@@ -305,6 +305,35 @@ button.frow{width:100%;text-align:left}
 .finbtn.pub::before{content:none}
 .post{background:var(--surface);border-radius:26px;padding:16px;margin-bottom:10px}
 .post-top{display:block;width:100%;text-align:left}
+.quien{display:grid;grid-template-columns:40px 1fr;gap:10px;align-items:center;text-align:left;min-width:0}
+.post-acts{display:flex;gap:8px;margin-top:12px}
+.post-act{display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:0 13px;border-radius:999px;background:var(--surface-2);font-size:13px;font-weight:700;color:var(--muted)}
+.post-act.on{background:var(--lime);color:var(--on-lime)}
+.post-act:disabled{opacity:1}
+.cm{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:start;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.cm b{font-weight:800}
+.cm span{overflow-wrap:anywhere;min-width:0}
+.cm .del{padding:3px 9px;font-size:12px}
+.cm-form{display:flex;gap:8px;margin-top:10px}
+.cm-form input{flex:1;min-width:0;min-height:44px;border:0;border-radius:999px;background:var(--surface-2);padding:0 14px;font-size:16px;outline:none}
+.cm-form button{flex:none;padding:0 14px;border-radius:999px;background:var(--lime);color:var(--on-lime);font-weight:800;font-size:14px}
+.pf{display:flex;align-items:center;gap:14px;margin:12px 0 16px}
+.pf .ava{width:64px;height:64px;font-size:26px;flex:none}
+.pf h1{margin:0;flex:1;min-width:0;font-size:28px}
+.seguir{flex:none;min-height:38px;padding:0 14px;border-radius:999px;background:var(--lime);color:var(--on-lime);font-weight:800;font-size:13px}
+.seguir.ya{background:var(--surface-2);color:var(--ink)}
+.persona{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line)}
+.persona:last-child{border-bottom:0}
+.persona .quien b{display:block;font-weight:800;overflow-wrap:anywhere}
+.persona .quien small{display:block;font-size:12px;color:var(--muted)}
+.aviso-f{display:block;width:100%;text-align:left;padding:13px 16px;border-bottom:1px solid var(--line);font-size:14px;overflow-wrap:anywhere}
+.aviso-f:last-child{border-bottom:0}
+.aviso-f b{font-weight:800}
+.aviso-f small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.aviso-f.nuevo{background:var(--lime-soft)}
+.tab.dot{position:relative}
+.tab.dot::after{content:"";position:absolute;top:7px;right:calc(50% - 16px);width:8px;height:8px;border-radius:50%;background:var(--danger)}
+button.rk{width:100%;text-align:left}
 .post-h{display:grid;grid-template-columns:40px 1fr auto;gap:10px;align-items:center}
 .ava{width:40px;height:40px;border-radius:50%;background:var(--lime);color:var(--on-lime);display:grid;place-items:center;font-weight:800;font-size:16px}
 .post-h .mid{min-width:0}
@@ -439,7 +468,8 @@ const state = {
   detalle: null, metrica: 'max', histSel: null, borrarSes: false, msgCopia: '',
   modo: 'cargando', cargado: false, aviso: '', hint: null,
   nube: '',
-  amigos: {modo: 'crear', google: false, pestana: 'feed', feed: null, marcas: null, cargando: false, error: '', ejercicio: null, busca: '', salir: false, abiertos: new Set()},
+  amigos: {modo: 'crear', google: false, pestana: 'feed', feed: null, marcas: null, cargando: false, error: '', ejercicio: null, busca: '', salir: false, abiertos: new Set(),
+    seg: [], gente: null, solo: false, perfil: null, perfilPosts: null, avisos: [], verAvisos: false, buscaGente: ''},
 };
 const conSets = s => s.ejercicios.some(e => e.sets.length);
 const grupoDe = e => e.grupo || IDEA_GRUPO[e.clave] || null;
@@ -522,6 +552,7 @@ function render(forzar) {
   if (!forzar && escribiendo()) { renderPendiente = true; return; }
   renderPendiente = false;
   for (const v of ['entreno', 'historial', 'progreso', 'records', 'amigos']) $('#tab-' + v).setAttribute('aria-pressed', state.vista === v);
+  $('#tab-amigos').classList.toggle('dot', avisosNuevos() > 0);
   $('#main').innerHTML = state.vista === 'entreno' ? vistaEntreno() : state.vista === 'historial' ? vistaHistorial() : state.vista === 'records' ? vistaRecords() : state.vista === 'amigos' ? vistaAmigos() : vistaProgreso();
 }
 
@@ -1194,18 +1225,86 @@ async function subirMarcas() {
   if (lista.length) await pedir('marcas?on_conflict=usuario,clave', {method: 'POST', body: lista, prefer: 'resolution=merge-duplicates,return=minimal'});
   await pedir(`marcas?usuario=eq.${cuenta.uid}${lista.length ? `&clave=not.in.(${lista.map(m => m.clave).join(',')})` : ''}`, {method: 'DELETE'});
 }
+const COLS_POST = 'select=*,perfiles(nombre),fuerzas(usuario),comentarios(id,usuario,texto,creado,perfiles(nombre))&comentarios.order=creado.asc';
+const sigoA = () => state.amigos.seg.filter(x => x.seguidor === cuenta.uid).map(x => x.seguido);
+const consultaFeed = () => `publicaciones?${COLS_POST}&order=creado.desc&limit=30${state.amigos.solo ? `&usuario=in.(${[cuenta.uid, ...sigoA()].join(',')})` : ''}`;
 async function cargarAmigos() {
   const a = state.amigos;
   if (!cuenta?.nombre || a.cargando) return;
   a.cargando = true; a.error = ''; render();
   try {
     await subirMarcas();
-    [a.feed, a.marcas] = await Promise.all([
-      pedir('publicaciones?select=*,perfiles(nombre)&order=creado.desc&limit=30'),
+    [a.seg, a.marcas, a.gente] = await Promise.all([
+      pedir('seguimientos?select=seguidor,seguido&limit=5000'),
       pedir('marcas?select=*,perfiles(nombre)&order=rm.desc&limit=2000'),
+      pedir('perfiles?select=id,nombre&order=nombre&limit=500'),
     ]);
+    a.feed = await pedir(consultaFeed());
+    await cargarAvisos();
   } catch { a.error = 'No he podido conectar. Revisa tu conexión.'; }
   a.cargando = false; render();
+}
+async function cargarAvisos() {
+  if (!cuenta?.nombre) return;
+  const a = state.amigos, u = cuenta.uid;
+  const [fz, cm, sg] = await Promise.all([
+    pedir(`fuerzas?select=creado,usuario,perfiles(nombre),publicaciones!inner(usuario,titulo)&publicaciones.usuario=eq.${u}&usuario=neq.${u}&order=creado.desc&limit=30`),
+    pedir(`comentarios?select=creado,usuario,texto,perfiles(nombre),publicaciones!inner(usuario,titulo)&publicaciones.usuario=eq.${u}&usuario=neq.${u}&order=creado.desc&limit=30`),
+    pedir(`seguimientos?select=creado,seguidor,perfiles!seguimientos_seguidor_fkey(nombre)&seguido=eq.${u}&order=creado.desc&limit=30`),
+  ]);
+  a.avisos = [
+    ...fz.map(x => ({t: Date.parse(x.creado), uid: x.usuario, nombre: x.perfiles?.nombre, texto: `te ha dado fuerza en ${x.publicaciones?.titulo}`})),
+    ...cm.map(x => ({t: Date.parse(x.creado), uid: x.usuario, nombre: x.perfiles?.nombre, texto: `ha comentado: ${x.texto}`})),
+    ...sg.map(x => ({t: Date.parse(x.creado), uid: x.seguidor, nombre: x.perfiles?.nombre, texto: 'ha empezado a seguirte'})),
+  ].sort((x, y) => y.t - x.t).slice(0, 40);
+}
+const avisosNuevos = () => { const v = ls.get('fr_avisos_visto', 0); return state.amigos.avisos.filter(x => x.t > v).length; };
+const postsDe = id => [...(state.amigos.feed || []), ...(state.amigos.perfilPosts || [])].filter(x => String(x.id) === id);
+async function darFuerza(id) {
+  const ps = postsDe(id), yo = cuenta.uid;
+  if (!ps.length) return;
+  const quitar = ps[0].fuerzas?.some(x => x.usuario === yo);
+  const cambiar = q => { for (const p of ps) p.fuerzas = q ? (p.fuerzas || []).filter(x => x.usuario !== yo) : [...(p.fuerzas || []), {usuario: yo}]; render(); };
+  cambiar(quitar);
+  try {
+    if (quitar) await pedir(`fuerzas?publicacion=eq.${id}&usuario=eq.${yo}`, {method: 'DELETE'});
+    else await pedir('fuerzas', {method: 'POST', body: {publicacion: id, usuario: yo}, prefer: 'return=minimal'});
+  } catch { cambiar(!quitar); toast('Sin conexión', 'Inténtalo otra vez'); }
+}
+async function comentar(f) {
+  const id = f.dataset.id, texto = f.texto.value.trim().slice(0, 300);
+  if (!texto) return;
+  f.texto.value = ''; document.activeElement?.blur();
+  try {
+    const [c] = await pedir('comentarios?select=id,usuario,texto,creado', {method: 'POST', body: {publicacion: id, usuario: cuenta.uid, texto}, prefer: 'return=representation'});
+    for (const p of postsDe(id)) p.comentarios = [...(p.comentarios || []), {...c, perfiles: {nombre: cuenta.nombre}}];
+    render(true);
+  } catch { f.texto.value = texto; toast('Sin conexión', 'No se ha enviado'); }
+}
+async function borrarComentario(id, cid) {
+  try {
+    await pedir(`comentarios?id=eq.${cid}`, {method: 'DELETE'});
+    for (const p of postsDe(id)) p.comentarios = (p.comentarios || []).filter(x => x.id !== cid);
+    render(true);
+  } catch { toast('Sin conexión', 'No se ha borrado'); }
+}
+async function seguir(uid) {
+  const a = state.amigos, yo = cuenta.uid, ya = sigoA().includes(uid);
+  const antes = a.seg;
+  a.seg = ya ? a.seg.filter(x => !(x.seguidor === yo && x.seguido === uid)) : [...a.seg, {seguidor: yo, seguido: uid}];
+  render();
+  try {
+    if (ya) await pedir(`seguimientos?seguidor=eq.${yo}&seguido=eq.${uid}`, {method: 'DELETE'});
+    else await pedir('seguimientos', {method: 'POST', body: {seguidor: yo, seguido: uid}, prefer: 'return=minimal'});
+    if (a.solo) { a.feed = await pedir(consultaFeed()); render(); }
+  } catch { a.seg = antes; render(); toast('Sin conexión', 'Inténtalo otra vez'); }
+}
+async function abrirPerfil(uid) {
+  const a = state.amigos;
+  a.perfil = uid; a.perfilPosts = null; a.verAvisos = false;
+  render(true); scrollTo(0, 0);
+  try { const r = await pedir(`publicaciones?${COLS_POST}&usuario=eq.${uid}&order=creado.desc&limit=30`); if (a.perfil === uid) { a.perfilPosts = r; render(); } }
+  catch { a.error = 'No he podido conectar. Revisa tu conexión.'; render(); }
 }
 async function entrar(nombre) {
   const a = state.amigos;
@@ -1255,7 +1354,7 @@ async function borrarCuenta() {
     cuenta = null; ls.set('fr_cuenta', null); ls.set('fr_borradas', {});
     state.sesiones.forEach(x => delete x.publicada); delete state.actual?.publicada;
     ls.set('lh3_sesiones', state.sesiones);
-    a.feed = a.marcas = a.ejercicio = null;
+    a.feed = a.marcas = a.ejercicio = a.gente = a.perfil = a.perfilPosts = null; a.seg = []; a.avisos = [];
   } catch { a.error = 'No he podido conectar. Revisa tu conexión.'; }
   a.salir = false; render(true);
 }
@@ -1331,7 +1430,7 @@ async function cerrarCuenta() {
   cuenta = null; ls.set('fr_cuenta', null); ls.set('fr_borradas', {});
   state.sesiones = []; state.actual = null; state.activo = null; state.nube = '';
   ls.set('lh3_sesiones', []);
-  a.feed = a.marcas = a.ejercicio = null; a.error = '';
+  a.feed = a.marcas = a.ejercicio = a.gente = a.perfil = a.perfilPosts = null; a.seg = []; a.avisos = []; a.error = '';
   render(true);
 }
 
@@ -1396,7 +1495,9 @@ async function compartirApp() {
 }
 function clasificaciones() {
   const m = new Map();
-  for (const r of state.amigos.marcas || []) {
+  const a = state.amigos, sigo = new Set([cuenta.uid, ...sigoA()]);
+  for (const r of a.marcas || []) {
+    if (a.solo && !sigo.has(r.usuario)) continue;
     const c = m.get(r.clave) || {clave: r.clave, nombre: r.nombre, filas: []};
     c.filas.push(r);
     m.set(r.clave, c);
@@ -1423,35 +1524,85 @@ function vistaRanking(clave) {
     <button class="back" data-accion="volver-ranking">‹ Clasificación</button>
     <h1>${esc(c.nombre)}</h1>
     <p>Ordenado por 1RM estimado, con la serie que lo consiguió.</p>
-    <div class="rows">${c.filas.map((r, i) => `<div class="rk${r.usuario === cuenta.uid ? ' yo' : ''}">
+    <div class="rows">${c.filas.map((r, i) => `<button class="rk${r.usuario === cuenta.uid ? ' yo' : ''}" data-accion="perfil" data-u="${esc(r.usuario)}">
       <span class="p num">${i + 1}</span>
       <span class="mid"><b>${esc(r.perfiles?.nombre)}</b><small class="num">${fmt(r.peso)} kg × ${fmt(r.reps)} · ${fechaCorta(String(r.fecha))}</small></span>
-      <span class="v num">${kgRm(r)}<small>kg</small></span></div>`).join('')}</div></div>`;
+      <span class="v num">${kgRm(r)}<small>kg</small></span></button>`).join('')}</div></div>`;
+}
+const ICON_FUERZA = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 7v10M3 9.5v5M18 7v10M21 9.5v5M6 12h12"/></svg>';
+const ICON_COMENTAR = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.8 7L4 20l1-5.1A8 8 0 1 1 21 12z"/></svg>';
+const avatar = n => `<span class="ava">${esc(String(n || '?')[0].toUpperCase())}</span>`;
+function botonSeguir(uid) {
+  if (uid === cuenta.uid) return '';
+  const ya = sigoA().includes(uid);
+  return `<button class="seguir${ya ? ' ya' : ''}" data-accion="seguir" data-u="${esc(uid)}">${ya ? 'Siguiendo' : 'Seguir'}</button>`;
 }
 function tarjetaPublicacion(p) {
-  const d = p.datos || {}, nombre = p.perfiles?.nombre || 'Alguien';
+  const d = p.datos || {}, nombre = p.perfiles?.nombre || 'Alguien', yo = cuenta.uid;
   const ejs = Array.isArray(d.ejercicios) ? d.ejercicios.filter(Boolean) : [];
   const mins = +d.mins || 0, recs = +d.records || 0, abierta = state.amigos.abiertos.has(p.id);
+  const fz = p.fuerzas || [], cms = p.comentarios || [], mia = fz.some(x => x.usuario === yo), propia = p.usuario === yo;
   return `<article class="post${abierta ? ' open' : ''}">
+    <div class="post-h" style="grid-template-columns:1fr auto">
+      <button class="quien" data-accion="perfil" data-u="${esc(p.usuario)}">${avatar(nombre)}
+        <span class="mid"><b>${esc(nombre)}</b><small class="num">${fechaCorta(String(p.fecha))}${mins ? ` · ${fmt(mins)} min` : ''}</small></span></button>
+      ${recs ? `<span class="tag">${fmt(recs)} ${recs === 1 ? 'récord' : 'récords'}</span>` : ''}</div>
     <button class="post-top" data-accion="post" data-id="${esc(p.id)}" aria-expanded="${abierta}">
-      <span class="post-h"><span class="ava">${esc(nombre[0].toUpperCase())}</span>
-        <span class="mid"><b>${esc(nombre)}</b><small class="num">${fechaCorta(String(p.fecha))}${mins ? ` · ${fmt(mins)} min` : ''}</small></span>
-        ${recs ? `<span class="tag">${fmt(recs)} ${recs === 1 ? 'récord' : 'récords'}</span>` : ''}</span>
       <span class="post-t">${esc(p.titulo)}</span>
       <span class="post-foot"><span class="post-st num">${ejs.length} ${ejs.length === 1 ? 'ejercicio' : 'ejercicios'} · ${fmt(+d.series || 0)} series · ${fmt(+d.vol || 0)} kg</span>${ICON_CHEV}</span>
     </button>
+    <div class="post-acts">
+      <button class="post-act${mia ? ' on' : ''}" data-accion="fuerza" data-id="${esc(p.id)}" ${propia ? 'disabled' : ''} aria-pressed="${mia}">${ICON_FUERZA}Fuerza${fz.length ? ` · ${fz.length}` : ''}</button>
+      <button class="post-act" data-accion="post" data-id="${esc(p.id)}">${ICON_COMENTAR}${cms.length || 'Comentar'}</button>
+    </div>
     <div class="post-body"><div class="post-in"><div class="post-list">${ejs.map(e => `<div class="post-ex"><span><span class="nm">${esc(e.nombre)}</span>
       <span class="ss num">${(Array.isArray(e.sets) ? e.sets : []).filter(Array.isArray).map(x => `${fmt(+x[0] || 0)}×${fmt(+x[1] || 0)}`).join(' · ')}</span></span>
       ${e.record ? '<span class="tag">Récord</span>' : ''}</div>`).join('')}</div>
-      ${ejs.length ? `<button class="finbtn pub" data-accion="replicar-post" data-id="${esc(p.id)}">Replicar sesión</button>` : ''}</div></div>
+      ${ejs.length ? `<button class="finbtn pub" data-accion="replicar-post" data-id="${esc(p.id)}">Replicar sesión</button>` : ''}
+      ${cms.map(c => `<div class="cm"><span><b>${esc(c.perfiles?.nombre || 'Alguien')}</b> ${esc(c.texto)}</span>${c.usuario === yo || propia ? `<button class="del" data-accion="borrar-comentario" data-id="${esc(p.id)}" data-c="${esc(c.id)}">Borrar</button>` : ''}</div>`).join('')}
+      <form class="cm-form" data-form="comentar" data-id="${esc(p.id)}"><input name="texto" maxlength="300" placeholder="Escribe un comentario" autocomplete="off" aria-label="Comentario"><button type="submit">Enviar</button></form></div></div>
   </article>`;
+}
+function vistaPerfil(uid) {
+  const a = state.amigos, nombre = a.gente?.find(x => x.id === uid)?.nombre || 'Alguien';
+  const seguidores = a.seg.filter(x => x.seguido === uid).length, siguiendo = a.seg.filter(x => x.seguidor === uid).length;
+  const marcasDe = (a.marcas || []).filter(r => r.usuario === uid);
+  let h = `<div class="det"><button class="back" data-accion="volver-perfil">‹ Volver</button>
+    <div class="pf">${avatar(nombre)}<h1>${esc(nombre)}</h1>${botonSeguir(uid)}</div></div>
+    <div class="sumrow">
+      <div><div class="label">Sesiones</div><div class="v num">${a.perfilPosts?.length ?? '–'}</div></div>
+      <div><div class="label">Seguidores</div><div class="v num">${seguidores}</div></div>
+      <div><div class="label">Siguiendo</div><div class="v num">${siguiendo}</div></div>
+    </div>`;
+  if (marcasDe.length) h += `<div class="sec-h"><h2>Mejores marcas</h2></div><div class="rows">${marcasDe.slice(0, 5).map(r => `<button class="prow rec" data-accion="ver-ranking" data-clave="${esc(r.clave)}">
+    <span class="nm">${esc(r.nombre)}<span class="sub num">${fmt(r.peso)} kg × ${fmt(r.reps)}</span></span><span class="kg num">${kgRm(r)}<small>kg</small></span></button>`).join('')}</div>`;
+  h += `<div class="sec-h"><h2>Sesiones</h2></div>`;
+  h += a.perfilPosts?.length ? a.perfilPosts.map(tarjetaPublicacion).join('')
+    : a.perfilPosts ? `<div class="empty">Aún no ha publicado sesiones.</div>` : `<div class="empty"><b>Cargando</b>Trayendo sus sesiones…</div>`;
+  return h;
+}
+function vistaAvisos() {
+  const a = state.amigos, visto = a.vistoAntes || 0;
+  let h = `<div class="det"><button class="back" data-accion="volver-avisos">‹ Amigos</button><h1>Avisos</h1></div><div style="height:14px"></div>`;
+  if (!a.avisos.length) return h + `<div class="empty"><b>Sin avisos</b>Aquí verás quién te da fuerza, te comenta o te sigue.</div>`;
+  return h + `<div class="rows">${a.avisos.map(x => `<button class="aviso-f${x.t > visto ? ' nuevo' : ''}" data-accion="perfil" data-u="${esc(x.uid)}"><b>${esc(x.nombre || 'Alguien')}</b> ${esc(x.texto)}
+    <small class="num">${fechaCorta(iso(new Date(x.t)))}</small></button>`).join('')}</div>`;
+}
+function listaGente() {
+  const a = state.amigos, q = norm(a.buscaGente);
+  const lista = (a.gente || []).filter(g => g.id !== cuenta.uid && (!q || norm(g.nombre).includes(q)));
+  if (!lista.length) return `<div class="empty">${q ? 'No hay nadie con ese nombre.' : 'Aún no hay nadie más. Invita a tus amigos.'}</div>`;
+  return `<div class="rows">${lista.map(g => `<div class="persona"><button class="quien" data-accion="perfil" data-u="${esc(g.id)}">${avatar(g.nombre)}
+    <span class="mid"><b>${esc(g.nombre)}</b><small class="num">${a.seg.filter(x => x.seguido === g.id).length} seguidores</small></span></button>${botonSeguir(g.id)}</div>`).join('')}</div>`;
 }
 function vistaAmigos() {
   const a = state.amigos;
+  if (a.perfil && cuenta?.nombre) return vistaPerfil(a.perfil);
   if (a.ejercicio && cuenta?.nombre) return vistaRanking(a.ejercicio);
+  if (a.verAvisos && cuenta?.nombre) return vistaAvisos();
   if (!cuenta?.email && !cuenta?.nombre && !a.googleVisto) comprobarGoogle();
   let h = `<section class="hero"><div class="hero-row"><span class="label">${cuenta?.nombre ? `Entras como ${esc(cuenta.nombre)}` : 'Compite con tus amigos'}</span>
-    <button class="datepill nueva" data-accion="compartir-app">Invitar</button></div><h1>Amigos</h1></section>`;
+    <div class="hero-acts">${cuenta?.nombre ? `<button class="datepill" data-accion="ver-avisos">Avisos${avisosNuevos() ? ` · ${avisosNuevos()}` : ''}</button>` : ''}<button class="datepill nueva" data-accion="compartir-app">Invitar</button></div></div><h1>Amigos</h1></section>`;
   if (a.error) h += `<div class="aviso">${esc(a.error)}</div>`;
   if (!cuenta?.email && !cuenta?.nombre) return h + vistaAcceso();
   if (!cuenta?.nombre) return h + `<section class="next"><h2>Elige tu nombre</h2>
@@ -1459,15 +1610,20 @@ function vistaAmigos() {
     <form class="search" data-form="alta"><input id="in-nombre" name="nombre" maxlength="24" placeholder="Tu nombre" autocomplete="off" autocapitalize="words" enterkeyhint="go" aria-label="Tu nombre"><button class="go" type="submit" ${a.cargando ? 'disabled' : ''}>${a.cargando ? 'Entrando…' : 'Entrar'}</button></form></section>`;
   if (!cuenta.email) h += `<section class="next" style="margin:0 0 12px"><h2>Protege tu cuenta</h2>
     <p>Pon un email y una contraseña. Conservas tu nombre y tus entrenos quedan a salvo si cambias de móvil.</p>${camposCuenta('proteger')}</section>`;
-  h += `<div class="seg" style="--n:2" role="group" aria-label="Sección">
+  h += `<div class="seg" style="--n:3" role="group" aria-label="Sección">
     <button data-accion="pestana-amigos" data-p="feed" aria-pressed="${a.pestana === 'feed'}">Publicaciones</button>
-    <button data-accion="pestana-amigos" data-p="ranking" aria-pressed="${a.pestana === 'ranking'}">Clasificación</button></div>`;
-  if (a.pestana === 'ranking') {
+    <button data-accion="pestana-amigos" data-p="ranking" aria-pressed="${a.pestana === 'ranking'}">Clasificación</button>
+    <button data-accion="pestana-amigos" data-p="gente" aria-pressed="${a.pestana === 'gente'}">Personas</button></div>`;
+  if (a.pestana !== 'gente') h += `<div class="filters" style="margin-top:0"><button class="gchip sm" data-accion="solo" data-v="" aria-pressed="${!a.solo}">Todos</button><button class="gchip sm" data-accion="solo" data-v="1" aria-pressed="${a.solo}">Siguiendo</button></div>`;
+  if (a.pestana === 'gente') {
+    h += a.gente ? `<form class="search" data-form="nada" style="margin-bottom:12px">${ICON_SEARCH}<input id="in-busca-gente" placeholder="Buscar persona" autocomplete="off" value="${esc(a.buscaGente)}" aria-label="Buscar persona"></form><div id="gente-list">${listaGente()}</div>`
+      : a.cargando ? `<div class="empty"><b>Cargando</b>Trayendo a la gente…</div>` : '';
+  } else if (a.pestana === 'ranking') {
     h += a.marcas ? `<form class="search" data-form="nada" style="margin-bottom:12px">${ICON_SEARCH}<input id="in-busca-rk" placeholder="Buscar ejercicio" autocomplete="off" value="${esc(a.busca)}" aria-label="Buscar ejercicio"></form><div id="rk-list">${listaClasificacion()}</div>`
       : a.cargando ? `<div class="empty"><b>Cargando</b>Trayendo la clasificación…</div>` : '';
   } else {
     h += a.feed?.length ? a.feed.map(tarjetaPublicacion).join('')
-      : a.feed ? `<div class="empty"><b>Aún no hay publicaciones</b>Finaliza una sesión y toca Publicar para ser el primero.</div>`
+      : a.feed ? `<div class="empty"><b>Aún no hay publicaciones</b>${a.solo ? 'Sigue a alguien en Personas o publica tu primera sesión.' : 'Finaliza una sesión y toca Publicar para ser el primero.'}</div>`
       : a.cargando ? `<div class="empty"><b>Cargando</b>Trayendo las publicaciones…</div>` : '';
   }
   return h + (cuenta.email ? `<div class="cuenta-txt">${esc(cuenta.email)}</div>` : '') + `<div class="salir">
@@ -1613,7 +1769,8 @@ document.addEventListener('click', ev => {
   const b = ev.target.closest('[data-accion], [data-vista]');
   if (!b) return;
   if (b.dataset.vista) {
-    state.vista = b.dataset.vista; state.detalle = null; state.histSel = null; state.borrarSes = false; state.amigos.ejercicio = null;
+    state.vista = b.dataset.vista; state.detalle = null; state.histSel = null; state.borrarSes = false;
+    Object.assign(state.amigos, {ejercicio: null, perfil: null, perfilPosts: null, verAvisos: false});
     render(true); scrollTo(0, 0);
     if (state.vista === 'amigos') cargarAmigos();
     return;
@@ -1690,13 +1847,14 @@ document.addEventListener('click', ev => {
     case 'post': {
       const ab = state.amigos.abiertos, id = b.dataset.id;
       ab.has(id) ? ab.delete(id) : ab.add(id);
-      b.closest('.post').classList.toggle('open', ab.has(id));
-      b.setAttribute('aria-expanded', ab.has(id));
+      const post = b.closest('.post');
+      post.classList.toggle('open', ab.has(id));
+      post.querySelector('.post-top').setAttribute('aria-expanded', ab.has(id));
       break;
     }
     case 'replicar-post': {
-      const p = state.amigos.feed?.find(x => String(x.id) === b.dataset.id);
-      if (p) replicarPublicacion(p);
+      const p = postsDe(b.dataset.id)[0];
+      if (p) { state.amigos.perfil = null; replicarPublicacion(p); }
       break;
     }
     case 'replicar-sesion': {
@@ -1708,7 +1866,20 @@ document.addEventListener('click', ev => {
     case 'despublicar': despublicar(ses); break;
     case 'compartir-app': compartirApp(); break;
     case 'pestana-amigos': state.amigos.pestana = b.dataset.p; render(true); if (!state.amigos.feed) cargarAmigos(); break;
-    case 'ver-ranking': state.amigos.ejercicio = b.dataset.clave; render(true); scrollTo(0, 0); break;
+    case 'ver-ranking': state.amigos.ejercicio = b.dataset.clave; state.amigos.perfil = null; render(true); scrollTo(0, 0); break;
+    case 'fuerza': darFuerza(b.dataset.id); break;
+    case 'borrar-comentario': borrarComentario(b.dataset.id, b.dataset.c); break;
+    case 'seguir': seguir(b.dataset.u); break;
+    case 'perfil': abrirPerfil(b.dataset.u); break;
+    case 'volver-perfil': state.amigos.perfil = state.amigos.perfilPosts = null; render(true); break;
+    case 'ver-avisos':
+      state.amigos.verAvisos = true; state.amigos.vistoAntes = ls.get('fr_avisos_visto', 0);
+      ls.set('fr_avisos_visto', Date.now()); render(true); scrollTo(0, 0); break;
+    case 'volver-avisos': state.amigos.verAvisos = false; render(true); break;
+    case 'solo':
+      state.amigos.solo = !!b.dataset.v; state.amigos.feed = null; render(true);
+      pedir(consultaFeed()).then(r => { state.amigos.feed = r; render(); }).catch(() => { state.amigos.error = 'No he podido conectar. Revisa tu conexión.'; render(); });
+      break;
     case 'volver-ranking': state.amigos.ejercicio = null; render(true); break;
     case 'google': entrarConGoogle(); break;
     case 'modo-acceso': state.amigos.modo = b.dataset.m; state.amigos.error = ''; render(true); break;
@@ -1759,12 +1930,14 @@ document.addEventListener('submit', ev => {
   if (f.dataset.form === 'serie') apuntar(f);
   if (f.dataset.form === 'alta') entrar(f.nombre.value);
   if (f.dataset.form === 'cuenta') accionCuenta(f, f.dataset.tipo);
+  if (f.dataset.form === 'comentar') comentar(f);
   if (f.dataset.form === 'cambiar') cambiarEjercicio(state.cambiando, mejorCoincidencia(f.q.value));
 });
 document.addEventListener('input', ev => {
   const el = ev.target;
   if (el.id === 'in-busca') { state.busca = el.value; $('#res').innerHTML = resultados(); return; }
   if (el.id === 'in-cambiar') { state.buscaCambio = el.value; $('#res-cambiar').innerHTML = resultados(el.value, 'cambiar-a'); return; }
+  if (el.id === 'in-busca-gente') { state.amigos.buscaGente = el.value; $('#gente-list').innerHTML = listaGente(); return; }
   if (el.id === 'in-busca-rk') { state.amigos.busca = el.value; $('#rk-list').innerHTML = listaClasificacion(); return; }
   if (el.id === 'in-busca-prog') { state.buscaProg = el.value; $('#prog-list').innerHTML = listaProgreso(); return; }
   if (el.id === 'in-peso' || el.id === 'in-reps') {
@@ -1785,7 +1958,8 @@ document.addEventListener('change', ev => {
   }
 });
 document.addEventListener('focusout', () => setTimeout(() => { if (renderPendiente && !escribiendo()) render(); }, 0));
-document.addEventListener('visibilitychange', () => { if (!document.hidden) sincronizar(); });
+function refrescarAvisos() { if (nubeLista() && cuenta?.nombre) cargarAvisos().then(() => render()).catch(() => {}); }
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { sincronizar(); refrescarAvisos(); } });
 addEventListener('online', () => sincronizar());
 /* el iPhone puede dejar la app abierta de un día para otro; una sesión a medias se queda donde está */
 document.addEventListener('visibilitychange', () => {
@@ -1818,7 +1992,7 @@ async function iniciar() {
   state.modo = 'local'; state.cargado = true;
   if (nubeLista()) { $('#tab-amigos').hidden = false; $('.tabbar').style.setProperty('--tabs', 5); }
   corregirJalon(); abrirUltimo(); render(true);
-  if (nubeLista()) { volverDeGoogle(); sincronizar(); }
+  if (nubeLista()) { volverDeGoogle(); sincronizar(); refrescarAvisos(); }
   try { await navigator.storage?.persist?.(); } catch {}
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
