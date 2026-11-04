@@ -304,15 +304,26 @@ button.frow{width:100%;text-align:left}
 .fileinp{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 .finbtn.pub::before{content:none}
 .post{background:var(--surface);border-radius:26px;padding:16px;margin-bottom:10px}
+.post-top{display:block;width:100%;text-align:left}
 .post-h{display:grid;grid-template-columns:40px 1fr auto;gap:10px;align-items:center}
 .ava{width:40px;height:40px;border-radius:50%;background:var(--lime);color:var(--on-lime);display:grid;place-items:center;font-weight:800;font-size:16px}
 .post-h .mid{min-width:0}
 .post-h b{display:block;font-weight:800;overflow-wrap:anywhere}
 .post-h small{display:block;font-size:12px;color:var(--muted)}
-.post h3{margin:12px 0 2px;font-weight:800;font-size:19px;letter-spacing:-.02em;overflow-wrap:anywhere}
+.post-t{display:block;margin:12px 0 2px;font-weight:800;font-size:19px;letter-spacing:-.02em;overflow-wrap:anywhere}
+.post-foot{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .post-st{font-size:12.5px;color:var(--muted)}
+.post-foot svg{flex:none;color:var(--muted);transition:transform .22s}
+.post.open .post-foot svg{transform:rotate(180deg)}
+.post-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .22s}
+.post.open .post-body{grid-template-rows:1fr}
+.post-in{min-height:0;overflow:hidden;visibility:hidden;transition:visibility .22s}
+.post.open .post-in{visibility:visible}
+.ref{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--surface-2);border-radius:16px;padding:10px 14px;margin-bottom:12px}
+.ref span{font-size:12px;font-weight:700;color:var(--muted);overflow-wrap:anywhere}
+.ref b{font-weight:800;font-size:14px;text-align:right;overflow-wrap:anywhere}
 .post-ex{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
-.post-ex:last-child{border-bottom:0;padding-bottom:0}
+.post-ex:last-child{border-bottom:0}
 .post-ex .nm{display:block;font-weight:700;font-size:14px;overflow-wrap:anywhere}
 .post-ex .ss{display:block;font-size:12px;color:var(--muted);overflow-wrap:anywhere}
 .post-list{margin-top:8px}
@@ -420,7 +431,7 @@ const state = {
   busca: '', buscaProg: '', filtroGrupo: null, filtroRec: null, rango: 7,
   detalle: null, metrica: 'max', histSel: null, borrarSes: false, msgCopia: '',
   modo: 'cargando', cargado: false, aviso: '', hint: null,
-  amigos: {pestana: 'feed', feed: null, marcas: null, cargando: false, error: '', ejercicio: null, busca: '', salir: false},
+  amigos: {pestana: 'feed', feed: null, marcas: null, cargando: false, error: '', ejercicio: null, busca: '', salir: false, abiertos: new Set()},
 };
 let db = null;
 const conSets = s => s.ejercicios.some(e => e.sets.length);
@@ -474,7 +485,7 @@ const nRecords = ses => ses.ejercicios.reduce((a, e) => a + etiquetas(e, ses).fi
 
 /* ---------- sesión actual y guardado ---------- */
 const sesionesDe = f => state.sesiones.filter(x => x.fecha === f);
-const idNuevo = f => state.sesiones.some(x => x.id === f) ? `${f}-${Date.now().toString(36)}` : f;
+const idNuevo = f => state.sesiones.some(x => x.id === f) ? `${f}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}` : f;
 function sesion() {
   if (state.nueva) return null;
   if (!state.actual || state.actual.fecha !== state.fecha) {
@@ -607,6 +618,7 @@ function bloque(e, i, ses) {
     <div class="res" id="res-cambiar">${resultados(state.buscaCambio, 'cambiar-a')}</div>
     <button class="chip" data-accion="cancelar-cambio" style="margin-top:8px">Cancelar</button></div>`;
   if (!g && ses.grupos.length > 1) h += `<div class="askg"><span class="label">¿Qué grupo trabaja?</span><div class="gchips">${ses.grupos.map(id => `<button class="gchip sm" data-accion="set-grupo" data-g="${id}" aria-pressed="false">${GRUPO[id]?.n || id}</button>`).join('')}</div></div>`;
+  if (e.ref) h += `<div class="ref"><span>${esc(e.ref.de)} hizo</span><b class="num">${e.ref.sets.map(x => `${fmt(x[0])}×${fmt(x[1])}`).join(' · ')}</b></div>`;
   h += m ? panelMarcas(m) : `<div class="first"><b>Primera vez con este ejercicio</b>Lo que apuntes hoy será tu marca de referencia.</div>`;
   if (e.sets.length) {
     const tags = etiquetas(e, ses);
@@ -675,7 +687,8 @@ function objetivo(m) {
   return top.reps >= 12 ? {peso: top.peso + 2.5, reps: 8} : {peso: top.peso, reps: top.reps + 1};
 }
 function prefill(e, m) {
-  const s = e.sets.at(-1) || m?.ultima.sets[0];
+  const r = e.ref?.sets[0];
+  const s = e.sets.at(-1) || m?.ultima.sets[0] || (r && {peso: r[0], reps: r[1]});
   return s ? {peso: String(s.peso), reps: String(s.reps)} : {peso: '', reps: ''};
 }
 
@@ -892,7 +905,8 @@ function vistaSesion(id) {
     h += `</div></div>`;
   }
   h += `<div class="foot-actions">
-    <button class="apuntar" data-accion="editar-sesion" data-id="${esc(s.id)}">Editar este entreno</button>
+    <button class="apuntar" data-accion="replicar-sesion" data-id="${esc(s.id)}">Replicar sesión</button>
+    <button class="ghost" data-accion="editar-sesion" data-id="${esc(s.id)}">Editar este entreno</button>
     <button class="chip danger${state.borrarSes ? ' sure' : ''}" data-accion="borrar-sesion" data-id="${esc(s.id)}" style="align-self:center">${state.borrarSes ? '¿Seguro? Se borra entero' : 'Borrar entreno'}</button>
   </div></div>`;
   return h;
@@ -1221,8 +1235,8 @@ async function entrar(nombre) {
 }
 function datosPublicacion(ses) {
   const st = statsSesion(ses);
-  return {mins: st.mins, series: st.series, vol: Math.round(st.vol), records: nRecords(ses),
-    ejercicios: ses.ejercicios.filter(e => e.sets.length).map(e => ({nombre: e.nombre, record: etiquetas(e, ses).includes('pr'), sets: e.sets.map(x => [x.peso, x.reps])}))};
+  return {mins: st.mins, series: st.series, vol: Math.round(st.vol), records: nRecords(ses), grupos: ses.grupos,
+    ejercicios: ses.ejercicios.filter(e => e.sets.length).map(e => ({nombre: e.nombre, grupo: grupoDe(e), record: etiquetas(e, ses).includes('pr'), sets: e.sets.map(x => [x.peso, x.reps])}))};
 }
 async function publicar(ses, callado) {
   if (!cuenta?.nombre) { state.vista = 'amigos'; render(true); scrollTo(0, 0); return; }
@@ -1299,16 +1313,19 @@ function vistaRanking(clave) {
 function tarjetaPublicacion(p) {
   const d = p.datos || {}, nombre = p.perfiles?.nombre || 'Alguien';
   const ejs = Array.isArray(d.ejercicios) ? d.ejercicios.filter(Boolean) : [];
-  const mins = +d.mins || 0, recs = +d.records || 0;
-  return `<article class="post">
-    <div class="post-h"><span class="ava">${esc(nombre[0].toUpperCase())}</span>
-      <span class="mid"><b>${esc(nombre)}</b><small class="num">${fechaCorta(String(p.fecha))}${mins ? ` · ${fmt(mins)} min` : ''}</small></span>
-      ${recs ? `<span class="tag">${fmt(recs)} ${recs === 1 ? 'récord' : 'récords'}</span>` : ''}</div>
-    <h3>${esc(p.titulo)}</h3>
-    <div class="post-st num">${fmt(+d.series || 0)} series · ${fmt(+d.vol || 0)} kg</div>
-    <div class="post-list">${ejs.map(e => `<div class="post-ex"><span><span class="nm">${esc(e.nombre)}</span>
+  const mins = +d.mins || 0, recs = +d.records || 0, abierta = state.amigos.abiertos.has(p.id);
+  return `<article class="post${abierta ? ' open' : ''}">
+    <button class="post-top" data-accion="post" data-id="${esc(p.id)}" aria-expanded="${abierta}">
+      <span class="post-h"><span class="ava">${esc(nombre[0].toUpperCase())}</span>
+        <span class="mid"><b>${esc(nombre)}</b><small class="num">${fechaCorta(String(p.fecha))}${mins ? ` · ${fmt(mins)} min` : ''}</small></span>
+        ${recs ? `<span class="tag">${fmt(recs)} ${recs === 1 ? 'récord' : 'récords'}</span>` : ''}</span>
+      <span class="post-t">${esc(p.titulo)}</span>
+      <span class="post-foot"><span class="post-st num">${ejs.length} ${ejs.length === 1 ? 'ejercicio' : 'ejercicios'} · ${fmt(+d.series || 0)} series · ${fmt(+d.vol || 0)} kg</span>${ICON_CHEV}</span>
+    </button>
+    <div class="post-body"><div class="post-in"><div class="post-list">${ejs.map(e => `<div class="post-ex"><span><span class="nm">${esc(e.nombre)}</span>
       <span class="ss num">${(Array.isArray(e.sets) ? e.sets : []).filter(Array.isArray).map(x => `${fmt(+x[0] || 0)}×${fmt(+x[1] || 0)}`).join(' · ')}</span></span>
       ${e.record ? '<span class="tag">Récord</span>' : ''}</div>`).join('')}</div>
+      ${ejs.length ? `<button class="finbtn pub" data-accion="replicar-post" data-id="${esc(p.id)}">Replicar sesión</button>` : ''}</div></div>
   </article>`;
 }
 function vistaAmigos() {
@@ -1361,6 +1378,42 @@ function empezar(nombre) {
   render(true);
   document.querySelector(`[data-clave="${CSS.escape(clave)}"]`)?.scrollIntoView({behavior: 'smooth', block: 'start'});
 }
+function cerrarAbierta(s) {
+  if (s.fin || !conSets(s)) return;
+  s.fin = Math.max(0, ...s.ejercicios.flatMap(e => e.sets.map(x => x.t || 0))) || Date.now();
+  guardarSesion(s);
+}
+/* si el ejercicio ya lo tienes con otro nombre parecido, usa el tuyo para conservar tus récords */
+function ejercicioCopiado(nombre, grupo, ref) {
+  nombre = String(nombre ?? '').trim().slice(0, 80);
+  if (!nombre) return null;
+  const c = [...catalogo().values()].find(x => claveRanking(x.nombre) === claveRanking(nombre));
+  const clave = c?.clave || claveDe(nombre);
+  return {clave, nombre: c?.nombre || nombre, grupo: c?.grupo || IDEA_GRUPO[clave] || (GRUPOS.some(g => g.id === grupo) ? grupo : null), sets: [], ...(ref ? {ref} : {})};
+}
+function replicar(grupos, copias) {
+  const ejercicios = [...new Map(copias.filter(Boolean).map(e => [e.clave, e])).values()].slice(0, 40);
+  if (!ejercicios.length) return;
+  if (grupos.length === 1) for (const e of ejercicios) e.grupo ??= grupos[0];
+  const previa = state.nueva ? state.actual : sesion();
+  if (previa && conSets(previa)) cerrarAbierta(previa);
+  else if (previa && !previa.fin) guardarSesion({...previa, ejercicios: [], grupos: []});
+  const ses = {id: idNuevo(hoy), fecha: hoy, grupos, titulo: '', ts: 0, creada: Date.now(), inicio: Date.now(), ejercicios};
+  Object.assign(state, {actual: ses, fecha: hoy, nueva: false, editGrupos: false, plan: null, vista: 'entreno', detalle: null, histSel: null, borrarSes: false,
+    activo: ejercicios[0].clave, menu: null, cambiando: null, setSel: null, hint: null, busca: ''});
+  guardarSesion(ses); render(true); scrollTo(0, 0);
+  toast('Sesión replicada', ses.titulo);
+}
+function replicarPublicacion(p) {
+  const d = p.datos || {};
+  const pedidos = Array.isArray(d.grupos) ? d.grupos : GRUPOS.filter(g => norm(p.titulo).includes(norm(g.n))).map(g => g.id);
+  const de = p.usuario === cuenta?.uid ? null : String(p.perfiles?.nombre || 'Alguien');
+  const ejs = Array.isArray(d.ejercicios) ? d.ejercicios.filter(Boolean) : [];
+  replicar(GRUPOS.map(g => g.id).filter(id => pedidos.includes(id)), ejs.map(e => {
+    const sets = (Array.isArray(e.sets) ? e.sets : []).filter(Array.isArray).map(x => [+x[0] || 0, +x[1] || 0]).slice(0, 30);
+    return ejercicioCopiado(e.nombre, e.grupo, de && sets.length ? {de, sets} : null);
+  }));
+}
 function cambiarEjercicio(vieja, nombre) {
   const ses = sesion();
   const e = ses?.ejercicios.find(x => x.clave === vieja);
@@ -1373,7 +1426,7 @@ function cambiarEjercicio(vieja, nombre) {
   else {
     e.nombre = c?.nombre || nombre;
     if (clave !== vieja) {
-      e.clave = clave;
+      e.clave = clave; delete e.ref;
       e.grupo = c?.grupo || IDEA_GRUPO[clave] || (ses.grupos.length === 1 ? ses.grupos[0] : null);
     }
   }
@@ -1429,11 +1482,7 @@ document.addEventListener('click', ev => {
       const grupos = GRUPOS.map(g => g.id).filter(id => state.plan.includes(id));
       if (ses) ses.grupos = grupos;
       else {
-        const previa = state.nueva ? state.actual : null;
-        if (previa && !previa.fin && conSets(previa)) {
-          previa.fin = Math.max(0, ...previa.ejercicios.flatMap(e => e.sets.map(x => x.t || 0))) || Date.now();
-          guardarSesion(previa);
-        }
+        if (state.nueva && state.actual) cerrarAbierta(state.actual);
         state.actual = {id: idNuevo(state.fecha), fecha: state.fecha, grupos, titulo: '', ts: 0, creada: Date.now(), inicio: state.fecha === hoy ? Date.now() : undefined, ejercicios: []};
         state.nueva = false;
       }
@@ -1486,6 +1535,23 @@ document.addEventListener('click', ev => {
       const st = statsSesion(ses);
       toast('Entreno terminado', `${st.mins} min · ${st.series} series`);
       if (ses.publicada) publicar(ses, true);
+      break;
+    }
+    case 'post': {
+      const ab = state.amigos.abiertos, id = b.dataset.id;
+      ab.has(id) ? ab.delete(id) : ab.add(id);
+      b.closest('.post').classList.toggle('open', ab.has(id));
+      b.setAttribute('aria-expanded', ab.has(id));
+      break;
+    }
+    case 'replicar-post': {
+      const p = state.amigos.feed?.find(x => String(x.id) === b.dataset.id);
+      if (p) replicarPublicacion(p);
+      break;
+    }
+    case 'replicar-sesion': {
+      const s = state.sesiones.find(x => x.id === b.dataset.id);
+      if (s) replicar([...s.grupos], s.ejercicios.filter(e => e.sets.length).map(e => ejercicioCopiado(e.nombre, grupoDe(e))));
       break;
     }
     case 'publicar': publicar(ses); break;
