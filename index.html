@@ -360,6 +360,11 @@ button.set-chip.vacia{box-shadow:inset 0 0 0 1px var(--line-2)}
 .logro b{display:block;font-size:20px;font-weight:800;letter-spacing:-.03em}
 .nota-rk{font-size:13px;color:var(--muted);margin:0 0 12px}
 .nota-rk b{color:var(--lime-ink)}
+.crear{display:flex;gap:8px;margin-bottom:12px}
+.crear input{flex:1;min-width:0;min-height:48px;border:0;border-radius:999px;background:var(--surface);padding:0 16px;font-size:16px;outline:none}
+.crear button{flex:none;padding:0 16px;border-radius:999px;background:var(--lime);color:var(--on-lime);font-weight:800;font-size:14px}
+.rutina-ex{display:block;font-size:12px;color:var(--faint);margin-top:2px;overflow-wrap:anywhere}
+.rut-acc{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
 .post-h{display:grid;grid-template-columns:40px 1fr auto;gap:10px;align-items:center}
 .ava{width:40px;height:40px;border-radius:50%;background:var(--lime);color:var(--on-lime);display:grid;place-items:center;font-weight:800;font-size:16px}
 .post-h .mid{min-width:0}
@@ -496,7 +501,7 @@ const state = {
   modo: 'cargando', cargado: false, aviso: '', hint: null,
   nube: '',
   amigos: {modo: 'crear', google: false, pestana: 'feed', feed: null, marcas: null, cargando: false, error: '', ejercicio: null, busca: '', salir: false, abiertos: new Set(),
-    seg: [], gente: null, solo: false, subida: null, subiendo: false, perfil: null, perfilPosts: null, avisos: [], verAvisos: false, buscaGente: ''},
+    seg: [], gente: null, solo: false, subida: null, subiendo: false, comunidad: 'gente', clubes: null, miembros: [], rutinas: null, club: null, clubPosts: null, borrarClub: false, guardaRutina: null, perfil: null, perfilPosts: null, avisos: [], verAvisos: false, buscaGente: ''},
 };
 const conSets = s => s.ejercicios.some(e => e.sets.length);
 const grupoDe = e => e.grupo || IDEA_GRUPO[e.clave] || null;
@@ -757,6 +762,10 @@ function mapaMuscular(m) {
     ${Object.entries(ZONAS[lado]).map(([g, d]) => { const n = +m[g] || 0; return `<path d="${d}" fill="${n ? 'var(--lime)' : 'var(--surface-3)'}" fill-opacity="${n ? (.35 + .65 * n / max).toFixed(2) : 1}"/>`; }).join('')}</svg>`;
   return `<div class="mapa">${cuerpo('frente')}${cuerpo('espalda')}</div>`;
 }
+function semanaActual() {
+  const semana = lunesDe(hoy), st = state.sesiones.filter(s => conSets(s) && s.fecha >= semana).map(statsSesion);
+  return {semana, vol: Math.round(st.reduce((a, x) => a + x.vol, 0)), series: st.reduce((a, x) => a + x.series, 0)};
+}
 function rachaSemanas() {
   const semanas = new Set(state.sesiones.filter(conSets).map(s => lunesDe(s.fecha)));
   let l = lunesDe(hoy), n = 0;
@@ -999,6 +1008,9 @@ function vistaSesion(id) {
   }
   h += `<div class="foot-actions">
     <button class="apuntar" data-accion="replicar-sesion" data-id="${esc(s.id)}">Replicar sesión</button>
+    ${nubeLista() ? (state.amigos.guardaRutina === s.id
+      ? `<form class="crear" data-form="rutina" data-id="${esc(s.id)}" style="margin:0"><input name="nombre" maxlength="60" value="${esc(s.titulo)}" autocomplete="off" aria-label="Nombre de la rutina"><button type="submit">Guardar</button></form>`
+      : `<button class="ghost" data-accion="guardar-rutina" data-id="${esc(s.id)}">Guardar como rutina</button>`) : ''}
     <button class="ghost" data-accion="editar-sesion" data-id="${esc(s.id)}">Editar este entreno</button>
     <button class="chip danger${state.borrarSes ? ' sure' : ''}" data-accion="borrar-sesion" data-id="${esc(s.id)}" style="align-self:center">${state.borrarSes ? '¿Seguro? Se borra entero' : 'Borrar entreno'}</button>
   </div></div>`;
@@ -1259,7 +1271,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 15;
+const VERSION = 16;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -1311,7 +1323,7 @@ async function subirMarcas() {
   const lista = misMarcas();
   if (lista.length) await pedir('marcas?on_conflict=usuario,clave', {method: 'POST', body: lista, prefer: 'resolution=merge-duplicates,return=minimal'});
   await pedir(`marcas?usuario=eq.${cuenta.uid}${lista.length ? `&clave=not.in.(${lista.map(m => m.clave).join(',')})` : ''}`, {method: 'DELETE'});
-  await pedir(`perfiles?id=eq.${cuenta.uid}`, {method: 'PATCH', body: {resumen: {racha: rachaSemanas(), logros: logros().filter(l => l.ok).length}}, prefer: 'return=minimal'});
+  await pedir(`perfiles?id=eq.${cuenta.uid}`, {method: 'PATCH', body: {resumen: {racha: rachaSemanas(), logros: logros().filter(l => l.ok).length, ...semanaActual()}}, prefer: 'return=minimal'});
 }
 const COLS_POST = 'select=*,perfiles(nombre),fuerzas(usuario),medios(id,usuario,ruta,tipo,ejercicio,serie,etiqueta),comentarios(id,usuario,texto,creado,perfiles(nombre))&comentarios.order=creado.asc';
 const sigoA = () => state.amigos.seg.filter(x => x.seguidor === cuenta.uid).map(x => x.seguido);
@@ -1326,6 +1338,11 @@ async function cargarAmigos() {
       pedir('seguimientos?select=seguidor,seguido&limit=5000'),
       pedir('marcas?select=*,perfiles(nombre)&order=rm.desc&limit=2000'),
       pedir('perfiles?select=id,nombre,resumen&order=nombre&limit=500'),
+    ]);
+    [a.clubes, a.miembros, a.rutinas] = await Promise.all([
+      pedir('clubes?select=id,nombre,creador&order=nombre&limit=200'),
+      pedir('club_miembros?select=club,usuario&limit=5000'),
+      pedir('rutinas?select=*,perfiles(nombre)&order=creado.desc&limit=100'),
     ]);
     a.feed = await pedir(consultaFeed());
     await cargarAvisos();
@@ -1347,7 +1364,7 @@ async function cargarAvisos() {
   ].sort((x, y) => y.t - x.t).slice(0, 40);
 }
 const avisosNuevos = () => { const v = ls.get('fr_avisos_visto', 0); return state.amigos.avisos.filter(x => x.t > v).length; };
-const postsDe = id => [...(state.amigos.feed || []), ...(state.amigos.perfilPosts || [])].filter(x => String(x.id) === id);
+const postsDe = id => [...(state.amigos.feed || []), ...(state.amigos.perfilPosts || []), ...(state.amigos.clubPosts || [])].filter(x => String(x.id) === id);
 async function darFuerza(id) {
   const ps = postsDe(id), yo = cuenta.uid;
   if (!ps.length) return;
@@ -1452,7 +1469,7 @@ async function borrarCuenta() {
     cuenta = null; ls.set('fr_cuenta', null); ls.set('fr_borradas', {});
     state.sesiones.forEach(x => delete x.publicada); delete state.actual?.publicada;
     ls.set('lh3_sesiones', state.sesiones);
-    a.feed = a.marcas = a.ejercicio = a.gente = a.perfil = a.perfilPosts = null; a.seg = []; a.avisos = [];
+    a.feed = a.marcas = a.ejercicio = a.gente = a.perfil = a.perfilPosts = a.clubes = a.rutinas = a.club = a.clubPosts = null; a.seg = []; a.avisos = []; a.miembros = [];
   } catch { a.error = 'No he podido conectar. Revisa tu conexión.'; }
   a.salir = false; render(true);
 }
@@ -1528,7 +1545,7 @@ async function cerrarCuenta() {
   cuenta = null; ls.set('fr_cuenta', null); ls.set('fr_borradas', {});
   state.sesiones = []; state.actual = null; state.activo = null; state.nube = '';
   ls.set('lh3_sesiones', []);
-  a.feed = a.marcas = a.ejercicio = a.gente = a.perfil = a.perfilPosts = null; a.seg = []; a.avisos = []; a.error = '';
+  a.feed = a.marcas = a.ejercicio = a.gente = a.perfil = a.perfilPosts = a.clubes = a.rutinas = a.club = a.clubPosts = null; a.seg = []; a.avisos = []; a.miembros = []; a.error = '';
   render(true);
 }
 
@@ -1821,11 +1838,111 @@ function listaGente() {
   return `<div class="rows">${lista.map(g => `<div class="persona"><button class="quien" data-accion="perfil" data-u="${esc(g.id)}">${avatar(g.nombre)}
     <span class="mid"><b>${esc(g.nombre)}</b><small class="num">${a.seg.filter(x => x.seguido === g.id).length} seguidores</small></span></button>${botonSeguir(g.id)}</div>`).join('')}</div>`;
 }
+/* ---------- clubs y rutinas ---------- */
+const miembrosDe = id => state.amigos.miembros.filter(m => m.club === id).map(m => m.usuario);
+const soyMiembro = id => miembrosDe(id).includes(cuenta.uid);
+function botonClub(id) {
+  const ya = soyMiembro(id);
+  return `<button class="seguir${ya ? ' ya' : ''}" data-accion="club-unirse" data-id="${esc(id)}">${ya ? 'Miembro' : 'Unirme'}</button>`;
+}
+function listaClubes() {
+  const a = state.amigos;
+  return `<form class="crear" data-form="club"><input name="nombre" maxlength="40" placeholder="Nombre de un club nuevo" autocomplete="off" aria-label="Nombre del club"><button type="submit">Crear</button></form>
+    ${a.clubes?.length ? `<div class="rows">${a.clubes.map(c => `<div class="persona"><button class="quien" data-accion="ver-club" data-id="${esc(c.id)}">${avatar(c.nombre)}
+      <span class="mid"><b>${esc(c.nombre)}</b><small class="num">${miembrosDe(c.id).length} ${miembrosDe(c.id).length === 1 ? 'miembro' : 'miembros'}</small></span></button>${botonClub(c.id)}</div>`).join('')}</div>`
+      : `<div class="empty"><b>Aún no hay clubs</b>Crea el de tu gimnasio y compite con los tuyos.</div>`}`;
+}
+function vistaClub(id) {
+  const a = state.amigos, c = a.clubes?.find(x => x.id === id);
+  if (!c) { a.club = null; return vistaAmigos(); }
+  const ids = new Set(miembrosDe(id)), gente = (a.gente || []).filter(g => ids.has(g.id));
+  const semana = lunesDe(hoy), vol = g => g.resumen?.semana === semana ? +g.resumen.vol || 0 : 0;
+  const tabla = [...gente].sort((x, y) => vol(y) - vol(x));
+  const mejores = new Map();
+  for (const r of a.marcas || []) if (ids.has(r.usuario) && !mejores.has(r.clave)) mejores.set(r.clave, r);
+  let h = `<div class="det"><button class="back" data-accion="volver-club">‹ Clubs</button>
+    <div class="pf">${avatar(c.nombre)}<h1>${esc(c.nombre)}</h1>${botonClub(id)}</div></div>
+    <div class="sec-h" style="margin-top:0"><h2>Esta semana</h2></div>`;
+  h += tabla.length ? `<div class="rows">${tabla.map((g, i) => `<button class="rk${g.id === cuenta.uid ? ' yo' : ''}" data-accion="perfil" data-u="${esc(g.id)}"><span class="p num">${i + 1}</span>
+    <span class="mid"><b>${esc(g.nombre)}</b><small class="num">${g.resumen?.semana === semana ? `${fmt(+g.resumen.series || 0)} series` : 'Sin entrenar esta semana'}</small></span><span class="v num">${fmt(vol(g))}<small>kg</small></span></button>`).join('')}</div>`
+    : `<div class="empty">Aún no hay nadie en este club.</div>`;
+  if (mejores.size) h += `<div class="sec-h"><h2>Récords del club</h2></div><div class="rows">${[...mejores.values()].slice(0, 12).map(r => `<button class="prow rec" data-accion="ver-ranking" data-clave="${esc(r.clave)}">
+    <span class="nm">${esc(r.nombre)}<span class="sub">${esc(r.perfiles?.nombre)}</span></span><span class="kg num">${kgRm(r)}<small>kg</small></span></button>`).join('')}</div>`;
+  h += `<div class="sec-h"><h2>Sesiones</h2></div>`;
+  h += a.clubPosts?.length ? a.clubPosts.map(tarjetaPublicacion).join('') : a.clubPosts ? `<div class="empty">Aún no hay sesiones publicadas.</div>` : `<div class="empty"><b>Cargando</b>Trayendo las sesiones…</div>`;
+  if (c.creador === cuenta.uid) h += `<div class="salir"><button class="chip danger${a.borrarClub ? ' sure' : ''}" data-accion="borrar-club" data-id="${esc(id)}">${a.borrarClub ? '¿Seguro? Se borra el club' : 'Borrar club'}</button></div>`;
+  return h;
+}
+async function abrirClub(id) {
+  const a = state.amigos;
+  a.club = id; a.clubPosts = null; a.borrarClub = false;
+  render(true); scrollTo(0, 0);
+  const ids = miembrosDe(id);
+  try {
+    const r = ids.length ? await pedir(`publicaciones?${COLS_POST}&usuario=in.(${ids.join(',')})&order=creado.desc&limit=20`) : [];
+    if (a.club === id) { a.clubPosts = r; render(); }
+  } catch { a.error = 'No he podido conectar. Revisa tu conexión.'; render(); }
+}
+async function crearClub(f) {
+  const a = state.amigos, nombre = f.nombre.value.trim().replace(/\s+/g, ' ');
+  if (nombre.length < 3) { toast('Nombre muy corto', 'Usa al menos 3 letras'); return; }
+  document.activeElement?.blur();
+  try {
+    const [c] = await pedir('clubes?select=id,nombre,creador', {method: 'POST', body: {nombre, creador: cuenta.uid}, prefer: 'return=representation'});
+    await pedir('club_miembros', {method: 'POST', body: {club: c.id, usuario: cuenta.uid}, prefer: 'return=minimal'});
+    a.clubes = [...a.clubes, c].sort((x, y) => x.nombre.localeCompare(y.nombre));
+    a.miembros = [...a.miembros, {club: c.id, usuario: cuenta.uid}];
+    abrirClub(c.id);
+  } catch (e) { toast(e.code === '23505' ? 'Ese club ya existe' : 'Sin conexión', e.code === '23505' ? 'Únete o prueba otro nombre' : 'No se ha creado'); }
+}
+async function unirseClub(id) {
+  const a = state.amigos, yo = cuenta.uid, ya = soyMiembro(id), antes = a.miembros;
+  a.miembros = ya ? a.miembros.filter(m => !(m.club === id && m.usuario === yo)) : [...a.miembros, {club: id, usuario: yo}];
+  render();
+  try {
+    if (ya) await pedir(`club_miembros?club=eq.${id}&usuario=eq.${yo}`, {method: 'DELETE'});
+    else await pedir('club_miembros', {method: 'POST', body: {club: id, usuario: yo}, prefer: 'return=minimal'});
+  } catch { a.miembros = antes; render(); toast('Sin conexión', 'Inténtalo otra vez'); }
+}
+async function borrarClub(id) {
+  const a = state.amigos;
+  try {
+    await pedir(`clubes?id=eq.${id}`, {method: 'DELETE'});
+    a.clubes = a.clubes.filter(c => c.id !== id); a.miembros = a.miembros.filter(m => m.club !== id); a.club = null;
+  } catch { toast('Sin conexión', 'No se ha borrado'); }
+  a.borrarClub = false; render(true);
+}
+function listaRutinas() {
+  const a = state.amigos;
+  if (!a.rutinas?.length) return `<div class="empty"><b>Aún no hay rutinas</b>Abre un entreno en Historial y toca Guardar como rutina.</div>`;
+  return `<div class="rows">${a.rutinas.map(r => {
+    const ejs = Array.isArray(r.datos?.ejercicios) ? r.datos.ejercicios.filter(Boolean) : [];
+    return `<div class="persona"><span class="quien" style="display:block"><b>${esc(r.nombre)}</b><small class="num">${esc(r.perfiles?.nombre || 'Alguien')} · ${ejs.length} ${ejs.length === 1 ? 'ejercicio' : 'ejercicios'}</small>
+      <span class="rutina-ex">${esc(ejs.map(e => e.nombre).join(' · '))}</span></span>
+      <span class="rut-acc"><button class="seguir" data-accion="usar-rutina" data-id="${esc(r.id)}">Empezar</button>${r.usuario === cuenta.uid ? `<button class="del" data-accion="borrar-rutina" data-id="${esc(r.id)}">Borrar</button>` : ''}</span></div>`;
+  }).join('')}</div>`;
+}
+async function guardarRutina(f) {
+  const a = state.amigos, s = state.sesiones.find(x => x.id === f.dataset.id), nombre = f.nombre.value.trim().replace(/\s+/g, ' ');
+  if (!s || nombre.length < 3) { toast('Nombre muy corto', 'Usa al menos 3 letras'); return; }
+  document.activeElement?.blur();
+  const datos = {grupos: s.grupos, ejercicios: s.ejercicios.filter(e => e.sets.length).map(e => ({nombre: e.nombre, grupo: grupoDe(e), sets: e.sets.map(x => [x.peso, x.reps])}))};
+  try {
+    const [r] = await pedir('rutinas?select=*', {method: 'POST', body: {usuario: cuenta.uid, nombre, datos}, prefer: 'return=representation'});
+    a.rutinas = [{...r, perfiles: {nombre: cuenta.nombre}}, ...(a.rutinas || [])];
+    a.guardaRutina = null; render(true); toast('Rutina guardada', nombre);
+  } catch { toast('Sin conexión', 'No se ha guardado'); }
+}
+function usarRutina(id) {
+  const a = state.amigos, r = a.rutinas?.find(x => x.id === id);
+  if (r) replicarPublicacion({titulo: r.nombre, usuario: r.usuario, perfiles: r.perfiles, datos: r.datos});
+}
 function vistaAmigos() {
   const a = state.amigos;
   if (a.perfil && cuenta?.nombre) return vistaPerfil(a.perfil);
   if (a.ejercicio && cuenta?.nombre) return vistaRanking(a.ejercicio);
   if (a.verAvisos && cuenta?.nombre) return vistaAvisos();
+  if (a.club && cuenta?.nombre) return vistaClub(a.club);
   if (!cuenta?.email && !cuenta?.nombre && !a.googleVisto) comprobarGoogle();
   let h = `<section class="hero"><div class="hero-row"><span class="label">${cuenta?.nombre ? `Entras como ${esc(cuenta.nombre)}` : 'Compite con tus amigos'}</span>
     <div class="hero-acts">${cuenta?.nombre ? `<button class="datepill" data-accion="ver-avisos">Avisos${avisosNuevos() ? ` · ${avisosNuevos()}` : ''}</button>` : ''}<button class="datepill nueva" data-accion="compartir-app">Invitar</button></div></div><h1>Amigos</h1></section>`;
@@ -1839,11 +1956,14 @@ function vistaAmigos() {
   h += `<div class="seg" style="--n:3" role="group" aria-label="Sección">
     <button data-accion="pestana-amigos" data-p="feed" aria-pressed="${a.pestana === 'feed'}">Publicaciones</button>
     <button data-accion="pestana-amigos" data-p="ranking" aria-pressed="${a.pestana === 'ranking'}">Clasificación</button>
-    <button data-accion="pestana-amigos" data-p="gente" aria-pressed="${a.pestana === 'gente'}">Personas</button></div>`;
+    <button data-accion="pestana-amigos" data-p="gente" aria-pressed="${a.pestana === 'gente'}">Comunidad</button></div>`;
   if (a.pestana !== 'gente') h += `<div class="filters" style="margin-top:0"><button class="gchip sm" data-accion="solo" data-v="" aria-pressed="${!a.solo}">Todos</button><button class="gchip sm" data-accion="solo" data-v="1" aria-pressed="${a.solo}">Siguiendo</button></div>`;
   if (a.pestana === 'gente') {
-    h += a.gente ? `<form class="search" data-form="nada" style="margin-bottom:12px">${ICON_SEARCH}<input id="in-busca-gente" placeholder="Buscar persona" autocomplete="off" value="${esc(a.buscaGente)}" aria-label="Buscar persona"></form><div id="gente-list">${listaGente()}</div>`
-      : a.cargando ? `<div class="empty"><b>Cargando</b>Trayendo a la gente…</div>` : '';
+    h += `<div class="filters" style="margin-top:0">${[['gente', 'Personas'], ['clubs', 'Clubs'], ['rutinas', 'Rutinas']].map(([k, n]) => `<button class="gchip sm" data-accion="comunidad" data-c="${k}" aria-pressed="${a.comunidad === k}">${n}</button>`).join('')}</div>`;
+    if (!a.gente) h += a.cargando ? `<div class="empty"><b>Cargando</b>Trayendo a la comunidad…</div>` : '';
+    else if (a.comunidad === 'clubs') h += listaClubes();
+    else if (a.comunidad === 'rutinas') h += listaRutinas();
+    else h += `<form class="search" data-form="nada" style="margin-bottom:12px">${ICON_SEARCH}<input id="in-busca-gente" placeholder="Buscar persona" autocomplete="off" value="${esc(a.buscaGente)}" aria-label="Buscar persona"></form><div id="gente-list">${listaGente()}</div>`;
   } else if (a.pestana === 'ranking') {
     h += a.marcas ? `<form class="search" data-form="nada" style="margin-bottom:12px">${ICON_SEARCH}<input id="in-busca-rk" placeholder="Buscar ejercicio" autocomplete="off" value="${esc(a.busca)}" aria-label="Buscar ejercicio"></form><div id="rk-list">${listaClasificacion()}</div>`
       : a.cargando ? `<div class="empty"><b>Cargando</b>Trayendo la clasificación…</div>` : '';
@@ -1996,7 +2116,7 @@ document.addEventListener('click', ev => {
   if (!b) return;
   if (b.dataset.vista) {
     state.vista = b.dataset.vista; state.detalle = null; state.histSel = null; state.borrarSes = false;
-    Object.assign(state.amigos, {ejercicio: null, perfil: null, perfilPosts: null, verAvisos: false});
+    Object.assign(state.amigos, {ejercicio: null, perfil: null, perfilPosts: null, verAvisos: false, club: null, clubPosts: null, guardaRutina: null});
     render(true); scrollTo(0, 0);
     if (state.vista === 'amigos') cargarAmigos();
     return;
@@ -2068,6 +2188,7 @@ document.addEventListener('click', ev => {
       const st = statsSesion(ses);
       toast('Entreno terminado', `${st.mins} min · ${st.series} series`);
       if (ses.publicada) publicar(ses, true);
+      else if (nubeLista() && cuenta?.nombre) subirMarcas().catch(() => {});
       break;
     }
     case 'post': {
@@ -2080,7 +2201,7 @@ document.addEventListener('click', ev => {
     }
     case 'replicar-post': {
       const p = postsDe(b.dataset.id)[0];
-      if (p) { state.amigos.perfil = null; replicarPublicacion(p); }
+      if (p) { state.amigos.perfil = state.amigos.club = null; replicarPublicacion(p); }
       break;
     }
     case 'replicar-sesion': {
@@ -2093,6 +2214,22 @@ document.addEventListener('click', ev => {
     case 'compartir-app': compartirApp(); break;
     case 'pestana-amigos': state.amigos.pestana = b.dataset.p; render(true); if (!state.amigos.feed) cargarAmigos(); break;
     case 'ver-ranking': state.amigos.ejercicio = b.dataset.clave; state.amigos.perfil = null; render(true); scrollTo(0, 0); break;
+    case 'comunidad': state.amigos.comunidad = b.dataset.c; render(true); break;
+    case 'ver-club': abrirClub(b.dataset.id); break;
+    case 'volver-club': state.amigos.club = state.amigos.clubPosts = null; render(true); break;
+    case 'club-unirse': unirseClub(b.dataset.id); break;
+    case 'borrar-club':
+      if (!state.amigos.borrarClub) { state.amigos.borrarClub = true; render(true); return; }
+      borrarClub(b.dataset.id); break;
+    case 'usar-rutina': usarRutina(b.dataset.id); break;
+    case 'borrar-rutina': {
+      const id = b.dataset.id;
+      pedir(`rutinas?id=eq.${id}`, {method: 'DELETE'}).then(() => { state.amigos.rutinas = state.amigos.rutinas.filter(r => r.id !== id); render(true); }).catch(() => toast('Sin conexión', 'No se ha borrado'));
+      break;
+    }
+    case 'guardar-rutina':
+      if (!cuenta?.nombre) { state.vista = 'amigos'; state.histSel = null; render(true); scrollTo(0, 0); return; }
+      state.amigos.guardaRutina = b.dataset.id; render(true); break;
     case 'fuerza': darFuerza(b.dataset.id); break;
     case 'elegir-medio':
       if (state.amigos.subiendo) { toast('Espera', 'Ya hay una subida en marcha'); return; }
@@ -2165,6 +2302,8 @@ document.addEventListener('submit', ev => {
   if (f.dataset.form === 'alta') entrar(f.nombre.value);
   if (f.dataset.form === 'cuenta') accionCuenta(f, f.dataset.tipo);
   if (f.dataset.form === 'comentar') comentar(f);
+  if (f.dataset.form === 'club') crearClub(f);
+  if (f.dataset.form === 'rutina') guardarRutina(f);
   if (f.dataset.form === 'cambiar') cambiarEjercicio(state.cambiando, mejorCoincidencia(f.q.value));
 });
 document.addEventListener('input', ev => {
