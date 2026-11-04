@@ -265,6 +265,8 @@ button:disabled{cursor:default;opacity:.4}
 .tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;font-weight:700;color:var(--muted);border-radius:22px;min-height:52px}
 .tab[aria-pressed="true"]{background:var(--lime);color:var(--on-lime)}
 .tab[hidden]{display:none}
+/* iOS encoge la ventana al cerrar el teclado y arrastra lo anclado abajo: la barra se ancla desde arriba */
+@supports (height:100lvh){.tabbar{bottom:auto;top:calc(100lvh - 14px - env(safe-area-inset-bottom,0px));transform:translate(-50%,-100%)}}
 
 @keyframes in{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}
 .setrow.nuevo{animation:in .35s ease-out}
