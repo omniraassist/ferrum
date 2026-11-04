@@ -267,6 +267,27 @@ button:disabled{cursor:default;opacity:.4}
 .setrow.nuevo{animation:in .35s ease-out}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hit .b .rl{display:block;font-size:10.5px;font-weight:800;color:var(--lime-ink);margin-bottom:1px}
+.goal{margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--on-lime);color:var(--ink);border-radius:14px;padding:10px 12px}
+.goal span{font-size:12px;font-weight:700;color:var(--lime-ink)}
+.goal b{font-weight:800;font-size:16px;white-space:nowrap}
+.finbtn{width:100%;margin-top:12px;min-height:56px;border-radius:999px;font-weight:800;font-size:16px;color:var(--lime-ink);box-shadow:inset 0 0 0 1.5px var(--lime);display:flex;align-items:center;justify-content:center;gap:8px}
+.finbtn::before{content:"✓"}
+.ghost.wide{width:100%;margin-top:12px}
+.fin-card{background:var(--lime);color:var(--on-lime);border-radius:26px;padding:20px}
+.fin-card .label{color:rgba(14,14,16,.6)}
+.fin-card h2{margin:4px 0 16px;font-size:30px;font-weight:800;letter-spacing:-.035em}
+.fin-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fin-grid div{background:rgba(14,14,16,.08);border-radius:18px;padding:12px;min-width:0}
+.fin-grid b{display:block;font-size:26px;font-weight:800;letter-spacing:-.03em;margin-top:2px;white-space:nowrap}
+.fin-grid small{font-size:12px;font-weight:700;opacity:.6;margin-left:2px;letter-spacing:0}
+.frow{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}
+.frow:last-child{border-bottom:0}
+.frow .mid{min-width:0}
+.frow .tt{display:block;font-weight:800;font-size:15px}
+.frow .meta{display:block;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.frow .rt{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.frow .rt b{font-weight:800;font-size:15px;white-space:nowrap}
 .row2 .apuntar{grid-column:auto;min-height:52px;font-size:15px}
 .importar{position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;min-height:52px}
 .fileinp{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
@@ -479,11 +500,12 @@ function vistaEntreno() {
       <label class="datepill" for="in-fecha">Otra fecha<input id="in-fecha" type="date" value="${state.fecha}" max="${hoy}" aria-label="Fecha del entreno"></label>
     </div>
     <h1>${ses && !state.editGrupos ? esc(ses.titulo) : state.editGrupos ? 'Grupos de la sesión' : '¿Qué toca hoy?'}</h1>
-    ${ses && !state.editGrupos ? `<button class="editg" data-accion="editar-grupos">Cambiar grupos musculares</button>` : ''}
+    ${ses && !state.editGrupos && !ses.fin ? `<button class="editg" data-accion="editar-grupos">Cambiar grupos musculares</button>` : ''}
   </section>`;
   if (state.aviso) h += `<div class="aviso">${esc(state.aviso)}</div>`;
   if (!ses && !state.cargado && state.modo === 'cargando') return h + `<div class="empty"><b>Cargando</b>Recuperando tus marcas…</div>`;
   if (!ses || state.editGrupos) return h + planificador(ses);
+  if (ses.fin) return h + resumenFin(ses);
   const st = statsSesion(ses);
   if (ses.ejercicios.length) h += `
   <div class="stats">
@@ -493,7 +515,7 @@ function vistaEntreno() {
     <div><div class="label">Tiempo</div><div class="v num">${st.mins}<small>min</small></div></div>
   </div>`;
   h += `<div class="list">${ses.ejercicios.map((e, i) => bloque(e, i, ses)).join('')}</div>`;
-  return h + buscador(ses);
+  return h + buscador(ses) + (st.series ? `<button class="finbtn" data-accion="finalizar">Finalizar sesión</button>` : '');
 }
 
 function gruposSugeridos(fecha) {
@@ -603,11 +625,41 @@ function panelMarcas(m) {
     </div>`;
   if (m.rangos.length > 1) h += `<div class="reps">${m.rangos.map(r => `<div class="rep"><div class="r">${r.r === 1 ? 'MÁX' : `×${r.r}+`}</div><div class="w num">${fmt(r.peso)} kg</div></div>`).join('')}</div>`;
   h += `<div class="last">Última vez · ${fechaCorta(m.ultima.fecha)}: <b class="num">${m.ultima.sets.map(s => `${fmt(s.peso)}×${fmt(s.reps)}`).join('  ·  ')}</b></div>`;
+  const o = objetivo(m);
+  if (o) h += `<div class="goal"><span>Objetivo de hoy</span><b class="num">${fmt(o.peso)} kg × ${fmt(o.reps)}</b></div>`;
   return h + `</div>`;
+}
+/* progresión simple: una repetición más con el mismo peso; si ya pasaste de 12, sube 2,5 kg y vuelve a 8 */
+function objetivo(m) {
+  const sets = m?.ultima.sets;
+  if (!sets?.length) return null;
+  const top = sets.reduce((a, x) => (x.peso > a.peso || (x.peso === a.peso && x.reps > a.reps)) ? x : a);
+  if (!top.peso) return {peso: 0, reps: top.reps + 1};
+  return top.reps >= 12 ? {peso: top.peso + 2.5, reps: 8} : {peso: top.peso, reps: top.reps + 1};
 }
 function prefill(e, m) {
   const s = e.sets.at(-1) || m?.ultima.sets[0];
   return s ? {peso: String(s.peso), reps: String(s.reps)} : {peso: '', reps: ''};
+}
+
+function resumenFin(ses) {
+  const st = statsSesion(ses), pr = nRecords(ses);
+  const dur = st.mins >= 60 ? `${Math.floor(st.mins / 60)}<small>h</small> ${st.mins % 60}<small>min</small>` : `${st.mins}<small>min</small>`;
+  let h = `<section class="fin-card"><span class="label">Entreno completado</span><h2>¡Buen trabajo!</h2>
+    <div class="fin-grid">
+      <div><span class="label">Duración</span><b class="num">${dur}</b></div>
+      <div><span class="label">Series</span><b class="num">${st.series}</b></div>
+      <div><span class="label">Volumen</span><b class="num">${fmt(Math.round(st.vol))}<small>kg</small></b></div>
+      <div><span class="label">Récords</span><b class="num">${pr}</b></div>
+    </div></section>`;
+  const hechos = ses.ejercicios.filter(e => e.sets.length);
+  if (hechos.length) h += `<div class="rows" style="margin-top:12px">${hechos.map(e => {
+    const tags = etiquetas(e, ses);
+    const top = e.sets.reduce((a, x) => (x.peso > a.peso || (x.peso === a.peso && x.reps > a.reps)) ? x : a);
+    return `<div class="frow"><span class="mid"><span class="tt">${esc(e.nombre)}</span><span class="meta num">${e.sets.map(x => `${fmt(x.peso)}×${fmt(x.reps)}`).join(' · ')}</span></span>
+      <span class="rt">${tags.includes('pr') ? '<span class="tag">Récord</span>' : ''}<b class="num">${fmt(top.peso)} kg × ${fmt(top.reps)}</b></span></div>`;
+  }).join('')}</div>`;
+  return h + `<button class="ghost wide" data-accion="reabrir">Reabrir sesión</button>`;
 }
 
 function buscador(ses) {
@@ -623,46 +675,110 @@ function buscador(ses) {
     <div class="res" id="res">${resultados()}</div>
   </section>`;
 }
+const VACIAS = new Set(['de', 'del', 'al', 'con', 'en', 'la', 'el', 'los', 'las', 'a', 'y', 'x']);
+const tokens = t => norm(t).split(' ').filter(w => w && !VACIAS.has(w));
+function casiIgual(a, b) {   // distancia de edición ≤ 1
+  if (a === b) return true;
+  if (Math.abs(a.length - b.length) > 1) return false;
+  let i = 0, j = 0, dif = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) { i++; j++; continue; }
+    if (++dif > 1) return false;
+    if (a.length > b.length) i++; else if (b.length > a.length) j++; else { i++; j++; }
+  }
+  return dif + (a.length - i) + (b.length - j) <= 1;
+}
+function parecido(nombre, q) {
+  if (!q) return 0;
+  const n = norm(nombre);
+  if (n === q) return 100;
+  if (n.startsWith(q)) return 85;
+  const qt = tokens(q), nt = tokens(nombre);
+  if (!qt.length) return n.includes(q) ? 40 : 0;
+  let ok = 0, exactas = 0;
+  for (const t of qt) {
+    if (nt.some(w => w.startsWith(t))) { ok++; exactas++; }
+    else if (t.length >= 4 && nt.some(w => casiIgual(t, w) || casiIgual(t, w.slice(0, t.length)))) ok++;
+  }
+  if (ok === qt.length) return 50 + exactas * 5;
+  return n.includes(q) ? 40 : 0;
+}
+/* lo que sueles hacer con estos grupos: frecuencia en sesiones parecidas + lo reciente que sea */
+function sugeridos(ses) {
+  const parecidas = state.sesiones.filter(s => s.id !== ses.id && conSets(s) && s.grupos.some(g => ses.grupos.includes(g))).slice(-12);
+  const puntos = new Map();
+  parecidas.forEach((s, i) => {
+    for (const e of s.ejercicios) {
+      if (!e.sets.length) continue;
+      const g = grupoDe(e) || catalogo().get(e.clave)?.grupo;
+      if (g && !ses.grupos.includes(g)) continue;
+      const p = puntos.get(e.clave) || {clave: e.clave, veces: 0, score: 0};
+      p.veces++; p.score += 1 + i / parecidas.length;
+      puntos.set(e.clave, p);
+    }
+  });
+  return [...puntos.values()].sort((a, b) => b.score - a.score);
+}
+function mejorCoincidencia(texto) {
+  const q = norm(texto);
+  if (!q || catalogo().has(claveDe(texto))) return texto;
+  const hits = [...catalogo().values()].filter(c => parecido(c.nombre, q) >= 50);
+  return hits.length === 1 ? hits[0].nombre : texto;
+}
 function resultados(texto = state.busca, accion = 'empezar') {
   const ses = sesion();
   if (!ses) return '';
   const enSesion = new Set(ses.ejercicios.map(e => e.clave));
   const q = norm(texto);
-  const fila = (nombre, clave, nuevo) => {
+  const fila = (nombre, clave, tipo, motivo) => {
     const m = marcas(clave, {excluir: ses.id});
-    return `<button class="hit${nuevo ? ' nuevo' : ''}" data-accion="${accion}" data-nombre="${esc(nombre)}">
-      <span class="n">${nuevo ? `Nuevo: ${esc(nombre)}` : marcar(nombre, q)}<span class="s">${nuevo ? 'Aún no tienes registros con este nombre' : m ? `${m.n} ${m.n === 1 ? 'sesión' : 'sesiones'} · última ${fechaCorta(m.ultima.fecha)}` : 'Sin registros todavía'}</span></span>
-      <span class="b num">${m ? `${fmt(m.max.peso)} kg<small>× ${fmt(m.max.reps)} · ${fechaCorta(m.max.fecha)}</small>` : ''}</span>
+    let sub = tipo === 'nuevo' ? 'Aún no lo has hecho: hoy empieza tu marca'
+      : m ? `Última · ${fechaCorta(m.ultima.fecha)}: ${m.ultima.sets.slice(0, 4).map(x => `${fmt(x.peso)}×${fmt(x.reps)}`).join(' · ')}`
+      : 'Aún sin registros';
+    if (motivo) sub = `${motivo} · ${sub}`;
+    if (enSesion.has(clave)) sub = `Ya está en el entreno de hoy · ${sub}`;
+    return `<button class="hit${tipo === 'nuevo' ? ' nuevo' : ''}" data-accion="${accion}" data-nombre="${esc(nombre)}">
+      <span class="n">${tipo === 'nuevo' ? `Nuevo: ${esc(nombre)}` : marcar(nombre, q)}<span class="s num">${sub}</span></span>
+      <span class="b num">${m ? `<small class="rl">Récord</small>${fmt(m.max.peso)} kg<small>× ${fmt(m.max.reps)} · ${fechaCorta(m.max.fecha)}</small>` : ''}</span>
     </button>`;
   };
+  const nombreDe = c => catalogo().get(c)?.nombre;
   if (!q) {
     let h = '';
-    const ult = [...state.sesiones].reverse().find(s => s.id !== ses.id && s.fecha <= state.fecha && conSets(s) && s.grupos.some(g => ses.grupos.includes(g)));
-    const pend = (ult?.ejercicios || []).filter(e => e.sets.length && !enSesion.has(e.clave) && (!grupoDe(e) || ses.grupos.includes(grupoDe(e))));
-    const usados = new Set([...enSesion, ...pend.map(e => e.clave)]);
-    if (pend.length) h += `<div class="label res-h">Tu última sesión de ${esc(tituloGrupos(ult.grupos).toLowerCase())} · ${fechaCorta(ult.fecha)}</div>` + pend.map(e => fila(catalogo().get(e.clave)?.nombre || e.nombre, e.clave)).join('');
-    const ideas = ses.grupos.flatMap(g => GRUPO[g]?.ideas || []).filter(n => !usados.has(claveDe(n))).slice(0, pend.length ? 4 : 8);
-    if (ideas.length) h += `<div class="label res-h">${pend.length ? 'Otras ideas' : `Ideas para ${esc(ses.titulo.toLowerCase())}`}</div>` + ideas.map(n => fila(catalogo().get(claveDe(n))?.nombre || n, claveDe(n))).join('');
+    const sug = sugeridos(ses).filter(x => !enSesion.has(x.clave));
+    const vistos = new Set(enSesion);
+    if (sug.length) {
+      h += `<div class="label res-h">Sugeridos para ${esc(ses.titulo.toLowerCase())}</div>`;
+      h += sug.slice(0, 6).map(x => { vistos.add(x.clave); return fila(nombreDe(x.clave), x.clave, 'hecho', `${x.veces} ${x.veces === 1 ? 'vez' : 'veces'}`); }).join('');
+    }
+    const otros = [...catalogo().values()].filter(c => !vistos.has(c.clave) && (!c.grupo || ses.grupos.includes(c.grupo)))
+      .sort((a, b) => a.hist.at(-1).fecha < b.hist.at(-1).fecha ? 1 : -1);
+    if (otros.length) {
+      h += `<div class="label res-h">Otros que ya has hecho</div>` + otros.slice(0, 6).map(c => { vistos.add(c.clave); return fila(c.nombre, c.clave, 'hecho'); }).join('');
+    }
+    if (vistos.size - enSesion.size < 5) {
+      const ideas = ses.grupos.flatMap(g => GRUPO[g]?.ideas || []).filter(n => !vistos.has(claveDe(n))).slice(0, 6);
+      if (ideas.length) h += `<div class="label res-h">Ideas para ${esc(ses.titulo.toLowerCase())}</div>` + ideas.map(n => fila(n, claveDe(n), 'idea')).join('');
+    }
     return h;
   }
-  const qs = q.split(' ');
-  const puntua = nombre => {
-    const n = norm(nombre);
-    if (n === q) return 100;
-    if (n.startsWith(q)) return 80;
-    if (qs.every(t => n.split(' ').some(w => w.startsWith(t)))) return 60;
-    if (n.includes(q)) return 40;
-    return 0;
-  };
-  const vistos = new Set(), hits = [];
-  for (const c of catalogo().values()) { const p = puntua(c.nombre); if (p) { hits.push({nombre: c.nombre, clave: c.clave, p: p + 5}); vistos.add(c.clave); } }
+  const recientes = (a, b) => (a.c.hist.at(-1).fecha < b.c.hist.at(-1).fecha ? 1 : -1);
+  const mios = [...catalogo().values()].map(c => ({c, p: parecido(c.nombre, q)})).filter(x => x.p).sort((a, b) => b.p - a.p || recientes(a, b));
+  const vistos = new Set(mios.map(x => x.c.clave));
+  const ideas = [];
   for (const g of GRUPOS) for (const n of g.ideas) {
-    const c = claveDe(n); if (vistos.has(c)) continue;
-    const p = puntua(n); if (p) { hits.push({nombre: n, clave: c, p}); vistos.add(c); }
+    const c = claveDe(n);
+    if (vistos.has(c)) continue;
+    const p = parecido(n, q);
+    if (p) { ideas.push({n, c, p}); vistos.add(c); }
   }
-  hits.sort((a, b) => b.p - a.p || a.nombre.localeCompare(b.nombre));
-  const h = hits.some(x => x.clave === claveDe(texto)) ? '' : fila(texto.trim(), claveDe(texto), true);
-  return h + hits.slice(0, 6).map(x => fila(x.nombre, x.clave)).join('');
+  ideas.sort((a, b) => b.p - a.p || a.n.localeCompare(b.n));
+  const exacto = catalogo().has(claveDe(texto)) || ideas.some(x => x.c === claveDe(texto));
+  let h = '';
+  if (mios.length) h += `<div class="label res-h">Ya lo has hecho</div>` + mios.slice(0, 6).map(x => fila(x.c.nombre, x.c.clave, 'hecho')).join('');
+  if (!exacto) h += (mios.length ? `<div class="label res-h">¿Es otro?</div>` : '') + fila(texto.trim(), claveDe(texto), 'nuevo');
+  if (ideas.length) h += `<div class="label res-h">Otros ejercicios</div>` + ideas.slice(0, 4).map(x => fila(x.n, x.c, 'idea')).join('');
+  return h;
 }
 function marcar(nombre, q) {
   if (!q) return esc(nombre);
@@ -676,7 +792,9 @@ function statsSesion(s) {
   const series = s.ejercicios.reduce((a, e) => a + e.sets.length, 0);
   const vol = s.ejercicios.reduce((a, e) => a + volDe(e.sets), 0);
   const ts = s.ejercicios.flatMap(e => e.sets.map(x => x.t)).filter(Boolean);
-  const mins = ts.length > 1 ? Math.round((Math.max(...ts) - Math.min(...ts)) / 60000) : 0;
+  const ini = Math.min(s.inicio || Infinity, ...ts);
+  const fin = s.fin || (ts.length ? Math.max(...ts) : 0);
+  const mins = ts.length && fin > ini ? Math.round((fin - ini) / 60000) : 0;
   return {ejercicios: s.ejercicios.filter(e => e.sets.length).length, series, vol, mins};
 }
 function vistaHistorial() {
@@ -1025,7 +1143,7 @@ document.addEventListener('click', ev => {
       if (!state.plan.length) return;
       const grupos = GRUPOS.map(g => g.id).filter(id => state.plan.includes(id));
       if (ses) ses.grupos = grupos;
-      else state.actual = {id: state.fecha, fecha: state.fecha, grupos, titulo: '', ts: 0, ejercicios: []};
+      else state.actual = {id: state.fecha, fecha: state.fecha, grupos, titulo: '', ts: 0, inicio: state.fecha === hoy ? Date.now() : undefined, ejercicios: []};
       guardarSesion(state.actual);
       state.editGrupos = false; state.plan = null;
       render(true); scrollTo(0, 0); break;
@@ -1062,6 +1180,17 @@ document.addEventListener('click', ev => {
       break;
     }
     case 'empezar': empezar(b.dataset.nombre); break;
+    case 'finalizar': {
+      ses.fin = Date.now(); state.activo = state.menu = state.cambiando = null;
+      guardarSesion(ses); render(true); scrollTo(0, 0);
+      const st = statsSesion(ses);
+      toast('Entreno terminado', `${st.mins} min · ${st.series} series`);
+      break;
+    }
+    case 'reabrir':
+      delete ses.fin; guardarSesion(ses);
+      if (ses.ejercicios.length) state.activo = ses.ejercicios.at(-1).clave;
+      render(true); break;
     case 'exportar': exportar(); break;
     case 'ver-progreso': state.vista = 'progreso'; state.detalle = clave; state.menu = null; render(true); scrollTo(0, 0); break;
     case 'ver-sesion': state.histSel = b.dataset.id; state.borrarSes = false; render(true); scrollTo(0, 0); break;
@@ -1091,9 +1220,9 @@ document.addEventListener('click', ev => {
 document.addEventListener('submit', ev => {
   ev.preventDefault();
   const f = ev.target;
-  if (f.dataset.form === 'buscar') empezar(f.q.value);
+  if (f.dataset.form === 'buscar') empezar(mejorCoincidencia(f.q.value));
   if (f.dataset.form === 'serie') apuntar(f);
-  if (f.dataset.form === 'cambiar') cambiarEjercicio(state.cambiando, f.q.value);
+  if (f.dataset.form === 'cambiar') cambiarEjercicio(state.cambiando, mejorCoincidencia(f.q.value));
 });
 document.addEventListener('input', ev => {
   const el = ev.target;
