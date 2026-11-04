@@ -1692,7 +1692,10 @@ async function subirMedio(file) {
     const {b, ext} = video ? await prepararVideo(file) : {b: await prepararFoto(file), ext: 'jpg'};
     const ruta = `${cuenta.uid}/${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}.${ext}`;
     const r = await fetch(`${NUBE.url}/storage/v1/object/media/${ruta}`, {method: 'POST', headers: {apikey: NUBE.key, Authorization: 'Bearer ' + await token(), 'Content-Type': ext === 'jpg' ? 'image/jpeg' : ext === 'mov' ? 'video/quicktime' : 'video/mp4'}, body: b});
-    if (!r.ok) throw Object.assign(new Error('subida'), {aviso: r.status === 403 ? 'Has llegado al máximo de 40 archivos. Borra alguno.' : 'No se ha podido subir.'});
+    if (!r.ok) {
+      const cod = String((await r.json().catch(() => ({}))).statusCode);
+      throw Object.assign(new Error('subida'), {aviso: cod === '403' ? 'Has llegado al máximo de 40 archivos. Borra alguno.' : cod === '413' ? 'Ese archivo pesa demasiado.' : 'No se ha podido subir.'});
+    }
     const [m] = await pedir('medios?select=id,usuario,ruta,tipo,ejercicio,serie,etiqueta', {method: 'POST', prefer: 'return=representation',
       body: {publicacion: sub.post, usuario: cuenta.uid, ruta, tipo: video ? 'video' : 'foto', ejercicio: sub.ejercicio || null, serie: sub.serie || null, etiqueta: sub.etiqueta || null}});
     for (const p of postsDe(sub.post)) p.medios = [...(p.medios || []), m];
