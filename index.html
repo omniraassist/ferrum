@@ -214,8 +214,8 @@ button:disabled{cursor:default;opacity:.4}
 .week{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;background:var(--surface);border-radius:26px;padding:18px;margin-bottom:12px}
 .week .big{font-weight:800;font-size:30px;line-height:1;margin-top:6px;white-space:nowrap;letter-spacing:-.03em}
 .week .big small{font-size:13px;color:var(--muted);font-weight:600;margin-left:4px;letter-spacing:0}
-.wdots{display:flex;gap:5px;justify-content:flex-end;flex-wrap:wrap}
-.wdot{width:28px;height:28px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;font-weight:800;font-size:11px;color:var(--faint)}
+.wdots{display:flex;gap:4px;justify-content:flex-end;flex-wrap:wrap}
+.wdot{width:26px;height:26px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;font-weight:800;font-size:11px;color:var(--faint)}
 .wdot.on{background:var(--lime);color:var(--on-lime)}
 .chart{padding:4px 0 0}
 .chart svg{display:block;width:100%;height:auto}
@@ -334,6 +334,32 @@ button.frow{width:100%;text-align:left}
 .tab.dot{position:relative}
 .tab.dot::after{content:"";position:absolute;top:7px;right:calc(50% - 16px);width:8px;height:8px;border-radius:50%;background:var(--danger)}
 button.rk{width:100%;text-align:left}
+.set-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+.set-chip{font-size:12px;font-weight:700;border-radius:999px;padding:4px 9px;background:var(--surface-2);color:var(--muted)}
+button.set-chip.vacia{box-shadow:inset 0 0 0 1px var(--line-2)}
+.set-chip.con{background:var(--lime);color:var(--on-lime)}
+.medio{margin-top:12px;background:var(--surface-2);border-radius:18px;overflow:hidden}
+.medio video,.medio img{display:block;width:100%;max-height:420px;background:#000;object-fit:contain}
+.medio-p{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px;font-size:12.5px;font-weight:700}
+.medio-p span{overflow-wrap:anywhere;min-width:0}
+.medio-p button{flex:none;font-size:12px;font-weight:700;color:var(--muted)}
+.mapa{display:flex;justify-content:center;gap:22px}
+.mapa svg{display:block;height:170px;width:auto}
+.esf{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:12px}
+.esf b{font-size:30px;font-weight:800;letter-spacing:-.03em}
+.esf span{font-size:13px;font-weight:700;color:var(--lime-ink)}
+.reto{margin-bottom:14px}
+.reto:last-child{margin-bottom:0}
+.reto-h{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;font-weight:700;margin-bottom:6px}
+.reto-h small{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap}
+.barra{height:10px;border-radius:5px;background:var(--surface-3);overflow:hidden}
+.barra i{display:block;height:100%;border-radius:5px;background:var(--lime)}
+.logros{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.logro{background:var(--surface-2);border-radius:18px;padding:12px 8px;text-align:center;font-size:12px;font-weight:700;color:var(--faint);min-width:0}
+.logro.on{background:var(--lime);color:var(--on-lime)}
+.logro b{display:block;font-size:20px;font-weight:800;letter-spacing:-.03em}
+.nota-rk{font-size:13px;color:var(--muted);margin:0 0 12px}
+.nota-rk b{color:var(--lime-ink)}
 .post-h{display:grid;grid-template-columns:40px 1fr auto;gap:10px;align-items:center}
 .ava{width:40px;height:40px;border-radius:50%;background:var(--lime);color:var(--on-lime);display:grid;place-items:center;font-weight:800;font-size:16px}
 .post-h .mid{min-width:0}
@@ -380,6 +406,7 @@ button.rk{width:100%;text-align:left}
   <main id="main"></main>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="in-medio" class="fileinp" accept="image/*,video/*" aria-label="Elegir foto o vídeo">
 <nav class="tabbar" aria-label="Secciones">
   <button class="tab" id="tab-entreno" data-vista="entreno" aria-pressed="true">
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 7v10M3 9.5v5M18 7v10M21 9.5v5M6 12h12"/></svg>Entreno
@@ -469,7 +496,7 @@ const state = {
   modo: 'cargando', cargado: false, aviso: '', hint: null,
   nube: '',
   amigos: {modo: 'crear', google: false, pestana: 'feed', feed: null, marcas: null, cargando: false, error: '', ejercicio: null, busca: '', salir: false, abiertos: new Set(),
-    seg: [], gente: null, solo: false, perfil: null, perfilPosts: null, avisos: [], verAvisos: false, buscaGente: ''},
+    seg: [], gente: null, solo: false, subida: null, subiendo: false, perfil: null, perfilPosts: null, avisos: [], verAvisos: false, buscaGente: ''},
 };
 const conSets = s => s.ejercicios.some(e => e.sets.length);
 const grupoDe = e => e.grupo || IDEA_GRUPO[e.clave] || null;
@@ -705,6 +732,57 @@ function prefill(e, m) {
   return s ? {peso: String(s.peso), reps: String(s.reps)} : {peso: '', reps: ''};
 }
 
+/* cada serie puntúa más cuanto más cerca está de tu mejor marca */
+function esfuerzo(ses) {
+  let t = 0;
+  for (const e of ses.ejercicios) {
+    const ref = marcas(e.clave)?.rm.v;
+    for (const x of e.sets) t += x.peso && ref ? 2 + 4 * Math.min(1.1, e1rm(x) / ref) ** 3 : 3;
+  }
+  return Math.round(t);
+}
+const nivelEsfuerzo = n => n < 40 ? 'suave' : n < 80 ? 'medio' : n < 120 ? 'duro' : 'brutal';
+function musculos(ses) {
+  const m = {};
+  for (const e of ses.ejercicios) { const g = grupoDe(e); if (g && e.sets.length) m[g] = (m[g] || 0) + e.sets.length; }
+  return m;
+}
+const ZONAS = {
+  frente: {hombros: 'M24 29a7 7 0 0 1 9-5l3 4-7 6zM76 29a7 7 0 0 0-9-5l-3 4 7 6z', pecho: 'M37 29h12v13c-6 2-11 0-13-4zM63 29H51v13c6 2 11 0 13-4z', biceps: 'M22 37l7 1-2 16-7-1zM78 37l-7 1 2 16 7-1z', antebrazo: 'M19 56l7 1-3 17-6-1zM81 56l-7 1 3 17 6-1z', abdominales: 'M40 45h20v24H40z', cuadriceps: 'M36 74h13l-1 34H38zM64 74H51l1 34h10z', gemelo: 'M38 114h9l-1 28h-6zM62 114h-9l1 28h6z'},
+  espalda: {hombros: 'M24 29a7 7 0 0 1 9-5l3 4-7 6zM76 29a7 7 0 0 0-9-5l-3 4 7 6z', espalda: 'M37 28h26l-4 32H41z', triceps: 'M22 37l7 1-2 16-7-1zM78 37l-7 1 2 16 7-1z', antebrazo: 'M19 56l7 1-3 17-6-1zM81 56l-7 1 3 17 6-1z', gluteo: 'M37 62h26v13H37z', femoral: 'M36 78h13l-1 30H38zM64 78H51l1 30h10z', gemelo: 'M38 114h9l-1 28h-6zM62 114h-9l1 28h6z'},
+};
+function mapaMuscular(m) {
+  const max = Math.max(1, ...Object.values(m).map(v => +v || 0));
+  const cuerpo = lado => `<svg viewBox="0 0 100 150" role="img" aria-label="Músculos trabajados, ${lado}"><circle cx="50" cy="12" r="9" fill="var(--surface-3)"/>
+    ${Object.entries(ZONAS[lado]).map(([g, d]) => { const n = +m[g] || 0; return `<path d="${d}" fill="${n ? 'var(--lime)' : 'var(--surface-3)'}" fill-opacity="${n ? (.35 + .65 * n / max).toFixed(2) : 1}"/>`; }).join('')}</svg>`;
+  return `<div class="mapa">${cuerpo('frente')}${cuerpo('espalda')}</div>`;
+}
+function rachaSemanas() {
+  const semanas = new Set(state.sesiones.filter(conSets).map(s => lunesDe(s.fecha)));
+  let l = lunesDe(hoy), n = 0;
+  if (!semanas.has(l)) l = sumarDias(l, -7);
+  while (semanas.has(l)) { n++; l = sumarDias(l, -7); }
+  return n;
+}
+function retosMes() {
+  const mes = hoy.slice(0, 7), ss = state.sesiones.filter(s => conSets(s) && s.fecha.startsWith(mes));
+  const st = ss.map(statsSesion);
+  return [
+    {n: 'Levanta 100.000 kg', v: st.reduce((a, x) => a + x.vol, 0), meta: 100000, u: 'kg'},
+    {n: 'Haz 12 sesiones', v: ss.length, meta: 12, u: 'sesiones'},
+    {n: 'Completa 200 series', v: st.reduce((a, x) => a + x.series, 0), meta: 200, u: 'series'},
+  ];
+}
+function logros() {
+  const ss = state.sesiones.filter(conSets), n = ss.length;
+  const vol = ss.reduce((a, s) => a + statsSesion(s).vol, 0), recs = ss.reduce((a, s) => a + nRecords(s), 0), racha = rachaSemanas();
+  return [
+    {t: '1', n: 'Primera sesión', ok: n >= 1}, {t: '10', n: '10 sesiones', ok: n >= 10}, {t: '50', n: '50 sesiones', ok: n >= 50},
+    {t: '4', n: '4 semanas seguidas', ok: racha >= 4}, {t: '12', n: '12 semanas seguidas', ok: racha >= 12}, {t: '10', n: '10 récords', ok: recs >= 10},
+    {t: '100t', n: '100 toneladas', ok: vol >= 100000}, {t: '1M', n: '1.000 toneladas', ok: vol >= 1000000}, {t: '50', n: '50 récords', ok: recs >= 50},
+  ];
+}
+
 function resumenFin(ses) {
   const st = statsSesion(ses), pr = nRecords(ses);
   const dur = st.mins >= 60 ? `${Math.floor(st.mins / 60)}<small>h</small> ${st.mins % 60}<small>min</small>` : `${st.mins}<small>min</small>`;
@@ -719,6 +797,8 @@ function resumenFin(ses) {
   if (nubeLista()) h += ses.publicada
     ? `<button class="finbtn" data-accion="despublicar">Publicada · toca para quitarla</button>`
     : `<button class="finbtn pub" data-accion="publicar">Publicar para los demás</button>`;
+  const esf = esfuerzo(ses);
+  h += `<div class="card" style="margin-top:12px"><div class="esf"><b class="num">${fmt(esf)}</b><span>Esfuerzo ${nivelEsfuerzo(esf)}</span></div>${mapaMuscular(musculos(ses))}</div>`;
   const hechos = ses.ejercicios.filter(e => e.sets.length);
   if (hechos.length) h += `<div class="rows" style="margin-top:12px">${hechos.map(e => {
     const tags = etiquetas(e, ses);
@@ -977,6 +1057,9 @@ function vistaProgreso() {
     <div><div class="label">Esta semana</div><div class="big num">${semana.length}<small>${semana.length === 1 ? 'sesión' : 'sesiones'}</small></div></div>
     <div class="wdots">${['L','M','X','J','V','S','D'].map((l, i) => `<span class="wdot${dias.has(i) ? ' on' : ''}" title="${l}"><span>${l}</span></span>`).join('')}</div>
   </div>`;
+  const racha = rachaSemanas();
+  h += `<div class="card"><div class="card-h"><h2>Retos del mes</h2><span class="r">Racha<br><b class="num">${racha} ${racha === 1 ? 'semana' : 'semanas'}</b></span></div>
+    ${retosMes().map(r => `<div class="reto"><div class="reto-h"><span>${r.n}</span><small class="num">${fmt(Math.round(r.v))} / ${fmt(r.meta)} ${r.u}</small></div><div class="barra"><i style="width:${Math.min(100, r.v / r.meta * 100).toFixed(1)}%"></i></div></div>`).join('')}</div>`;
   if (!catalogo().size) return h + `<div class="empty"><b>Aún no hay marcas</b>Apunta tu primera serie en Entreno y aquí verás tus gráficas de progreso.</div>`;
   h += `<div class="card"><div class="card-h"><h2>Volumen semanal</h2><span class="r">Esta semana<br><b class="num">${fmt(Math.round(volSem))} kg</b></span></div>
     <div class="chart">${graficaBarras(semanasVolumen(10))}</div></div>`;
@@ -1158,6 +1241,7 @@ function vistaRecords() {
   if (resto.length) h += `<div class="sec-h"><h2>Últimos récords</h2></div><div class="rows">${resto.map(r => `<button class="frow" data-accion="detalle" data-clave="${esc(r.clave)}">
     <span class="mid"><span class="tt">${esc(r.nombre)}</span><span class="meta num">${fechaCorta(r.fecha)} · ${textoRecord(r)}</span></span>
     <span class="rt"><b class="num">${fmt(r.set.peso)} kg × ${fmt(r.set.reps)}</b></span></button>`).join('')}</div>`;
+  h += `<div class="sec-h"><h2>Logros</h2></div><div class="logros">${logros().map(l => `<div class="logro${l.ok ? ' on' : ''}"><b class="num">${l.t}</b>${l.n}</div>`).join('')}</div>`;
   const bloques = [...GRUPOS, {id: null, n: 'Sin grupo'}].map(g => ({...g, lista: cat.filter(c => c.grupo === g.id)})).filter(g => g.lista.length);
   h += `<div class="sec-h"><h2>Mejor marca por ejercicio</h2></div>`;
   if (bloques.length > 1) h += `<div class="filters"><button class="gchip sm" data-accion="filtro-rec" data-g="" aria-pressed="${!state.filtroRec}">Todos</button>${bloques.filter(g => g.id).map(g => `<button class="gchip sm" data-accion="filtro-rec" data-g="${g.id}" aria-pressed="${state.filtroRec === g.id}">${g.n}</button>`).join('')}</div>`;
@@ -1175,7 +1259,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 14;
+const VERSION = 15;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -1211,12 +1295,14 @@ async function pedir(ruta, {method = 'GET', body, prefer} = {}) {
 /* la clave ignora las palabras vacías: "Press de banca" y "Press banca" compiten juntos */
 const claveRanking = n => (tokens(n).join('-') || claveDe(n)).slice(0, 80);
 function misMarcas() {
-  const mapa = new Map();
+  const mapa = new Map(), desde = sumarDias(hoy, -89);
   for (const c of catalogo().values()) {
     const {rm} = marcas(c.clave);
     if (!rm.v || rm.peso > 1000 || rm.reps > 200) continue;
-    const clave = claveRanking(c.nombre);
-    if (!(mapa.get(clave)?.rm >= rm.v)) mapa.set(clave, {usuario: cuenta.uid, clave, nombre: c.nombre.slice(0, 80), peso: rm.peso, reps: rm.reps, rm: Math.round(rm.v * 10) / 10, fecha: rm.fecha});
+    const clave = claveRanking(c.nombre), previa = mapa.get(clave);
+    const series90 = (previa?.series90 || 0) + c.hist.filter(h => h.fecha >= desde).reduce((a, h) => a + h.sets.length, 0);
+    if (previa?.rm >= rm.v) previa.series90 = series90;
+    else mapa.set(clave, {usuario: cuenta.uid, clave, nombre: c.nombre.slice(0, 80), peso: rm.peso, reps: rm.reps, rm: Math.round(rm.v * 10) / 10, fecha: rm.fecha, series90});
   }
   return [...mapa.values()];
 }
@@ -1225,8 +1311,9 @@ async function subirMarcas() {
   const lista = misMarcas();
   if (lista.length) await pedir('marcas?on_conflict=usuario,clave', {method: 'POST', body: lista, prefer: 'resolution=merge-duplicates,return=minimal'});
   await pedir(`marcas?usuario=eq.${cuenta.uid}${lista.length ? `&clave=not.in.(${lista.map(m => m.clave).join(',')})` : ''}`, {method: 'DELETE'});
+  await pedir(`perfiles?id=eq.${cuenta.uid}`, {method: 'PATCH', body: {resumen: {racha: rachaSemanas(), logros: logros().filter(l => l.ok).length}}, prefer: 'return=minimal'});
 }
-const COLS_POST = 'select=*,perfiles(nombre),fuerzas(usuario),comentarios(id,usuario,texto,creado,perfiles(nombre))&comentarios.order=creado.asc';
+const COLS_POST = 'select=*,perfiles(nombre),fuerzas(usuario),medios(id,usuario,ruta,tipo,ejercicio,serie,etiqueta),comentarios(id,usuario,texto,creado,perfiles(nombre))&comentarios.order=creado.asc';
 const sigoA = () => state.amigos.seg.filter(x => x.seguidor === cuenta.uid).map(x => x.seguido);
 const consultaFeed = () => `publicaciones?${COLS_POST}&order=creado.desc&limit=30${state.amigos.solo ? `&usuario=in.(${[cuenta.uid, ...sigoA()].join(',')})` : ''}`;
 async function cargarAmigos() {
@@ -1238,7 +1325,7 @@ async function cargarAmigos() {
     [a.seg, a.marcas, a.gente] = await Promise.all([
       pedir('seguimientos?select=seguidor,seguido&limit=5000'),
       pedir('marcas?select=*,perfiles(nombre)&order=rm.desc&limit=2000'),
-      pedir('perfiles?select=id,nombre&order=nombre&limit=500'),
+      pedir('perfiles?select=id,nombre,resumen&order=nombre&limit=500'),
     ]);
     a.feed = await pedir(consultaFeed());
     await cargarAvisos();
@@ -1326,7 +1413,7 @@ async function entrar(nombre) {
 }
 function datosPublicacion(ses) {
   const st = statsSesion(ses);
-  return {mins: st.mins, series: st.series, vol: Math.round(st.vol), records: nRecords(ses), grupos: ses.grupos,
+  return {mins: st.mins, series: st.series, vol: Math.round(st.vol), records: nRecords(ses), grupos: ses.grupos, esfuerzo: esfuerzo(ses), musculos: musculos(ses),
     ejercicios: ses.ejercicios.filter(e => e.sets.length).map(e => ({nombre: e.nombre, grupo: grupoDe(e), record: etiquetas(e, ses).includes('pr'), sets: e.sets.map(x => [x.peso, x.reps])}))};
 }
 async function publicar(ses, callado) {
@@ -1340,7 +1427,16 @@ async function publicar(ses, callado) {
     if (!callado) toast('Publicada', ses.titulo);
   } catch { toast('Sin conexión', 'No se ha publicado'); }
 }
-const quitarRemota = id => pedir(`publicaciones?usuario=eq.${cuenta.uid}&sesion=eq.${encodeURIComponent(id)}`, {method: 'DELETE'});
+async function borrarArchivos(rutas) {
+  if (!rutas.length) return;
+  await fetch(`${NUBE.url}/storage/v1/object/media`, {method: 'DELETE', headers: {apikey: NUBE.key, Authorization: 'Bearer ' + await token(), 'Content-Type': 'application/json'}, body: JSON.stringify({prefixes: rutas})});
+}
+async function quitarRemota(id) {
+  const filtro = `usuario=eq.${cuenta.uid}&sesion=eq.${encodeURIComponent(id)}`;
+  const [p] = await pedir(`publicaciones?select=medios(ruta)&${filtro}`);
+  await borrarArchivos((p?.medios || []).map(m => m.ruta));
+  await pedir(`publicaciones?${filtro}`, {method: 'DELETE'});
+}
 async function despublicar(ses) {
   try {
     await quitarRemota(ses.id);
@@ -1351,6 +1447,7 @@ async function despublicar(ses) {
 async function borrarCuenta() {
   const a = state.amigos;
   try {
+    await borrarArchivos((await pedir(`medios?select=ruta&usuario=eq.${cuenta.uid}`)).map(m => m.ruta));
     await pedir('rpc/borrar_mi_cuenta', {method: 'POST', body: {}});
     cuenta = null; ls.set('fr_cuenta', null); ls.set('fr_borradas', {});
     state.sesiones.forEach(x => delete x.publicada); delete state.actual?.publicada;
@@ -1525,10 +1622,109 @@ function vistaRanking(clave) {
     <button class="back" data-accion="volver-ranking">‹ Clasificación</button>
     <h1>${esc(c.nombre)}</h1>
     <p>Ordenado por 1RM estimado, con la serie que lo consiguió.</p>
+    ${(l => l ? `<p class="nota-rk">Leyenda: <b>${esc(l.perfiles?.nombre)}</b>, con ${fmt(+l.series90)} series en 90 días</p>` : '')(lideres().leyendas.find(x => x.clave === clave))}
     <div class="rows">${c.filas.map((r, i) => `<button class="rk${r.usuario === cuenta.uid ? ' yo' : ''}" data-accion="perfil" data-u="${esc(r.usuario)}">
       <span class="p num">${i + 1}</span>
       <span class="mid"><b>${esc(r.perfiles?.nombre)}</b><small class="num">${fmt(r.peso)} kg × ${fmt(r.reps)} · ${fechaCorta(String(r.fecha))}</small></span>
-      <span class="v num">${kgRm(r)}<small>kg</small></span></button>`).join('')}</div></div>`;
+      <span class="v num">${i === 0 ? '<span class="tag" style="margin-right:6px">Corona</span>' : ''}${kgRm(r)}<small>kg</small></span></button>`).join('')}</div></div>`;
+}
+/* ---------- fotos y vídeos ---------- */
+const urlMedio = r => /^[0-9a-f-]{36}\/[a-z0-9]+\.(mp4|mov|jpg)$/.test(r) ? `${NUBE.url}/storage/v1/object/public/media/${r}` : '';
+function prepararFoto(file) {
+  return new Promise((ok, mal) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onerror = () => mal(new Error('foto'));
+    img.onload = () => {
+      const k = Math.min(1, 1280 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob(b => b ? ok(b) : mal(new Error('foto')), 'image/jpeg', .8);
+    };
+    img.src = url;
+  });
+}
+function leerVideo(file) {
+  return new Promise((ok, mal) => {
+    const v = document.createElement('video');
+    v.preload = 'auto'; v.muted = true; v.playsInline = true;
+    v.onloadedmetadata = () => ok(v);
+    v.onerror = () => mal(new Error('video'));
+    v.src = URL.createObjectURL(file);
+  });
+}
+/* reduce a 720p volviendo a grabar el vídeo; el iPhone no da otra forma de comprimir en una web. El clip queda sin sonido */
+async function comprimirVideo(v) {
+  const tipo = ['video/mp4;codecs=avc1.42E01E', 'video/mp4'].find(t => window.MediaRecorder?.isTypeSupported?.(t));
+  const k = Math.min(1, 720 / Math.min(v.videoWidth, v.videoHeight)), c = document.createElement('canvas');
+  if (!tipo || !c.captureStream) throw new Error('sin compresión');
+  c.width = Math.round(v.videoWidth * k / 2) * 2; c.height = Math.round(v.videoHeight * k / 2) * 2;
+  const ctx = c.getContext('2d'), trozos = [];
+  const rec = new MediaRecorder(c.captureStream(30), {mimeType: tipo, videoBitsPerSecond: 2500000});
+  rec.ondataavailable = e => { if (e.data.size) trozos.push(e.data); };
+  const parado = new Promise(ok => { rec.onstop = ok; });
+  rec.start(1000);
+  await v.play();
+  await new Promise(ok => {
+    const limite = setTimeout(ok, (v.duration * 2 + 5) * 1000);
+    const paso = () => { ctx.drawImage(v, 0, 0, c.width, c.height); if (v.ended) { clearTimeout(limite); ok(); } else requestAnimationFrame(paso); };
+    paso();
+  });
+  rec.stop(); await parado;
+  return new Blob(trozos, {type: 'video/mp4'});
+}
+async function prepararVideo(file) {
+  const v = await leerVideo(file);
+  if (v.duration > 21) throw Object.assign(new Error('largo'), {aviso: 'El vídeo dura más de 20 segundos. Recórtalo en Fotos y súbelo otra vez.'});
+  const original = file.type === 'video/quicktime' ? {b: file, ext: 'mov'} : file.type === 'video/mp4' ? {b: file, ext: 'mp4'} : null;
+  if (original && file.size < 6e6) return original;
+  const peque = await comprimirVideo(v).catch(() => null);
+  if (peque?.size && (!original || peque.size < file.size)) return {b: peque, ext: 'mp4'};
+  if (original && file.size < 30e6) return original;
+  throw Object.assign(new Error('grande'), {aviso: 'Ese vídeo pesa demasiado. Grábalo más corto o a menos calidad.'});
+}
+async function subirMedio(file) {
+  const a = state.amigos, sub = a.subida;
+  if (!file || !sub) return;
+  a.subiendo = true; toast('Subiendo', file.type.startsWith('video') ? 'Preparando el vídeo…' : 'Preparando la foto…');
+  try {
+    const video = file.type.startsWith('video');
+    const {b, ext} = video ? await prepararVideo(file) : {b: await prepararFoto(file), ext: 'jpg'};
+    const ruta = `${cuenta.uid}/${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}.${ext}`;
+    const r = await fetch(`${NUBE.url}/storage/v1/object/media/${ruta}`, {method: 'POST', headers: {apikey: NUBE.key, Authorization: 'Bearer ' + await token(), 'Content-Type': ext === 'jpg' ? 'image/jpeg' : ext === 'mov' ? 'video/quicktime' : 'video/mp4'}, body: b});
+    if (!r.ok) throw Object.assign(new Error('subida'), {aviso: r.status === 403 ? 'Has llegado al máximo de 40 archivos. Borra alguno.' : 'No se ha podido subir.'});
+    const [m] = await pedir('medios?select=id,usuario,ruta,tipo,ejercicio,serie,etiqueta', {method: 'POST', prefer: 'return=representation',
+      body: {publicacion: sub.post, usuario: cuenta.uid, ruta, tipo: video ? 'video' : 'foto', ejercicio: sub.ejercicio || null, serie: sub.serie || null, etiqueta: sub.etiqueta || null}});
+    for (const p of postsDe(sub.post)) p.medios = [...(p.medios || []), m];
+    a.abiertos.add(sub.post);
+    toast('Subido', video ? 'Vídeo publicado' : 'Foto publicada');
+  } catch (e) { toast('No se ha subido', e.aviso || 'Revisa tu conexión.'); }
+  a.subiendo = false; a.subida = null; render(true);
+}
+async function borrarMedio(post, id) {
+  const m = postsDe(post)[0]?.medios?.find(x => x.id === id);
+  if (!m) return;
+  try {
+    await borrarArchivos([m.ruta]);
+    await pedir(`medios?id=eq.${id}`, {method: 'DELETE'});
+    for (const p of postsDe(post)) p.medios = p.medios.filter(x => x.id !== id);
+    render(true);
+  } catch { toast('Sin conexión', 'No se ha borrado'); }
+}
+async function denunciarMedio(id) {
+  ls.set('fr_denunciados', [...ls.get('fr_denunciados', []), id]);
+  render(true);
+  toast('Denuncia enviada', 'Ya no lo verás');
+  await pedir('denuncias', {method: 'POST', body: {medio: id, usuario: cuenta.uid}, prefer: 'return=minimal'}).catch(() => {});
+}
+function bloqueMedio(m, p) {
+  const u = urlMedio(m.ruta);
+  if (!u || ls.get('fr_denunciados', []).includes(m.id)) return '';
+  const pie = m.ejercicio ? `${m.ejercicio}${m.serie ? ` · serie ${m.serie}` : ''}${m.etiqueta ? ` · ${m.etiqueta}` : ''}` : '';
+  return `<div class="medio" id="m-${esc(m.id)}">${m.tipo === 'video' ? `<video src="${u}" controls playsinline preload="none"></video>` : `<img src="${u}" alt="${esc(pie || 'Foto de la sesión')}" loading="lazy">`}
+    <div class="medio-p"><span class="num">${esc(pie)}</span>${m.usuario === cuenta.uid
+      ? `<button data-accion="borrar-medio" data-id="${esc(p.id)}" data-m="${esc(m.id)}">Borrar</button>`
+      : `<button data-accion="denunciar" data-m="${esc(m.id)}">Denunciar</button>`}</div></div>`;
 }
 const ICON_FUERZA = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 7v10M3 9.5v5M18 7v10M21 9.5v5M6 12h12"/></svg>';
 const ICON_COMENTAR = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.8 7L4 20l1-5.1A8 8 0 1 1 21 12z"/></svg>';
@@ -1543,6 +1739,12 @@ function tarjetaPublicacion(p) {
   const ejs = Array.isArray(d.ejercicios) ? d.ejercicios.filter(Boolean) : [];
   const mins = +d.mins || 0, recs = +d.records || 0, abierta = state.amigos.abiertos.has(p.id);
   const fz = p.fuerzas || [], cms = p.comentarios || [], mia = fz.some(x => x.usuario === yo), propia = p.usuario === yo;
+  const medios = (p.medios || []).filter(m => !ls.get('fr_denunciados', []).includes(m.id));
+  const chip = (e, x, k) => {
+    const txt = `${fmt(+x[0] || 0)}×${fmt(+x[1] || 0)}`, m = medios.find(y => y.ejercicio === e.nombre && y.serie === k + 1);
+    if (m) return `<button class="set-chip con num" data-accion="ver-medio" data-m="${esc(m.id)}">▶ ${txt}</button>`;
+    return propia ? `<button class="set-chip vacia num" data-accion="elegir-medio" data-id="${esc(p.id)}" data-e="${esc(e.nombre)}" data-k="${k + 1}" data-t="${esc(`${fmt(+x[0] || 0)} kg × ${fmt(+x[1] || 0)}`)}" aria-label="Añadir vídeo a la serie ${k + 1}">${txt}</button>` : `<span class="set-chip num">${txt}</span>`;
+  };
   return `<article class="post${abierta ? ' open' : ''}">
     <div class="post-h" style="grid-template-columns:1fr auto">
       <button class="quien" data-accion="perfil" data-u="${esc(p.usuario)}">${avatar(nombre)}
@@ -1550,19 +1752,34 @@ function tarjetaPublicacion(p) {
       ${recs ? `<span class="tag">${fmt(recs)} ${recs === 1 ? 'récord' : 'récords'}</span>` : ''}</div>
     <button class="post-top" data-accion="post" data-id="${esc(p.id)}" aria-expanded="${abierta}">
       <span class="post-t">${esc(p.titulo)}</span>
-      <span class="post-foot"><span class="post-st num">${ejs.length} ${ejs.length === 1 ? 'ejercicio' : 'ejercicios'} · ${fmt(+d.series || 0)} series · ${fmt(+d.vol || 0)} kg</span>${ICON_CHEV}</span>
+      <span class="post-foot"><span class="post-st num">${ejs.length} ${ejs.length === 1 ? 'ejercicio' : 'ejercicios'} · ${fmt(+d.series || 0)} series · ${fmt(+d.vol || 0)} kg${medios.length ? ` · ${medios.length} ${medios.length === 1 ? 'clip' : 'clips'}` : ''}</span>${ICON_CHEV}</span>
     </button>
     <div class="post-acts">
       <button class="post-act${mia ? ' on' : ''}" data-accion="fuerza" data-id="${esc(p.id)}" ${propia ? 'disabled' : ''} aria-pressed="${mia}">${ICON_FUERZA}Fuerza${fz.length ? ` · ${fz.length}` : ''}</button>
       <button class="post-act" data-accion="post" data-id="${esc(p.id)}">${ICON_COMENTAR}${cms.length || 'Comentar'}</button>
     </div>
-    <div class="post-body"><div class="post-in"><div class="post-list">${ejs.map(e => `<div class="post-ex"><span><span class="nm">${esc(e.nombre)}</span>
-      <span class="ss num">${(Array.isArray(e.sets) ? e.sets : []).filter(Array.isArray).map(x => `${fmt(+x[0] || 0)}×${fmt(+x[1] || 0)}`).join(' · ')}</span></span>
+    <div class="post-body"><div class="post-in">
+      ${+d.esfuerzo ? `<div class="esf" style="margin:12px 0 4px"><b class="num">${fmt(+d.esfuerzo)}</b><span>Esfuerzo ${nivelEsfuerzo(+d.esfuerzo)}</span></div>` : ''}
+      ${d.musculos && typeof d.musculos === 'object' ? mapaMuscular(d.musculos) : ''}
+      ${propia ? `<p class="note" style="margin:10px 0 0">Toca una serie para añadirle un vídeo de hasta 20 segundos. Que no salga otra gente sin su permiso.</p>` : ''}
+      <div class="post-list">${ejs.map(e => `<div class="post-ex"><span><span class="nm">${esc(e.nombre)}</span>
+      <span class="set-chips">${(Array.isArray(e.sets) ? e.sets : []).filter(Array.isArray).map((x, k) => chip(e, x, k)).join('')}</span></span>
       ${e.record ? '<span class="tag">Récord</span>' : ''}</div>`).join('')}</div>
+      ${medios.map(m => bloqueMedio(m, p)).join('')}
+      ${propia ? `<button class="finbtn pub" data-accion="elegir-medio" data-id="${esc(p.id)}">Añadir foto o vídeo</button>` : ''}
       ${ejs.length ? `<button class="finbtn pub" data-accion="replicar-post" data-id="${esc(p.id)}">Replicar sesión</button>` : ''}
       ${cms.map(c => `<div class="cm"><span><b>${esc(c.perfiles?.nombre || 'Alguien')}</b> ${esc(c.texto)}</span>${c.usuario === yo || propia ? `<button class="del" data-accion="borrar-comentario" data-id="${esc(p.id)}" data-c="${esc(c.id)}">Borrar</button>` : ''}</div>`).join('')}
       <form class="cm-form" data-form="comentar" data-id="${esc(p.id)}"><input name="texto" maxlength="300" placeholder="Escribe un comentario" autocomplete="off" aria-label="Comentario"><button type="submit">Enviar</button></form></div></div>
   </article>`;
+}
+/* corona: mejor 1RM de cada ejercicio. Leyenda: más series en 90 días */
+function lideres() {
+  const coronas = new Map(), leyendas = new Map();
+  for (const r of state.amigos.marcas || []) {
+    if (!coronas.has(r.clave) || +r.rm > +coronas.get(r.clave).rm) coronas.set(r.clave, r);
+    if (+r.series90 > 0 && (!leyendas.has(r.clave) || +r.series90 > +leyendas.get(r.clave).series90)) leyendas.set(r.clave, r);
+  }
+  return {coronas: [...coronas.values()], leyendas: [...leyendas.values()]};
 }
 function vistaPerfil(uid) {
   const a = state.amigos, nombre = a.gente?.find(x => x.id === uid)?.nombre || 'Alguien';
@@ -1574,6 +1791,11 @@ function vistaPerfil(uid) {
       <div><div class="label">Sesiones</div><div class="v num">${a.perfilPosts?.length ?? '–'}</div></div>
       <div><div class="label">Seguidores</div><div class="v num">${seguidores}</div></div>
       <div><div class="label">Siguiendo</div><div class="v num">${siguiendo}</div></div>
+    </div>
+    <div class="sumrow" style="margin-top:8px">
+      <div><div class="label">Racha</div><div class="v num">${+a.gente?.find(x => x.id === uid)?.resumen?.racha || 0}<small style="font-size:12px;color:var(--muted)"> sem</small></div></div>
+      <div><div class="label">Coronas</div><div class="v num">${lideres().coronas.filter(r => r.usuario === uid).length}</div></div>
+      <div><div class="label">Leyendas</div><div class="v num">${lideres().leyendas.filter(r => r.usuario === uid).length}</div></div>
     </div>`;
   if (marcasDe.length) h += `<div class="sec-h"><h2>Mejores marcas</h2></div><div class="rows">${marcasDe.slice(0, 5).map(r => `<button class="prow rec" data-accion="ver-ranking" data-clave="${esc(r.clave)}">
     <span class="nm">${esc(r.nombre)}<span class="sub num">${fmt(r.peso)} kg × ${fmt(r.reps)}</span></span><span class="kg num">${kgRm(r)}<small>kg</small></span></button>`).join('')}</div>`;
@@ -1869,6 +2091,14 @@ document.addEventListener('click', ev => {
     case 'pestana-amigos': state.amigos.pestana = b.dataset.p; render(true); if (!state.amigos.feed) cargarAmigos(); break;
     case 'ver-ranking': state.amigos.ejercicio = b.dataset.clave; state.amigos.perfil = null; render(true); scrollTo(0, 0); break;
     case 'fuerza': darFuerza(b.dataset.id); break;
+    case 'elegir-medio':
+      if (state.amigos.subiendo) { toast('Espera', 'Ya hay una subida en marcha'); return; }
+      state.amigos.subida = {post: b.dataset.id, ejercicio: b.dataset.e, serie: +b.dataset.k || null, etiqueta: b.dataset.t};
+      $('#in-medio').value = ''; $('#in-medio').click();
+      break;
+    case 'ver-medio': document.getElementById('m-' + b.dataset.m)?.scrollIntoView({behavior: 'smooth', block: 'center'}); break;
+    case 'borrar-medio': borrarMedio(b.dataset.id, b.dataset.m); break;
+    case 'denunciar': denunciarMedio(b.dataset.m); break;
     case 'borrar-comentario': borrarComentario(b.dataset.id, b.dataset.c); break;
     case 'seguir': seguir(b.dataset.u); break;
     case 'perfil': abrirPerfil(b.dataset.u); break;
@@ -1949,6 +2179,7 @@ document.addEventListener('input', ev => {
     if (state.hint?.err) { state.hint = null; const h = el.closest('form').querySelector('.hint'); if (h) { h.classList.remove('err'); h.textContent = 'Toca una serie para borrarla.'; } }
   }
 });
+document.addEventListener('change', ev => { if (ev.target.id === 'in-medio') subirMedio(ev.target.files?.[0]); });
 document.addEventListener('focusin', ev => { if (ev.target.id === 'in-peso' || ev.target.id === 'in-reps') ev.target.select?.(); });
 document.addEventListener('change', ev => {
   if (ev.target.id === 'in-fecha' && ev.target.value) {
