@@ -337,7 +337,13 @@ button.frow{width:100%;text-align:left}
 .rk .mid small{display:block;font-size:12px;color:var(--muted)}
 .rk .v{font-weight:800;font-size:18px;white-space:nowrap;letter-spacing:-.02em}
 .rk .v small{font-size:11px;color:var(--muted);font-weight:600;margin-left:2px}
-.salir{display:flex;justify-content:center;margin-top:18px}
+.salir{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px}
+.campos{display:flex;flex-direction:column;gap:10px}
+.campo{width:100%;min-height:54px;border:0;border-radius:18px;background:var(--surface-2);padding:0 16px;font-size:16px;font-weight:500;outline:none;box-shadow:inset 0 0 0 1.5px transparent}
+.campo:focus{box-shadow:inset 0 0 0 1.5px var(--lime)}
+.campo::placeholder{color:var(--faint)}
+.google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:54px;border-radius:999px;background:var(--ink);color:var(--on-lime);font-weight:800;margin-bottom:14px}
+.cuenta-txt{text-align:center;font-size:12.5px;color:var(--muted);margin-top:18px;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
@@ -412,6 +418,7 @@ function tituloGrupos(ids) {
 const ICON_DOTS = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>';
 const ICON_SEARCH = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>';
 const ICON_CHEV = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+const ICON_GOOGLE = '<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.2 5.5-4.8 7.2l7.7 6c4.5-4.2 6.9-10.3 6.9-17.7z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C1 16.4 0 20.1 0 24s1 7.6 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.7-6c-2.2 1.5-4.9 2.3-8.2 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>';
 const ICON_RIGHT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
 
 /* ---------- estado ---------- */
@@ -431,9 +438,9 @@ const state = {
   busca: '', buscaProg: '', filtroGrupo: null, filtroRec: null, rango: 7,
   detalle: null, metrica: 'max', histSel: null, borrarSes: false, msgCopia: '',
   modo: 'cargando', cargado: false, aviso: '', hint: null,
-  amigos: {pestana: 'feed', feed: null, marcas: null, cargando: false, error: '', ejercicio: null, busca: '', salir: false, abiertos: new Set()},
+  nube: '',
+  amigos: {modo: 'crear', google: false, pestana: 'feed', feed: null, marcas: null, cargando: false, error: '', ejercicio: null, busca: '', salir: false, abiertos: new Set()},
 };
-let db = null;
 const conSets = s => s.ejercicios.some(e => e.sets.length);
 const grupoDe = e => e.grupo || IDEA_GRUPO[e.clave] || null;
 
@@ -485,7 +492,7 @@ const nRecords = ses => ses.ejercicios.reduce((a, e) => a + etiquetas(e, ses).fi
 
 /* ---------- sesión actual y guardado ---------- */
 const sesionesDe = f => state.sesiones.filter(x => x.fecha === f);
-const idNuevo = f => state.sesiones.some(x => x.id === f) ? `${f}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}` : f;
+const idNuevo = f => `${f}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
 function sesion() {
   if (state.nueva) return null;
   if (!state.actual || state.actual.fecha !== state.fecha) {
@@ -494,11 +501,6 @@ function sesion() {
   }
   return state.actual;
 }
-function setSync(s, txt) { const el = $('#sync'); if (!el) return; el.dataset.s = s; el.textContent = txt; }
-function syncListo() { state.modo === 'local' ? setSync('err', 'Solo en este móvil') : setSync('ok', 'Sincronizado'); }
-
-const porGuardar = new Map();
-let guardando = false;
 function guardarSesion(ses) {
   ses.ts = Date.now();
   ses.titulo = tituloGrupos(ses.grupos);
@@ -506,28 +508,8 @@ function guardarSesion(ses) {
   const resto = state.sesiones.filter(x => x.id !== ses.id);
   state.sesiones = vacia ? resto : ordenar([...resto, clone(ses)]);
   ls.set('lh3_sesiones', state.sesiones);
-  const {id, ...doc} = clone(ses);
-  porGuardar.set(id, vacia ? null : doc);
-  if (!db) { porGuardar.clear(); syncListo(); return; }
-  if (!guardando) bucleGuardado();
-}
-async function bucleGuardado() {
-  guardando = true; setSync('pend', 'Guardando…');
-  let error = null;
-  while (porGuardar.size) {
-    const [id, doc] = porGuardar.entries().next().value;
-    porGuardar.delete(id);
-    const ref = db.doc('sesiones/' + id);
-    const op = () => doc ? ref.set(doc) : ref.delete();
-    try { await op(); }
-    catch (e) {
-      try { await new Promise(r => setTimeout(r, 500 + Math.random() * 700)); await op(); }
-      catch (e2) { error = e2; }
-    }
-  }
-  guardando = false;
-  if (error) setSync('err', error.code === 'quota_exceeded' ? 'Almacenamiento lleno' : 'No se pudo guardar');
-  else syncListo();
+  if (vacia && cuenta?.email) ls.set('fr_borradas', {...ls.get('fr_borradas', {}), [ses.id]: ses.ts});
+  programarSync();
 }
 
 /* ---------- render ---------- */
@@ -914,7 +896,8 @@ function vistaSesion(id) {
 
 function copiaSeguridad() {
   return `<div class="card" style="margin-top:16px"><div class="card-h"><h2>Copia de seguridad</h2></div>
-    <p class="note" style="margin:0 0 14px">Tus entrenos se guardan en este iPhone. Haz una copia de vez en cuando y guárdala en Archivos o en iCloud.</p>
+    <p class="note" style="margin:0 0 14px">${!cuenta?.email ? 'Tus entrenos solo están en este iPhone. Crea una cuenta en Amigos para no perderlos, o haz una copia y guárdala en Archivos.'
+      : state.nube === 'error' ? 'Sin conexión: subiré tus entrenos a tu cuenta en cuanto pueda.' : 'Tus entrenos están a salvo en tu cuenta. También puedes guardar una copia en Archivos.'}</p>
     <div class="row2"><button class="apuntar" data-accion="exportar">Exportar</button>
     <label class="ghost importar" for="in-import">Importar<input type="file" id="in-import" class="fileinp" accept=".json,application/json"></label></div>
     ${state.msgCopia ? `<div class="note">${esc(state.msgCopia)}</div>` : ''}</div>`;
@@ -945,6 +928,7 @@ document.addEventListener('change', async ev => {
     state.sesiones = ordenar([...mapa.values()]);
     ls.set('lh3_sesiones', state.sesiones);
     state.actual = null;
+    programarSync();
     state.msgCopia = n ? `Importadas ${n} ${n === 1 ? 'sesión' : 'sesiones'}.` : 'La copia no tenía sesiones nuevas.';
   } catch { state.msgCopia = 'Ese archivo no es una copia de Ferrum.'; }
   render(true);
@@ -1162,17 +1146,24 @@ const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publisha
 const nubeLista = () => !!(NUBE.url && NUBE.key);
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
+async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
+  const headers = {apikey: NUBE.key, 'Content-Type': 'application/json'};
+  if (t) headers.Authorization = 'Bearer ' + t;
+  const r = await fetch(`${NUBE.url}/auth/v1/${ruta}`, {method, headers, body: body ? JSON.stringify(body) : undefined});
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(j.msg || r.status), {code: j.error_code || j.code});
+  return j;
+}
+function guardarCuenta(j, extra) {
+  cuenta = {...extra, token: j.access_token, refresh: j.refresh_token, caduca: Date.now() + j.expires_in * 1000, uid: j.user.id, email: j.user.is_anonymous ? undefined : j.user.email};
+  ls.set('fr_cuenta', cuenta);
+}
 function token() {
   if (cuenta?.token && cuenta.caduca > Date.now() + 60000) return Promise.resolve(cuenta.token);
-  renovando ??= (async () => {
-    const ruta = cuenta?.refresh ? 'token?grant_type=refresh_token' : 'signup';
-    const r = await fetch(`${NUBE.url}/auth/v1/${ruta}`, {method: 'POST', headers: {apikey: NUBE.key, 'Content-Type': 'application/json'}, body: JSON.stringify(cuenta?.refresh ? {refresh_token: cuenta.refresh} : {})});
-    if (!r.ok) throw new Error('auth ' + r.status);
-    const j = await r.json();
-    cuenta = {...cuenta, token: j.access_token, refresh: j.refresh_token, caduca: Date.now() + j.expires_in * 1000, uid: j.user.id};
-    ls.set('fr_cuenta', cuenta);
-    return cuenta.token;
-  })().finally(() => { renovando = null; });
+  if (!cuenta?.refresh) return Promise.reject(new Error('sin cuenta'));
+  renovando ??= pedirAuth('token?grant_type=refresh_token', {body: {refresh_token: cuenta.refresh}})
+    .then(j => { guardarCuenta(j, {nombre: cuenta.nombre}); return cuenta.token; })
+    .finally(() => { renovando = null; });
   return renovando;
 }
 async function pedir(ruta, {method = 'GET', body, prefer} = {}) {
@@ -1260,13 +1251,139 @@ async function despublicar(ses) {
 async function borrarCuenta() {
   const a = state.amigos;
   try {
-    await pedir(`perfiles?id=eq.${cuenta.uid}`, {method: 'DELETE'});
-    delete cuenta.nombre; ls.set('fr_cuenta', cuenta);
+    await pedir('rpc/borrar_mi_cuenta', {method: 'POST', body: {}});
+    cuenta = null; ls.set('fr_cuenta', null); ls.set('fr_borradas', {});
     state.sesiones.forEach(x => delete x.publicada); delete state.actual?.publicada;
     ls.set('lh3_sesiones', state.sesiones);
     a.feed = a.marcas = a.ejercicio = null;
   } catch { a.error = 'No he podido conectar. Revisa tu conexión.'; }
   a.salir = false; render(true);
+}
+const ERRORES_CUENTA = {user_already_exists: 'Ese email ya tiene cuenta. Toca Ya tengo cuenta.', email_exists: 'Ese email ya tiene cuenta. Toca Ya tengo cuenta.',
+  invalid_credentials: 'Email o contraseña incorrectos.', weak_password: 'Usa una contraseña más segura.', validation_failed: 'Revisa el email.',
+  email_address_invalid: 'Revisa el email.', over_request_rate_limit: 'Demasiados intentos. Espera un poco.', over_email_send_rate_limit: 'Demasiados intentos. Espera un poco.'};
+const perfilDe = async uid => (await pedir(`perfiles?select=nombre&id=eq.${uid}`))[0]?.nombre;
+/* una cuenta anónima antigua deja su sitio a la cuenta real: su perfil se borra y sus entrenos se quedan en el móvil */
+async function dejarAnonima(antes) {
+  if (!antes?.nombre || antes.email || !antes.token) return null;
+  await fetch(`${NUBE.url}/rest/v1/perfiles?id=eq.${antes.uid}`, {method: 'DELETE', headers: {apikey: NUBE.key, Authorization: 'Bearer ' + antes.token}}).catch(() => {});
+  return antes.nombre;
+}
+async function trasEntrar(nombreAnterior) {
+  cuenta.nombre = await perfilDe(cuenta.uid);
+  if (!cuenta.nombre && nombreAnterior) {
+    await pedir('perfiles', {method: 'POST', body: {nombre: nombreAnterior}, prefer: 'return=minimal'}).catch(() => {});
+    cuenta.nombre = await perfilDe(cuenta.uid);
+  }
+  ls.set('fr_cuenta', cuenta);
+  await sincronizar();
+}
+async function accionCuenta(f, tipo) {
+  const a = state.amigos, email = f.email.value.trim().toLowerCase(), password = f.password.value;
+  if (!/^\S+@\S+\.\S+$/.test(email)) { a.error = 'Revisa el email.'; render(true); return; }
+  if (password.length < 8) { a.error = 'La contraseña necesita al menos 8 caracteres.'; render(true); return; }
+  document.activeElement?.blur();
+  a.cargando = true; a.error = ''; render(true);
+  try {
+    if (tipo === 'proteger') {
+      await pedirAuth('user', {method: 'PUT', token: await token(), body: {email, password}});
+      cuenta.email = email; ls.set('fr_cuenta', cuenta);
+      await sincronizar();
+    } else {
+      const antes = cuenta;
+      const j = await pedirAuth(tipo === 'crear' ? 'signup' : 'token?grant_type=password', {body: {email, password}});
+      if (!j.access_token) throw new Error('sin sesión');
+      guardarCuenta(j);
+      await trasEntrar(await dejarAnonima(antes));
+    }
+    a.cargando = false;
+    await cargarAmigos();
+  } catch (e) { a.cargando = false; a.error = ERRORES_CUENTA[e.code] || 'No he podido conectar. Revisa tu conexión.'; }
+  render(true);
+}
+function entrarConGoogle() {
+  location.href = `${NUBE.url}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(location.origin + location.pathname)}`;
+}
+/* Google vuelve a la app con la sesión en el hash de la dirección */
+async function volverDeGoogle() {
+  const h = new URLSearchParams(location.hash.slice(1));
+  if (!h.has('access_token') && !h.has('error')) return;
+  history.replaceState(null, '', location.pathname);
+  state.vista = 'amigos';
+  const a = state.amigos;
+  if (h.has('error')) { a.error = 'No se ha podido entrar con Google.'; render(true); return; }
+  a.cargando = true; render(true);
+  try {
+    const antes = cuenta, access_token = h.get('access_token');
+    const user = await pedirAuth('user', {method: 'GET', token: access_token});
+    guardarCuenta({access_token, refresh_token: h.get('refresh_token'), expires_in: +h.get('expires_in') || 3600, user});
+    await trasEntrar(await dejarAnonima(antes));
+    a.cargando = false;
+    await cargarAmigos();
+  } catch { a.cargando = false; a.error = 'No se ha podido entrar con Google.'; }
+  render(true);
+}
+async function cerrarCuenta() {
+  const a = state.amigos;
+  await sincronizar();
+  if (state.nube !== 'ok') { a.error = 'Conéctate a internet para cerrar sesión: si no, perderías lo que no se ha subido.'; render(true); return; }
+  pedirAuth('logout', {token: await token()}).catch(() => {});
+  cuenta = null; ls.set('fr_cuenta', null); ls.set('fr_borradas', {});
+  state.sesiones = []; state.actual = null; state.activo = null; state.nube = '';
+  ls.set('lh3_sesiones', []);
+  a.feed = a.marcas = a.ejercicio = null; a.error = '';
+  render(true);
+}
+
+/* ---------- copia en la nube: gana la versión más reciente de cada sesión ---------- */
+let syncT = null, syncEnCurso = null, syncOtra = false;
+function programarSync() {
+  if (!cuenta?.email) return;
+  clearTimeout(syncT); syncT = setTimeout(sincronizar, 1500);
+}
+function sincronizar() {
+  if (!nubeLista() || !cuenta?.email) return Promise.resolve();
+  if (syncEnCurso) { syncOtra = true; return syncEnCurso; }
+  syncEnCurso = sincronizarYa().finally(() => {
+    syncEnCurso = null;
+    if (syncOtra) { syncOtra = false; sincronizar(); }
+  });
+  return syncEnCurso;
+}
+async function sincronizarYa() {
+  const uid = cuenta.uid;
+  try {
+    const remotas = new Map((await pedir(`sesiones?select=id,ts&usuario=eq.${uid}`)).map(r => [r.id, +r.ts]));
+    const tumbas = ls.get('fr_borradas', {});
+    const locales = new Map(state.sesiones.map(x => [x.id, x.ts || 1]));
+    const bajar = [...remotas].filter(([id, ts]) => ts > (locales.get(id) ?? tumbas[id] ?? -1)).map(x => x[0]);
+    let cambios = false;
+    for (let i = 0; i < bajar.length; i += 100) {
+      const ids = bajar.slice(i, i + 100).map(id => `"${encodeURIComponent(id)}"`).join(',');
+      for (const r of await pedir(`sesiones?select=id,ts,doc&usuario=eq.${uid}&id=in.(${ids})`)) cambios = aplicarRemota(r) || cambios;
+    }
+    if (cambios) {
+      ls.set('lh3_sesiones', state.sesiones);
+      if (state.actual) state.actual = clone(state.sesiones.find(x => x.id === state.actual.id) ?? null);
+    }
+    const subir = [
+      ...state.sesiones.filter(x => (x.ts || 1) > (remotas.get(x.id) ?? -1)).map(x => ({usuario: uid, id: x.id, ts: x.ts || 1, doc: x})),
+      ...Object.entries(tumbas).filter(([id, ts]) => ts > (remotas.get(id) ?? -1)).map(([id, ts]) => ({usuario: uid, id, ts, doc: null})),
+    ];
+    for (let i = 0; i < subir.length; i += 50) await pedir('sesiones?on_conflict=usuario,id', {method: 'POST', body: subir.slice(i, i + 50), prefer: 'resolution=merge-duplicates,return=minimal'});
+    const quedan = ls.get('fr_borradas', {});
+    for (const id of Object.keys(tumbas)) if (quedan[id] === tumbas[id]) delete quedan[id];
+    ls.set('fr_borradas', quedan);
+    state.nube = 'ok';
+    if (cambios || state.vista !== 'entreno') render();
+  } catch { state.nube = 'error'; if (state.vista !== 'entreno') render(); }
+}
+function aplicarRemota(r) {
+  const ts = +r.ts, actual = state.sesiones.find(x => x.id === r.id);
+  if (actual && (actual.ts || 1) >= ts) return false;
+  const resto = state.sesiones.filter(x => x.id !== r.id);
+  state.sesiones = r.doc ? ordenar([...resto, normalizar({...r.doc, id: r.id, ts})]) : resto;
+  return true;
 }
 async function compartirApp() {
   const url = location.origin + location.pathname;
@@ -1331,12 +1448,16 @@ function tarjetaPublicacion(p) {
 function vistaAmigos() {
   const a = state.amigos;
   if (a.ejercicio && cuenta?.nombre) return vistaRanking(a.ejercicio);
+  if (!cuenta?.email && !cuenta?.nombre && !a.googleVisto) comprobarGoogle();
   let h = `<section class="hero"><div class="hero-row"><span class="label">${cuenta?.nombre ? `Entras como ${esc(cuenta.nombre)}` : 'Compite con tus amigos'}</span>
     <button class="datepill nueva" data-accion="compartir-app">Invitar</button></div><h1>Amigos</h1></section>`;
   if (a.error) h += `<div class="aviso">${esc(a.error)}</div>`;
+  if (!cuenta?.email && !cuenta?.nombre) return h + vistaAcceso();
   if (!cuenta?.nombre) return h + `<section class="next"><h2>Elige tu nombre</h2>
     <p>Tu nombre y tu mejor marca de cada ejercicio los verá cualquiera que use Ferrum. Tus sesiones, solo las que publiques.</p>
     <form class="search" data-form="alta"><input id="in-nombre" name="nombre" maxlength="24" placeholder="Tu nombre" autocomplete="off" autocapitalize="words" enterkeyhint="go" aria-label="Tu nombre"><button class="go" type="submit" ${a.cargando ? 'disabled' : ''}>${a.cargando ? 'Entrando…' : 'Entrar'}</button></form></section>`;
+  if (!cuenta.email) h += `<section class="next" style="margin:0 0 12px"><h2>Protege tu cuenta</h2>
+    <p>Pon un email y una contraseña. Conservas tu nombre y tus entrenos quedan a salvo si cambias de móvil.</p>${camposCuenta('proteger')}</section>`;
   h += `<div class="seg" style="--n:2" role="group" aria-label="Sección">
     <button data-accion="pestana-amigos" data-p="feed" aria-pressed="${a.pestana === 'feed'}">Publicaciones</button>
     <button data-accion="pestana-amigos" data-p="ranking" aria-pressed="${a.pestana === 'ranking'}">Clasificación</button></div>`;
@@ -1348,7 +1469,35 @@ function vistaAmigos() {
       : a.feed ? `<div class="empty"><b>Aún no hay publicaciones</b>Finaliza una sesión y toca Publicar para ser el primero.</div>`
       : a.cargando ? `<div class="empty"><b>Cargando</b>Trayendo las publicaciones…</div>` : '';
   }
-  return h + `<div class="salir"><button class="chip danger${a.salir ? ' sure' : ''}" data-accion="borrar-cuenta">${a.salir ? '¿Seguro? Se borra todo lo publicado' : 'Salir y borrar mis datos públicos'}</button></div>`;
+  return h + (cuenta.email ? `<div class="cuenta-txt">${esc(cuenta.email)}</div>` : '') + `<div class="salir">
+    ${cuenta.email ? `<button class="chip" data-accion="cerrar-cuenta">Cerrar sesión</button>` : ''}
+    <button class="chip danger${a.salir ? ' sure' : ''}" data-accion="borrar-cuenta">${a.salir ? '¿Seguro? Se borra para siempre' : 'Borrar mi cuenta'}</button></div>`;
+}
+function camposCuenta(tipo) {
+  const a = state.amigos, nueva = tipo !== 'entrar';
+  const texto = tipo === 'entrar' ? 'Entrar' : tipo === 'crear' ? 'Crear cuenta' : 'Guardar';
+  return `<form class="campos" data-form="cuenta" data-tipo="${tipo}">
+    <input class="campo" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Tu email" aria-label="Email">
+    <input class="campo" name="password" type="password" autocomplete="${nueva ? 'new-password' : 'current-password'}" placeholder="${nueva ? 'Elige una contraseña (mínimo 8)' : 'Tu contraseña'}" aria-label="Contraseña">
+    <button class="apuntar" type="submit" ${a.cargando ? 'disabled' : ''}>${a.cargando ? 'Un momento…' : texto}</button></form>`;
+}
+function vistaAcceso() {
+  const a = state.amigos;
+  return `<section class="next"><h2>Crea tu cuenta</h2>
+    <p>Tus entrenos se guardan en tu cuenta y los recuperas en cualquier móvil.</p>
+    ${a.google ? `<button class="google" data-accion="google">${ICON_GOOGLE}Continuar con Google</button>` : ''}
+    <div class="seg" style="--n:2" role="group" aria-label="Acceso">
+      <button data-accion="modo-acceso" data-m="crear" aria-pressed="${a.modo === 'crear'}">Soy nuevo</button>
+      <button data-accion="modo-acceso" data-m="entrar" aria-pressed="${a.modo === 'entrar'}">Ya tengo cuenta</button></div>
+    ${camposCuenta(a.modo)}</section>`;
+}
+async function comprobarGoogle() {
+  const a = state.amigos;
+  a.googleVisto = true;
+  try {
+    const j = await pedirAuth('settings', {method: 'GET'});
+    if (j.external?.google) { a.google = true; render(); }
+  } catch {}
 }
 
 /* ---------- toast ---------- */
@@ -1560,6 +1709,9 @@ document.addEventListener('click', ev => {
     case 'pestana-amigos': state.amigos.pestana = b.dataset.p; render(true); if (!state.amigos.feed) cargarAmigos(); break;
     case 'ver-ranking': state.amigos.ejercicio = b.dataset.clave; render(true); scrollTo(0, 0); break;
     case 'volver-ranking': state.amigos.ejercicio = null; render(true); break;
+    case 'google': entrarConGoogle(); break;
+    case 'modo-acceso': state.amigos.modo = b.dataset.m; state.amigos.error = ''; render(true); break;
+    case 'cerrar-cuenta': cerrarCuenta(); break;
     case 'borrar-cuenta':
       if (!state.amigos.salir) { state.amigos.salir = true; render(true); return; }
       borrarCuenta(); break;
@@ -1605,6 +1757,7 @@ document.addEventListener('submit', ev => {
   if (f.dataset.form === 'buscar') empezar(mejorCoincidencia(f.q.value));
   if (f.dataset.form === 'serie') apuntar(f);
   if (f.dataset.form === 'alta') entrar(f.nombre.value);
+  if (f.dataset.form === 'cuenta') accionCuenta(f, f.dataset.tipo);
   if (f.dataset.form === 'cambiar') cambiarEjercicio(state.cambiando, mejorCoincidencia(f.q.value));
 });
 document.addEventListener('input', ev => {
@@ -1631,6 +1784,8 @@ document.addEventListener('change', ev => {
   }
 });
 document.addEventListener('focusout', () => setTimeout(() => { if (renderPendiente && !escribiendo()) render(); }, 0));
+document.addEventListener('visibilitychange', () => { if (!document.hidden) sincronizar(); });
+addEventListener('online', () => sincronizar());
 /* el iPhone puede dejar la app abierta de un día para otro; una sesión a medias se queda donde está */
 document.addEventListener('visibilitychange', () => {
   const ahora = iso(new Date());
@@ -1646,15 +1801,11 @@ function abrirUltimo() {
   const ses = sesion();
   if (!state.activo && ses?.ejercicios.length) state.activo = ses.ejercicios.at(-1).clave;
 }
-function modoLocal() {
-  state.modo = 'local'; state.cargado = true;
-  state.aviso = 'Sin conexión con tu cuenta: lo que apuntes se guarda solo en este navegador.';
-  syncListo(); render();
-}
 async function iniciar() {
   state.modo = 'local'; state.cargado = true;
   if (nubeLista()) { $('#tab-amigos').hidden = false; $('.tabbar').style.setProperty('--tabs', 5); }
   abrirUltimo(); render(true);
+  if (nubeLista()) { volverDeGoogle(); sincronizar(); }
   try { await navigator.storage?.persist?.(); } catch {}
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
