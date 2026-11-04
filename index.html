@@ -365,9 +365,6 @@ const GRUPOS = [
   {id:'antebrazo', n:'Antebrazo', ideas:['Curl de muñeca','Paseo del granjero']},
 ];
 const GRUPO = Object.fromEntries(GRUPOS.map(g => [g.id, g]));
-const RUTINA = {lunes:['pecho','triceps'], martes:['cuadriceps','gemelo'], miercoles:['espalda','biceps'], jueves:['hombros','abdominales'], viernes:['femoral','gluteo']};
-const SEMANA = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];
-const SEMANA_N = {domingo:'domingo', lunes:'lunes', martes:'martes', miercoles:'miércoles', jueves:'jueves', viernes:'viernes', sabado:'sábado'};
 
 /* ---------- utilidades ---------- */
 const $ = s => document.querySelector(s);
@@ -381,7 +378,6 @@ let hoy = iso(new Date());
 const fechaCorta = s => parseISO(s).toLocaleDateString('es-ES', {day:'numeric', month:'short'}).replace('.', '');
 const fechaHero = s => parseISO(s).toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'short'}).replace('.', '');
 const fechaLarga = s => parseISO(s).toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
-const diaDeFecha = s => SEMANA[parseISO(s).getDay()];
 const lunesDe = f => { const d = parseISO(f); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return iso(d); };
 const sumarDias = (f, n) => { const d = parseISO(f); d.setDate(d.getDate() + n); return iso(d); };
 const norm = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
@@ -408,7 +404,7 @@ const ICON_RIGHT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" 
 /* ---------- estado ---------- */
 function normalizar(s) {
   const ejercicios = (Array.isArray(s.ejercicios) ? s.ejercicios : []).map(e => ({...e, sets: Array.isArray(e.sets) ? e.sets : []}));
-  const grupos = Array.isArray(s.grupos) ? s.grupos : (RUTINA[s.dia || diaDeFecha(s.fecha)] || []);
+  const grupos = Array.isArray(s.grupos) ? s.grupos : [];
   return {...s, ejercicios, grupos, titulo: s.titulo || tituloGrupos(grupos)};
 }
 const orden = s => s.creada || s.inicio || s.ts || 0;
@@ -417,7 +413,7 @@ const state = {
   fecha: hoy, vista: 'entreno',
   sesiones: ordenar(ls.get('lh3_sesiones', []).map(normalizar)),
   actual: null,
-  plan: null, planFecha: null, planOrigen: null, editGrupos: false, nueva: false, fechaPrevia: null,
+  plan: null, planFecha: null, editGrupos: false, nueva: false, fechaPrevia: null,
   activo: null, menu: null, borrar: null, setSel: null, inputs: {}, cambiando: null, buscaCambio: '',
   busca: '', buscaProg: '', filtroGrupo: null, filtroRec: null, rango: 7,
   detalle: null, metrica: 'max', histSel: null, borrarSes: false, msgCopia: '',
@@ -567,23 +563,12 @@ function vistaEntreno() {
   return h + buscador(ses) + (st.series ? `<button class="finbtn" data-accion="finalizar">Finalizar sesión</button>` : '');
 }
 
-function gruposSugeridos(fecha) {
-  if (sesionesDe(fecha).some(conSets)) return {grupos: [], origen: null};
-  const wd = diaDeFecha(fecha);
-  const prev = [...state.sesiones].reverse().find(s => s.fecha < fecha && diaDeFecha(s.fecha) === wd && s.grupos.length && conSets(s));
-  return {grupos: prev ? prev.grupos : (RUTINA[wd] || []), origen: prev ? 'ultima' : RUTINA[wd] ? 'rutina' : null};
-}
 function planificador(ses) {
   if (!state.plan || state.planFecha !== state.fecha) {
-    if (ses) { state.plan = [...ses.grupos]; state.planOrigen = null; }
-    else { const s = gruposSugeridos(state.fecha); state.plan = [...s.grupos]; state.planOrigen = s.origen; }
+    state.plan = ses ? [...ses.grupos] : [];
     state.planFecha = state.fecha;
   }
-  const wd = SEMANA_N[diaDeFecha(state.fecha)];
-  const texto = ses ? 'Marca los grupos que trabajas en esta sesión.'
-    : state.planOrigen === 'ultima' ? `Te he marcado lo que hiciste el último ${wd}. Cambia lo que quieras.`
-    : state.planOrigen === 'rutina' ? `Te he marcado tu rutina de los ${wd}. Cambia lo que quieras.`
-    : 'Marca los grupos musculares que vas a entrenar.';
+  const texto = ses ? 'Marca los grupos que trabajas en esta sesión.' : 'Marca los grupos musculares que vas a entrenar.';
   return `<section class="next plan">
     <span class="label">Antes de empezar</span>
     <h2 style="margin-top:6px">Grupos musculares</h2>
