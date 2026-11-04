@@ -413,6 +413,11 @@ button.set-chip.vacia{box-shadow:inset 0 0 0 1px var(--line-2)}
 .capa-in .carta.nueva{animation:revela .7s cubic-bezier(.2,.9,.25,1.1) both}
 .rayos{position:absolute;inset:-40%;pointer-events:none;background:repeating-conic-gradient(from 0deg,rgba(245,196,81,.2) 0 10deg,transparent 10deg 24deg);animation:gira 14s linear infinite}
 @keyframes gira{to{transform:rotate(360deg)}}
+.recorte video{display:block;width:100%;max-height:40vh;border-radius:16px;background:#000}
+.rc{display:block;width:100%;text-align:left;font-size:13px;font-weight:700;color:var(--muted)}
+.rc b{float:right;color:var(--ink);font-weight:800}
+.rc input{display:block;width:100%;margin-top:8px;accent-color:var(--lime);height:30px}
+.giro{width:46px;height:46px;border-radius:50%;border:4px solid var(--surface-3);border-top-color:var(--lime);animation:gira 1s linear infinite}
 .crear{display:flex;gap:8px;margin-bottom:12px}
 .crear input{flex:1;min-width:0;min-height:48px;border:0;border-radius:999px;background:var(--surface);padding:0 16px;font-size:16px;outline:none}
 .crear button{flex:none;padding:0 16px;border-radius:999px;background:var(--lime);color:var(--on-lime);font-weight:800;font-size:14px}
@@ -950,6 +955,19 @@ function pintarCapa() {
   const el = $('#capa'), c = state.capa;
   el.classList.toggle('on', !!c);
   if (!c) { el.innerHTML = ''; return; }
+  if (c.tipo === 'espera') {
+    el.innerHTML = `<div class="capa-in"><div class="giro"></div><div class="capa-txt"><b>${esc(c.texto)}</b><span>Puede tardar lo que dura el vídeo. No bloquees el móvil ni salgas de la app.</span></div></div>`;
+    return;
+  }
+  if (c.tipo === 'recorte') {
+    el.innerHTML = `<div class="capa-in recorte"><div class="capa-txt"><b>Recorta tu vídeo</b><span>Dura ${mmss(c.total)}. Elige un tramo de hasta ${VIDEO_MAX} segundos.</span></div>
+      <video id="rc-video" src="${c.url}" muted playsinline controls preload="metadata"></video>
+      <label class="rc">Empieza en <b id="rc-ini-t" class="num">${mmss(c.ini)}</b><input id="rc-ini" type="range" min="0" max="${(c.total - c.largo).toFixed(1)}" step="0.5" value="${c.ini}"></label>
+      <label class="rc">Duración <b id="rc-largo-t" class="num">${c.largo} s</b><input id="rc-largo" type="range" min="3" max="${VIDEO_MAX}" step="1" value="${c.largo}"></label>
+      <button class="apuntar" data-accion="usar-recorte">Usar este tramo</button>
+      <button class="ghost" style="width:100%" data-accion="cancelar-recorte">Cancelar</button></div>`;
+    return;
+  }
   if (c.tipo === 'sobre' && !c.abierto) {
     el.innerHTML = `<div class="capa-in"><div class="capa-txt"><b>Sobre de Ferrum</b><span>Toca para abrirlo</span></div>
       <button class="sobre" data-accion="rasgar-sobre" aria-label="Abrir sobre"><span class="sobre-logo"><img src="ferrum-trazo-180.png" alt="">FERRUM</span></button></div>`;
@@ -1457,7 +1475,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 17;
+const VERSION = 18;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -1863,7 +1881,8 @@ function leerVideo(file) {
   });
 }
 /* reduce a 720p volviendo a grabar el vídeo; el iPhone no da otra forma de comprimir en una web. El clip queda sin sonido */
-async function comprimirVideo(v) {
+async function comprimirVideo(v, tramo) {
+  const desde = tramo?.desde || 0, hasta = tramo?.hasta || v.duration;
   const tipo = ['video/mp4;codecs=avc1.42E01E', 'video/mp4'].find(t => window.MediaRecorder?.isTypeSupported?.(t));
   const k = Math.min(1, 720 / Math.min(v.videoWidth, v.videoHeight)), c = document.createElement('canvas');
   if (!tipo || !c.captureStream) throw new Error('sin compresión');
@@ -1872,19 +1891,26 @@ async function comprimirVideo(v) {
   const rec = new MediaRecorder(c.captureStream(30), {mimeType: tipo, videoBitsPerSecond: 2500000});
   rec.ondataavailable = e => { if (e.data.size) trozos.push(e.data); };
   const parado = new Promise(ok => { rec.onstop = ok; });
+  if (desde) { v.currentTime = desde; await new Promise(ok => { v.onseeked = ok; }); }
   rec.start(1000);
   await v.play();
   await new Promise(ok => {
-    const limite = setTimeout(ok, (v.duration * 2 + 5) * 1000);
-    const paso = () => { ctx.drawImage(v, 0, 0, c.width, c.height); if (v.ended) { clearTimeout(limite); ok(); } else requestAnimationFrame(paso); };
+    const limite = setTimeout(ok, ((hasta - desde) * 2 + 5) * 1000);
+    const paso = () => { ctx.drawImage(v, 0, 0, c.width, c.height); if (v.ended || v.currentTime >= hasta) { clearTimeout(limite); ok(); } else requestAnimationFrame(paso); };
     paso();
   });
-  rec.stop(); await parado;
+  v.pause(); rec.stop(); await parado;
   return new Blob(trozos, {type: 'video/mp4'});
 }
-async function prepararVideo(file) {
+const VIDEO_MAX = 45;
+const mmss = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+async function prepararVideo(file, tramo) {
   const v = await leerVideo(file);
-  if (v.duration > 21) throw Object.assign(new Error('largo'), {aviso: 'El vídeo dura más de 20 segundos. Recórtalo en Fotos y súbelo otra vez.'});
+  if (tramo) {
+    const b = await comprimirVideo(v, tramo).catch(() => null);
+    if (!b?.size) throw Object.assign(new Error('recorte'), {aviso: 'No he podido recortarlo en este móvil. Recórtalo en Fotos y súbelo otra vez.'});
+    return {b, ext: 'mp4'};
+  }
   const original = file.type === 'video/quicktime' ? {b: file, ext: 'mov'} : file.type === 'video/mp4' ? {b: file, ext: 'mp4'} : null;
   if (original && file.size < 6e6) return original;
   const peque = await comprimirVideo(v).catch(() => null);
@@ -1892,13 +1918,20 @@ async function prepararVideo(file) {
   if (original && file.size < 30e6) return original;
   throw Object.assign(new Error('grande'), {aviso: 'Ese vídeo pesa demasiado. Grábalo más corto o a menos calidad.'});
 }
-async function subirMedio(file) {
-  const a = state.amigos, sub = a.subida;
+async function subirMedio(file, tramo) {
+  const a = state.amigos, sub = a.subida, video = file?.type.startsWith('video');
   if (!file || !sub) return;
-  a.subiendo = true; toast('Subiendo', file.type.startsWith('video') ? 'Preparando el vídeo…' : 'Preparando la foto…');
+  if (video && !tramo) {
+    const v = await leerVideo(file).catch(() => null);
+    if (v && v.duration > VIDEO_MAX + 1) {
+      state.capa = {tipo: 'recorte', file, url: v.src, total: v.duration, ini: 0, largo: VIDEO_MAX};
+      pintarCapa(); return;
+    }
+  }
+  a.subiendo = true;
+  state.capa = {tipo: 'espera', texto: video ? 'Preparando tu vídeo' : 'Subiendo tu foto'}; pintarCapa();
   try {
-    const video = file.type.startsWith('video');
-    const {b, ext} = video ? await prepararVideo(file) : {b: await prepararFoto(file), ext: 'jpg'};
+    const {b, ext} = video ? await prepararVideo(file, tramo) : {b: await prepararFoto(file), ext: 'jpg'};
     const ruta = `${cuenta.uid}/${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}.${ext}`;
     const r = await fetch(`${NUBE.url}/storage/v1/object/media/${ruta}`, {method: 'POST', headers: {apikey: NUBE.key, Authorization: 'Bearer ' + await token(), 'Content-Type': ext === 'jpg' ? 'image/jpeg' : ext === 'mov' ? 'video/quicktime' : 'video/mp4'}, body: b});
     if (!r.ok) {
@@ -1911,7 +1944,7 @@ async function subirMedio(file) {
     a.abiertos.add(sub.post);
     toast('Subido', video ? 'Vídeo publicado' : 'Foto publicada');
   } catch (e) { toast('No se ha subido', e.aviso || 'Revisa tu conexión.'); }
-  a.subiendo = false; a.subida = null; render(true);
+  a.subiendo = false; a.subida = null; state.capa = null; pintarCapa(); render(true);
 }
 async function borrarMedio(post, id) {
   const m = postsDe(post)[0]?.medios?.find(x => x.id === id);
@@ -1973,7 +2006,7 @@ function tarjetaPublicacion(p) {
     <div class="post-body"><div class="post-in">
       ${+d.esfuerzo ? `<div class="esf" style="margin:12px 0 4px"><b class="num">${fmt(+d.esfuerzo)}</b><span>Esfuerzo ${nivelEsfuerzo(+d.esfuerzo)}</span></div>` : ''}
       ${d.musculos && typeof d.musculos === 'object' ? mapaMuscular(d.musculos) : ''}
-      ${propia ? `<p class="note" style="margin:10px 0 0">Toca una serie para añadirle un vídeo de hasta 20 segundos. Que no salga otra gente sin su permiso.</p>` : ''}
+      ${propia ? `<p class="note" style="margin:10px 0 0">Toca una serie para añadirle un vídeo de hasta ${VIDEO_MAX} segundos; si dura más, podrás recortarlo. Que no salga otra gente sin su permiso.</p>` : ''}
       <div class="post-list">${ejs.map(e => `<div class="post-ex"><span><span class="nm">${esc(e.nombre)}</span>
       <span class="set-chips">${(Array.isArray(e.sets) ? e.sets : []).filter(Array.isArray).map((x, k) => chip(e, x, k)).join('')}</span></span>
       ${e.record ? '<span class="tag">Récord</span>' : ''}</div>`).join('')}</div>
@@ -2407,6 +2440,8 @@ document.addEventListener('click', ev => {
     case 'compartir-app': compartirApp(); break;
     case 'pestana-amigos': state.amigos.pestana = b.dataset.p; render(true); if (!state.amigos.feed) cargarAmigos(); break;
     case 'ver-ranking': state.amigos.ejercicio = b.dataset.clave; state.amigos.perfil = null; render(true); scrollTo(0, 0); break;
+    case 'usar-recorte': { const c = state.capa; subirMedio(c.file, {desde: c.ini, hasta: c.ini + c.largo}); break; }
+    case 'cancelar-recorte': state.capa = null; state.amigos.subida = null; pintarCapa(); break;
     case 'rec-tab': state.recTab = b.dataset.t; state.detalle = null; render(true); break;
     case 'abrir-sobre': { const id = sobresPendientes()[0]; if (id) { state.capa = {tipo: 'sobre', id}; pintarCapa(); } break; }
     case 'rasgar-sobre': marcarSobre(state.capa.id); state.capa.abierto = true; pintarCapa(); break;
@@ -2517,6 +2552,14 @@ document.addEventListener('input', ev => {
   const el = ev.target;
   if (el.id === 'in-busca') { state.busca = el.value; $('#res').innerHTML = resultados(); return; }
   if (el.id === 'in-cambiar') { state.buscaCambio = el.value; $('#res-cambiar').innerHTML = resultados(el.value, 'cambiar-a'); return; }
+  if (el.id === 'rc-ini' || el.id === 'rc-largo') {
+    const c = state.capa, ini = $('#rc-ini');
+    if (el.id === 'rc-largo') { c.largo = +el.value; ini.max = (c.total - c.largo).toFixed(1); $('#rc-largo-t').textContent = c.largo + ' s'; }
+    c.ini = Math.min(+ini.value, c.total - c.largo);
+    $('#rc-ini-t').textContent = mmss(c.ini);
+    $('#rc-video').currentTime = c.ini;
+    return;
+  }
   if (el.id === 'in-busca-gente') { state.amigos.buscaGente = el.value; $('#gente-list').innerHTML = listaGente(); return; }
   if (el.id === 'in-busca-rk') { state.amigos.busca = el.value; $('#rk-list').innerHTML = listaClasificacion(); return; }
   if (el.id === 'in-busca-prog') { state.buscaProg = el.value; $('#prog-list').innerHTML = listaProgreso(); return; }
