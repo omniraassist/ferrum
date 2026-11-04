@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
 <style>
-/* Layout: una columna de app nativa con pestañas flotantes (Entreno · Historial · Progreso).
+/* Layout: una columna de app nativa con pestañas flotantes (Entreno · Historial · Progreso · Récords).
    Dirección: app de fitness moderna en modo oscuro fijo — negro carbón, tarjetas grafito sin bordes y muy redondeadas,
    un único acento verde lima con texto negro para lo importante (récords, botón de apuntar, selección). */
 :root{
@@ -64,6 +64,8 @@ button:disabled{cursor:default;opacity:.4}
 .hero-row > .label::first-letter{text-transform:uppercase}
 .datepill{position:relative;display:inline-flex;align-items:center;gap:6px;background:var(--surface);border-radius:999px;padding:8px 14px;font-size:12.5px;font-weight:600;color:var(--ink);min-height:36px;flex:none}
 .datepill input{position:absolute;inset:0;opacity:0;width:100%;height:100%;font-size:16px}
+.hero-acts{display:flex;gap:6px;flex:none}
+.datepill.nueva{background:var(--lime);color:var(--on-lime);font-weight:800}
 .hero h1,.det h1{margin:8px 0 0;font-weight:800;font-size:clamp(30px,8.6vw,38px);line-height:1.05;letter-spacing:-.035em;text-wrap:balance;overflow-wrap:anywhere}
 .editg{margin-top:12px;font-size:13px;color:var(--lime-ink);font-weight:700;display:inline-flex;align-items:center;gap:6px;min-height:32px}
 .editg::after{content:"→"}
@@ -258,9 +260,9 @@ button:disabled{cursor:default;opacity:.4}
 .toast .label{color:rgba(14,14,16,.65)}
 .toast b{display:block;font-weight:800;font-size:22px;margin-top:2px;letter-spacing:-.03em}
 .tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:16;
-  display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:6px;border-radius:999px;width:min(calc(100% - 32px),390px);
+  display:grid;grid-template-columns:repeat(4,1fr);gap:2px;padding:6px;border-radius:28px;width:min(calc(100% - 32px),390px);
   background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 16px 36px -12px rgba(0,0,0,.7),inset 0 0 0 1px var(--line)}
-.tab{display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:700;color:var(--muted);border-radius:999px;min-height:48px}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;font-weight:700;color:var(--muted);border-radius:22px;min-height:52px}
 .tab[aria-pressed="true"]{background:var(--lime);color:var(--on-lime)}
 
 @keyframes in{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -273,7 +275,6 @@ button:disabled{cursor:default;opacity:.4}
 .goal b{font-weight:800;font-size:16px;white-space:nowrap}
 .finbtn{width:100%;margin-top:12px;min-height:56px;border-radius:999px;font-weight:800;font-size:16px;color:var(--lime-ink);box-shadow:inset 0 0 0 1.5px var(--lime);display:flex;align-items:center;justify-content:center;gap:8px}
 .finbtn::before{content:"✓"}
-.ghost.wide{width:100%;margin-top:12px}
 .fin-card{background:var(--lime);color:var(--on-lime);border-radius:26px;padding:20px}
 .fin-card .label{color:rgba(14,14,16,.6)}
 .fin-card h2{margin:4px 0 16px;font-size:30px;font-weight:800;letter-spacing:-.035em}
@@ -289,6 +290,13 @@ button:disabled{cursor:default;opacity:.4}
 .frow .rt{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
 .frow .rt b{font-weight:800;font-size:15px;white-space:nowrap}
 .row2 .apuntar{grid-column:auto;min-height:52px;font-size:15px}
+.fin-acts{margin-top:12px}
+.fin-acts .ghost{min-height:52px;font-size:15px}
+button.frow{width:100%;text-align:left}
+.prow.rec{grid-template-columns:1fr auto}
+.rec-top{margin-bottom:12px}
+.rec-top .nm{font-weight:800;font-size:15px;overflow-wrap:anywhere}
+.rec-top .pr-item{margin-top:2px}
 .importar{position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;min-height:52px}
 .fileinp{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 </style>
@@ -307,6 +315,9 @@ button:disabled{cursor:default;opacity:.4}
   </button>
   <button class="tab" id="tab-progreso" data-vista="progreso" aria-pressed="false">
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18M5 16l4-5 4 3 6-8"/></svg>Progreso
+  </button>
+  <button class="tab" id="tab-records" data-vista="records" aria-pressed="false">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v6a4 4 0 0 1-8 0zM8 6H4v1a4 4 0 0 0 4 4M16 6h4v1a4 4 0 0 1-4 4M12 14v5M8 20h8"/></svg>Récords
   </button>
 </nav>
 
@@ -337,7 +348,7 @@ const fmt = n => nf.format(n);
 const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return isFinite(n) ? n : null; };
 const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const parseISO = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
-const hoy = iso(new Date());
+let hoy = iso(new Date());
 const fechaCorta = s => parseISO(s).toLocaleDateString('es-ES', {day:'numeric', month:'short'}).replace('.', '');
 const fechaHero = s => parseISO(s).toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'short'}).replace('.', '');
 const fechaLarga = s => parseISO(s).toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
@@ -371,14 +382,15 @@ function normalizar(s) {
   const grupos = Array.isArray(s.grupos) ? s.grupos : (RUTINA[s.dia || diaDeFecha(s.fecha)] || []);
   return {...s, ejercicios, grupos, titulo: s.titulo || tituloGrupos(grupos)};
 }
-const ordenar = arr => arr.sort((a, b) => a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : (a.ts || 0) - (b.ts || 0));
+const orden = s => s.creada || s.inicio || s.ts || 0;
+const ordenar = arr => arr.sort((a, b) => a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : orden(a) - orden(b));
 const state = {
   fecha: hoy, vista: 'entreno',
   sesiones: ordenar(ls.get('lh3_sesiones', []).map(normalizar)),
   actual: null,
-  plan: null, planFecha: null, planOrigen: null, editGrupos: false,
+  plan: null, planFecha: null, planOrigen: null, editGrupos: false, nueva: false, fechaPrevia: null,
   activo: null, menu: null, borrar: null, setSel: null, inputs: {}, cambiando: null, buscaCambio: '',
-  busca: '', buscaProg: '', filtroGrupo: null, rango: 7,
+  busca: '', buscaProg: '', filtroGrupo: null, filtroRec: null, rango: 7,
   detalle: null, metrica: 'max', histSel: null, borrarSes: false, msgCopia: '',
   modo: 'cargando', cargado: false, aviso: '', hint: null,
 };
@@ -396,7 +408,7 @@ function catalogo() {
     const c = m.get(e.clave) || {clave: e.clave, nombre: e.nombre, grupo: null, hist: []};
     c.nombre = e.nombre;
     c.grupo = grupoDe(e) || c.grupo || (s.grupos.length === 1 ? s.grupos[0] : null);
-    c.hist.push({fecha: s.fecha, id: s.id, sets: e.sets});
+    c.hist.push({fecha: s.fecha, id: s.id, orden: orden(s), sets: e.sets});
     m.set(e.clave, c);
   }
   catFuente = state.sesiones; catCache = m;
@@ -404,7 +416,7 @@ function catalogo() {
 }
 function marcas(clave, {excluir, antes} = {}) {
   const c = catalogo().get(clave);
-  const hs = (c?.hist || []).filter(h => h.id !== excluir && (!antes || h.fecha < antes));
+  const hs = (c?.hist || []).filter(h => h.id !== excluir && (!antes || h.fecha < antes.fecha || (h.fecha === antes.fecha && h.orden < orden(antes))));
   if (!hs.length) return null;
   let max = null, rm = null;
   for (const h of hs) for (const s of h.sets) {
@@ -421,7 +433,7 @@ function marcas(clave, {excluir, antes} = {}) {
 }
 /* series que batieron récord respecto a todo lo anterior a esa sesión */
 function etiquetas(e, ses) {
-  const m = marcas(e.clave, {excluir: ses.id, antes: ses.fecha});
+  const m = marcas(e.clave, {excluir: ses.id, antes: ses});
   if (!m) return e.sets.map(() => '');
   let maxP = m.max.peso, rmP = m.rm.v;
   return e.sets.map(s => {
@@ -433,10 +445,12 @@ function etiquetas(e, ses) {
 const nRecords = ses => ses.ejercicios.reduce((a, e) => a + etiquetas(e, ses).filter(t => t === 'pr').length, 0);
 
 /* ---------- sesión actual y guardado ---------- */
-const sesionDeFecha = f => state.sesiones.find(x => x.id === f) || state.sesiones.find(x => x.fecha === f);
+const sesionesDe = f => state.sesiones.filter(x => x.fecha === f);
+const idNuevo = f => state.sesiones.some(x => x.id === f) ? `${f}-${Date.now().toString(36)}` : f;
 function sesion() {
+  if (state.nueva) return null;
   if (!state.actual || state.actual.fecha !== state.fecha) {
-    const s = sesionDeFecha(state.fecha);
+    const s = sesionesDe(state.fecha).at(-1);
     state.actual = s ? clone(s) : null;
   }
   return state.actual;
@@ -486,20 +500,25 @@ function escribiendo() {
 function render(forzar) {
   if (!forzar && escribiendo()) { renderPendiente = true; return; }
   renderPendiente = false;
-  for (const v of ['entreno', 'historial', 'progreso']) $('#tab-' + v).setAttribute('aria-pressed', state.vista === v);
-  $('#main').innerHTML = state.vista === 'entreno' ? vistaEntreno() : state.vista === 'historial' ? vistaHistorial() : vistaProgreso();
+  for (const v of ['entreno', 'historial', 'progreso', 'records']) $('#tab-' + v).setAttribute('aria-pressed', state.vista === v);
+  $('#main').innerHTML = state.vista === 'entreno' ? vistaEntreno() : state.vista === 'historial' ? vistaHistorial() : state.vista === 'records' ? vistaRecords() : vistaProgreso();
 }
 
 /* ---------- entreno ---------- */
 function vistaEntreno() {
   const ses = sesion();
+  const delDia = sesionesDe(state.fecha);
+  const nSes = ses && delDia.length > 1 ? delDia.findIndex(x => x.id === ses.id) + 1 : 0;
   let h = `
   <section class="hero">
     <div class="hero-row">
-      <span class="label">${esc(fechaHero(state.fecha))}${state.fecha === hoy ? ' · hoy' : ''}</span>
-      <label class="datepill" for="in-fecha">Otra fecha<input id="in-fecha" type="date" value="${state.fecha}" max="${hoy}" aria-label="Fecha del entreno"></label>
+      <span class="label">${esc(fechaHero(state.fecha))}${state.fecha === hoy ? ' · hoy' : ''}${nSes ? ` · sesión ${nSes}` : ''}</span>
+      <div class="hero-acts">
+        ${ses && !ses.fin && !state.editGrupos && conSets(ses) ? `<button class="datepill nueva" data-accion="nueva-sesion">+ Nueva</button>` : ''}
+        <label class="datepill" for="in-fecha">Otra fecha<input id="in-fecha" type="date" value="${state.fecha}" max="${hoy}" aria-label="Fecha del entreno"></label>
+      </div>
     </div>
-    <h1>${ses && !state.editGrupos ? esc(ses.titulo) : state.editGrupos ? 'Grupos de la sesión' : '¿Qué toca hoy?'}</h1>
+    <h1>${ses && !state.editGrupos ? esc(ses.titulo) : state.editGrupos ? 'Grupos de la sesión' : state.nueva ? 'Nueva sesión' : '¿Qué toca hoy?'}</h1>
     ${ses && !state.editGrupos && !ses.fin ? `<button class="editg" data-accion="editar-grupos">Cambiar grupos musculares</button>` : ''}
   </section>`;
   if (state.aviso) h += `<div class="aviso">${esc(state.aviso)}</div>`;
@@ -519,6 +538,7 @@ function vistaEntreno() {
 }
 
 function gruposSugeridos(fecha) {
+  if (sesionesDe(fecha).some(conSets)) return {grupos: [], origen: null};
   const wd = diaDeFecha(fecha);
   const prev = [...state.sesiones].reverse().find(s => s.fecha < fecha && diaDeFecha(s.fecha) === wd && s.grupos.length && conSets(s));
   return {grupos: prev ? prev.grupos : (RUTINA[wd] || []), origen: prev ? 'ultima' : RUTINA[wd] ? 'rutina' : null};
@@ -542,7 +562,7 @@ function planificador(ses) {
       ${GRUPOS.map(g => `<button class="gchip" data-accion="grupo" data-g="${g.id}" aria-pressed="${state.plan.includes(g.id)}">${g.n}</button>`).join('')}
     </div>
     <div class="plan-actions">
-      ${ses ? `<button class="ghost" data-accion="cancelar-grupos">Cancelar</button>` : ''}
+      ${ses || state.nueva ? `<button class="ghost" data-accion="cancelar-grupos">Cancelar</button>` : ''}
       <button class="apuntar" data-accion="confirmar-grupos" ${state.plan.length ? '' : 'disabled'}>${state.plan.length ? (ses ? 'Guardar grupos' : `Empezar · ${esc(tituloGrupos(GRUPOS.map(g => g.id).filter(id => state.plan.includes(id))))}`) : 'Elige al menos un grupo'}</button>
     </div>
   </section>`;
@@ -651,7 +671,8 @@ function resumenFin(ses) {
       <div><span class="label">Series</span><b class="num">${st.series}</b></div>
       <div><span class="label">Volumen</span><b class="num">${fmt(Math.round(st.vol))}<small>kg</small></b></div>
       <div><span class="label">Récords</span><b class="num">${pr}</b></div>
-    </div></section>`;
+    </div></section>
+    <div class="row2 fin-acts"><button class="ghost" data-accion="reabrir">Reabrir</button><button class="apuntar" data-accion="nueva-sesion">Nueva sesión</button></div>`;
   const hechos = ses.ejercicios.filter(e => e.sets.length);
   if (hechos.length) h += `<div class="rows" style="margin-top:12px">${hechos.map(e => {
     const tags = etiquetas(e, ses);
@@ -659,7 +680,7 @@ function resumenFin(ses) {
     return `<div class="frow"><span class="mid"><span class="tt">${esc(e.nombre)}</span><span class="meta num">${e.sets.map(x => `${fmt(x.peso)}×${fmt(x.reps)}`).join(' · ')}</span></span>
       <span class="rt">${tags.includes('pr') ? '<span class="tag">Récord</span>' : ''}<b class="num">${fmt(top.peso)} kg × ${fmt(top.reps)}</b></span></div>`;
   }).join('')}</div>`;
-  return h + `<button class="ghost wide" data-accion="reabrir">Reabrir sesión</button>`;
+  return h;
 }
 
 function buscador(ses) {
@@ -851,7 +872,7 @@ function vistaSesion(id) {
     h += `</div></div>`;
   }
   h += `<div class="foot-actions">
-    <button class="apuntar" data-accion="editar-sesion" data-fecha="${s.fecha}">Editar este entreno</button>
+    <button class="apuntar" data-accion="editar-sesion" data-id="${esc(s.id)}">Editar este entreno</button>
     <button class="chip danger${state.borrarSes ? ' sure' : ''}" data-accion="borrar-sesion" data-id="${esc(s.id)}" style="align-self:center">${state.borrarSes ? '¿Seguro? Se borra entero' : 'Borrar entreno'}</button>
   </div></div>`;
   return h;
@@ -999,7 +1020,7 @@ function vistaDetalle(clave) {
   const met = state.metrica;
   const valor = sets => met === 'rm' ? Math.max(...sets.map(e1rm)) : met === 'vol' ? volDe(sets) : Math.max(...sets.map(s => s.peso));
   return `<div class="det">
-  <button class="back" data-accion="volver">‹ Progreso</button>
+  <button class="back" data-accion="volver">‹ ${state.vista === 'records' ? 'Récords' : 'Progreso'}</button>
   <h1>${esc(c.nombre)}</h1>
   <p>${c.grupo ? GRUPO[c.grupo].n + ' · ' : ''}${m.n} ${m.n === 1 ? 'sesión registrada' : 'sesiones registradas'} desde el ${fechaCorta(c.hist[0].fecha)}</p>
   ${panelMarcas(m)}
@@ -1049,6 +1070,57 @@ function grafica(pts, met) {
   s += `</svg>`;
   if (pts.length === 1) s += `<div class="note">Con la próxima sesión verás la línea de progreso.</div>`;
   return s;
+}
+
+/* ---------- récords ---------- */
+/* récords batidos, del más reciente al más antiguo: uno por ejercicio y sesión */
+function recordsRecientes(n) {
+  const out = [];
+  for (const s of [...state.sesiones].reverse()) for (const e of s.ejercicios) {
+    if (out.length >= n) return out;
+    const tags = etiquetas(e, s);
+    const pr = tags.lastIndexOf('pr'), k = pr >= 0 ? pr : tags.lastIndexOf('rm');
+    if (k < 0) continue;
+    const set = e.sets[k];
+    out.push({clave: e.clave, nombre: e.nombre, fecha: s.fecha, set, tipo: pr >= 0 ? 'pr' : 'rm',
+      mejora: pr >= 0 ? set.peso - marcas(e.clave, {excluir: s.id, antes: s}).max.peso : 0});
+  }
+  return out;
+}
+const textoRecord = r => r.tipo === 'pr' ? `+${fmt(r.mejora)} kg sobre tu marca anterior` : `1RM estimado ${fmt(Math.round(e1rm(r.set) * 2) / 2)} kg`;
+function vistaRecords() {
+  if (state.detalle) return vistaDetalle(state.detalle);
+  let h = `<section class="hero"><span class="label">Tus mejores marcas</span><h1>Récords</h1></section>`;
+  const cat = [...catalogo().values()];
+  if (!cat.length) return h + `<div class="empty"><b>Aún no hay récords</b>Apunta tu primera serie en Entreno y aquí verás tu mejor marca de cada ejercicio.</div>`;
+  const con = state.sesiones.filter(conSets), mes = hoy.slice(0, 7);
+  const contar = ss => ss.reduce((a, s) => a + nRecords(s), 0);
+  const [ultimo, ...resto] = recordsRecientes(6);
+  if (ultimo) h += `<section class="pr rec-top">
+    <div class="pr-h"><h4>Último récord</h4><small>${fechaCorta(ultimo.fecha)}</small></div>
+    <div class="nm">${esc(ultimo.nombre)}</div>
+    <div class="pr-item"><div class="v num">${fmt(ultimo.set.peso)}<small>kg × ${fmt(ultimo.set.reps)}</small></div><div class="d">${textoRecord(ultimo)}</div></div>
+  </section>`;
+  h += `<div class="sumrow">
+    <div><div class="label">Ejercicios</div><div class="v num">${cat.length}</div></div>
+    <div><div class="label">Récords</div><div class="v num">${contar(con)}</div></div>
+    <div><div class="label">Este mes</div><div class="v num">${contar(con.filter(s => s.fecha.startsWith(mes)))}</div></div>
+  </div>`;
+  if (resto.length) h += `<div class="sec-h"><h2>Últimos récords</h2></div><div class="rows">${resto.map(r => `<button class="frow" data-accion="detalle" data-clave="${esc(r.clave)}">
+    <span class="mid"><span class="tt">${esc(r.nombre)}</span><span class="meta num">${fechaCorta(r.fecha)} · ${textoRecord(r)}</span></span>
+    <span class="rt"><b class="num">${fmt(r.set.peso)} kg × ${fmt(r.set.reps)}</b></span></button>`).join('')}</div>`;
+  const bloques = [...GRUPOS, {id: null, n: 'Sin grupo'}].map(g => ({...g, lista: cat.filter(c => c.grupo === g.id)})).filter(g => g.lista.length);
+  h += `<div class="sec-h"><h2>Mejor marca por ejercicio</h2></div>`;
+  if (bloques.length > 1) h += `<div class="filters"><button class="gchip sm" data-accion="filtro-rec" data-g="" aria-pressed="${!state.filtroRec}">Todos</button>${bloques.filter(g => g.id).map(g => `<button class="gchip sm" data-accion="filtro-rec" data-g="${g.id}" aria-pressed="${state.filtroRec === g.id}">${g.n}</button>`).join('')}</div>`;
+  for (const g of bloques) {
+    if (state.filtroRec && g.id !== state.filtroRec) continue;
+    const filas = g.lista.map(c => ({c, m: marcas(c.clave)})).sort((a, b) => b.m.max.peso - a.m.max.peso);
+    h += `<div class="month"><span class="label">${esc(g.n)}</span></div><div class="rows">${filas.map(({c, m}) => `<button class="prow rec" data-accion="detalle" data-clave="${esc(c.clave)}">
+      <span class="nm">${esc(c.nombre)}<span class="sub num">${m.max.peso ? `1RM est. ${fmt(Math.round(m.rm.v * 2) / 2)} kg · ` : ''}${fechaCorta(m.max.fecha)}</span></span>
+      <span class="kg num">${m.max.peso ? `${fmt(m.max.peso)}<small>kg × ${fmt(m.max.reps)}</small>` : `${fmt(m.max.reps)}<small>reps</small>`}</span>
+    </button>`).join('')}</div>`;
+  }
+  return h;
 }
 
 /* ---------- toast ---------- */
@@ -1108,7 +1180,7 @@ function apuntar(form) {
     state.hint = {err: reps == null || reps <= 0 ? 'Pon cuántas repeticiones has hecho.' : 'Pon el peso (0 si es con tu peso corporal).'};
     render(true); return;
   }
-  const m = marcas(e.clave, {excluir: ses.id, antes: ses.fecha});
+  const m = marcas(e.clave, {excluir: ses.id, antes: ses});
   const maxAntes = Math.max(m ? m.max.peso : -Infinity, ...e.sets.map(s => s.peso));
   const rmAntes = Math.max(m ? m.rm.v : -Infinity, ...e.sets.map(e1rm));
   const s = {peso, reps, t: Date.now()};
@@ -1143,13 +1215,28 @@ document.addEventListener('click', ev => {
       if (!state.plan.length) return;
       const grupos = GRUPOS.map(g => g.id).filter(id => state.plan.includes(id));
       if (ses) ses.grupos = grupos;
-      else state.actual = {id: state.fecha, fecha: state.fecha, grupos, titulo: '', ts: 0, inicio: state.fecha === hoy ? Date.now() : undefined, ejercicios: []};
+      else {
+        const previa = state.nueva ? state.actual : null;
+        if (previa && !previa.fin && conSets(previa)) {
+          previa.fin = Math.max(0, ...previa.ejercicios.flatMap(e => e.sets.map(x => x.t || 0))) || Date.now();
+          guardarSesion(previa);
+        }
+        state.actual = {id: idNuevo(state.fecha), fecha: state.fecha, grupos, titulo: '', ts: 0, creada: Date.now(), inicio: state.fecha === hoy ? Date.now() : undefined, ejercicios: []};
+        state.nueva = false;
+      }
       guardarSesion(state.actual);
       state.editGrupos = false; state.plan = null;
       render(true); scrollTo(0, 0); break;
     }
     case 'editar-grupos': state.editGrupos = true; state.plan = null; render(true); break;
-    case 'cancelar-grupos': state.editGrupos = false; state.plan = null; render(true); break;
+    case 'cancelar-grupos':
+      if (state.nueva) { state.nueva = false; state.fecha = state.fechaPrevia; abrirUltimo(); }
+      state.editGrupos = false; state.plan = null; render(true); break;
+    case 'nueva-sesion':
+      state.fechaPrevia = state.fecha; state.fecha = hoy; state.nueva = true;
+      state.editGrupos = false; state.plan = null; state.busca = '';
+      state.activo = state.menu = state.cambiando = state.setSel = state.hint = null;
+      render(true); scrollTo(0, 0); break;
     case 'activar': state.activo = state.activo === clave ? null : clave; state.menu = state.setSel = state.cambiando = null; state.hint = null; render(true); break;
     case 'menu': state.menu = state.menu === clave ? null : clave; state.borrar = null; state.cambiando = null; render(true); break;
     case 'cambiar': state.cambiando = clave; state.buscaCambio = ''; state.menu = null; render(true); document.getElementById('in-cambiar')?.focus(); break;
@@ -1195,10 +1282,12 @@ document.addEventListener('click', ev => {
     case 'ver-progreso': state.vista = 'progreso'; state.detalle = clave; state.menu = null; render(true); scrollTo(0, 0); break;
     case 'ver-sesion': state.histSel = b.dataset.id; state.borrarSes = false; render(true); scrollTo(0, 0); break;
     case 'volver-hist': state.histSel = null; state.borrarSes = false; render(true); break;
-    case 'editar-sesion':
-      state.vista = 'entreno'; state.fecha = b.dataset.fecha; state.actual = null; state.activo = null; state.histSel = null; state.editGrupos = false;
-      { const s = sesion(); if (s?.ejercicios.length) state.activo = s.ejercicios.at(-1).clave; }
-      render(true); scrollTo(0, 0); break;
+    case 'editar-sesion': {
+      const s = state.sesiones.find(x => x.id === b.dataset.id);
+      if (!s) return;
+      state.vista = 'entreno'; state.fecha = s.fecha; state.actual = clone(s); state.nueva = false; state.activo = null; state.histSel = null; state.editGrupos = false;
+      abrirUltimo(); render(true); scrollTo(0, 0); break;
+    }
     case 'borrar-sesion': {
       if (!state.borrarSes) { state.borrarSes = true; render(true); return; }
       const s = state.sesiones.find(x => x.id === b.dataset.id);
@@ -1210,6 +1299,7 @@ document.addEventListener('click', ev => {
     case 'volver': state.detalle = null; render(true); break;
     case 'metrica': state.metrica = b.dataset.m; render(true); break;
     case 'rango': state.rango = +b.dataset.r; render(true); break;
+    case 'filtro-rec': state.filtroRec = b.dataset.g || null; render(true); break;
     case 'filtro':
       state.filtroGrupo = b.dataset.g || null;
       $('#prog-list').innerHTML = listaProgreso();
@@ -1241,12 +1331,21 @@ document.addEventListener('focusin', ev => { if (ev.target.id === 'in-peso' || e
 document.addEventListener('change', ev => {
   if (ev.target.id === 'in-fecha' && ev.target.value) {
     state.fecha = ev.target.value > hoy ? hoy : ev.target.value;
-    state.actual = null; state.activo = null; state.editGrupos = false; state.plan = null;
-    const s = sesion(); if (s?.ejercicios.length) state.activo = s.ejercicios.at(-1).clave;
+    state.editGrupos = false; state.plan = null;
+    if (!state.nueva) { state.actual = null; state.activo = null; abrirUltimo(); }
     ev.target.blur(); render(true);
   }
 });
 document.addEventListener('focusout', () => setTimeout(() => { if (renderPendiente && !escribiendo()) render(); }, 0));
+/* el iPhone puede dejar la app abierta de un día para otro; una sesión a medias se queda donde está */
+document.addEventListener('visibilitychange', () => {
+  const ahora = iso(new Date());
+  if (document.hidden || ahora === hoy) return;
+  const ayer = hoy, ses = state.actual;
+  hoy = ahora;
+  if (state.fecha === ayer && !state.nueva && !(ses && !ses.fin && conSets(ses))) { state.fecha = hoy; state.actual = null; state.activo = null; state.plan = null; abrirUltimo(); }
+  render();
+});
 
 /* ---------- arranque ---------- */
 function abrirUltimo() {
