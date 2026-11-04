@@ -1175,6 +1175,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
+const VERSION = 14;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -1626,7 +1627,7 @@ function vistaAmigos() {
       : a.feed ? `<div class="empty"><b>Aún no hay publicaciones</b>${a.solo ? 'Sigue a alguien en Personas o publica tu primera sesión.' : 'Finaliza una sesión y toca Publicar para ser el primero.'}</div>`
       : a.cargando ? `<div class="empty"><b>Cargando</b>Trayendo las publicaciones…</div>` : '';
   }
-  return h + (cuenta.email ? `<div class="cuenta-txt">${esc(cuenta.email)}</div>` : '') + `<div class="salir">
+  return h + `<div class="cuenta-txt">${cuenta.email ? `${esc(cuenta.email)} · ` : ''}Ferrum ${VERSION}</div><div class="salir">
     ${cuenta.email ? `<button class="chip" data-accion="cerrar-cuenta">Cerrar sesión</button>` : ''}
     <button class="chip danger${a.salir ? ' sure' : ''}" data-accion="borrar-cuenta">${a.salir ? '¿Seguro? Se borra para siempre' : 'Borrar mi cuenta'}</button></div>`;
 }
@@ -1959,7 +1960,11 @@ document.addEventListener('change', ev => {
 });
 document.addEventListener('focusout', () => setTimeout(() => { if (renderPendiente && !escribiendo()) render(); }, 0));
 function refrescarAvisos() { if (nubeLista() && cuenta?.nombre) cargarAvisos().then(() => render()).catch(() => {}); }
-document.addEventListener('visibilitychange', () => { if (!document.hidden) { sincronizar(); refrescarAvisos(); } });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  sincronizar(); refrescarAvisos();
+  navigator.serviceWorker?.getRegistration().then(r => r?.update()).catch(() => {});
+});
 addEventListener('online', () => sincronizar());
 /* el iPhone puede dejar la app abierta de un día para otro; una sesión a medias se queda donde está */
 document.addEventListener('visibilitychange', () => {
@@ -1994,7 +1999,11 @@ async function iniciar() {
   corregirJalon(); abrirUltimo(); render(true);
   if (nubeLista()) { volverDeGoogle(); sincronizar(); refrescarAvisos(); }
   try { await navigator.storage?.persist?.(); } catch {}
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
+  if ('serviceWorker' in navigator) {
+    const habia = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (habia && !escribiendo()) location.reload(); });
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
 }
 iniciar();
 </script>

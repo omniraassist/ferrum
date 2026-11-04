@@ -1,5 +1,5 @@
 // Ferrum: la app abre sin conexión. La página se pide primero a la red para recibir actualizaciones.
-const CACHE = 'ferrum-v13';
+const CACHE = 'ferrum-v14';
 const ARCHIVOS = ['./', './index.html', './manifest.webmanifest', './ferrum-trazo-180.png', './ferrum-trazo-192.png', './ferrum-trazo-512.png'];
 
 self.addEventListener('install', e => {
@@ -23,7 +23,7 @@ self.addEventListener('fetch', e => {
     return;
   }
   if (url.origin !== location.origin) return;
-  e.respondWith(fetch(req).then(res => {
+  e.respondWith(fetch(req.url, {cache: 'no-cache'}).then(res => {
     const copia = res.clone(); caches.open(CACHE).then(c => c.put(req, copia)); return res;
   }).catch(() => caches.match(req).then(hit => hit || caches.match('./index.html'))));
 });
