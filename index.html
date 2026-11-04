@@ -1365,6 +1365,7 @@ async function sincronizarYa() {
     if (cambios) {
       ls.set('lh3_sesiones', state.sesiones);
       if (state.actual) state.actual = clone(state.sesiones.find(x => x.id === state.actual.id) ?? null);
+      corregirJalon();
     }
     const subir = [
       ...state.sesiones.filter(x => (x.ts || 1) > (remotas.get(x.id) ?? -1)).map(x => ({usuario: uid, id: x.id, ts: x.ts || 1, doc: x})),
@@ -1797,6 +1798,18 @@ document.addEventListener('visibilitychange', () => {
 });
 
 /* ---------- arranque ---------- */
+/* corrección puntual: series del 4 nov apuntadas con el peso y las repeticiones al revés */
+function corregirJalon() {
+  const mal = x => (x.peso === 10 && x.reps === 100) || (x.peso === 8 && x.reps === 100) || (x.peso === 12 && x.reps === 85);
+  const s = state.sesiones.find(x => x.fecha === '2026-11-04' && x.ejercicios.some(e => e.clave === 'jalon-al-pecho-neutro' && e.sets.some(mal)));
+  if (!s) return;
+  const ses = clone(s);
+  for (const x of ses.ejercicios.find(e => e.clave === 'jalon-al-pecho-neutro').sets) if (mal(x)) [x.peso, x.reps] = [x.reps, x.peso];
+  guardarSesion(ses);
+  if (state.actual?.id === ses.id) state.actual = clone(ses);
+  if (!nubeLista() || !cuenta?.nombre) return;
+  if (ses.publicada) publicar(ses, true); else subirMarcas().catch(() => {});
+}
 function abrirUltimo() {
   const ses = sesion();
   if (!state.activo && ses?.ejercicios.length) state.activo = ses.ejercicios.at(-1).clave;
@@ -1804,7 +1817,7 @@ function abrirUltimo() {
 async function iniciar() {
   state.modo = 'local'; state.cargado = true;
   if (nubeLista()) { $('#tab-amigos').hidden = false; $('.tabbar').style.setProperty('--tabs', 5); }
-  abrirUltimo(); render(true);
+  corregirJalon(); abrirUltimo(); render(true);
   if (nubeLista()) { volverDeGoogle(); sincronizar(); }
   try { await navigator.storage?.persist?.(); } catch {}
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
