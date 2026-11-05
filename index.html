@@ -562,6 +562,12 @@ details.pr-d[open] summary::after{transform:rotate(180deg);margin-top:5px}
 .hero-sub{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 12px}
 .salir-s{min-height:36px;font-size:13px;font-weight:600;color:var(--muted)}
 .salir-s.sure{color:var(--danger)}
+.srow-w{position:relative;border-bottom:1px solid var(--line)}
+.srow-w:last-child{border-bottom:0}
+.srow-w .srow{border-bottom:0;padding-right:50px}
+.srow-del{position:absolute;top:50%;right:4px;display:grid;place-items:center;width:44px;height:44px;margin-top:-22px;color:var(--faint);transition:color .2s,transform .17s cubic-bezier(.3,1.4,.4,1)}
+.srow-del:active{color:var(--danger);transform:scale(.88)}
+.apuntar.peligro{background:var(--danger);color:#160806}
 .marcos{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 8px;text-align:center}
 .marco{display:grid;justify-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink)}
 .marco small{display:block;font-size:11.5px;font-weight:500;color:var(--muted)}
@@ -878,7 +884,7 @@ const state = {
   plan: null, planFecha: null, editGrupos: false, nueva: false, fechaPrevia: null,
   activo: null, menu: null, borrar: null, setSel: null, inputs: {}, cambiando: null, buscaCambio: '',
   busca: '', buscaProg: '', filtroGrupo: null, filtroRec: null, rango: 7,
-  detalle: null, metrica: 'max', histSel: null, borrarSes: false, msgCopia: '',
+  detalle: null, metrica: 'max', histSel: null, msgCopia: '',
   modo: 'cargando', cargado: false, aviso: '', hint: null,
   nube: '', recTab: 'marcas', capa: null, yoTab: 'perfil', rutEdit: null, calMes: 0, inicio: null, abiertas: new Set(['Objetivo semanal', 'Misiones de la semana']),
   amigos: {modo: 'crear', google: false, pestana: 'feed', feed: null, marcas: null, cargando: false, error: '', ejercicio: null, busca: '', salir: false, abiertos: new Set(),
@@ -1442,6 +1448,14 @@ function pintarCapa() {
       <form class="crear" data-form="gym-otro"><input name="nombre" maxlength="60" placeholder="¿No está? Escribe su nombre" autocomplete="off" aria-label="Otro gimnasio"><button type="submit">Usar</button></form></div>`;
     return;
   }
+  if (c.tipo === 'borrar-ses') {
+    const s = state.sesiones.find(x => x.id === c.id), st = statsSesion(s);
+    el.innerHTML = `<div class="capa-in"><div class="capa-txt"><b>¿Seguro que quieres eliminarla?</b><span>${esc(s.titulo)} · ${esc(fechaCorta(s.fecha))} · ${st.series} ${st.series === 1 ? 'serie' : 'series'}.
+      ${s.publicada ? 'También desaparecerá del feed, con sus comentarios y vídeos.' : ''} Sus récords se recalculan y no se puede deshacer.</span></div>
+      <button class="apuntar peligro" data-accion="confirmar-borrar">Eliminar sesión</button>
+      <button class="ghost" style="width:100%" data-accion="cerrar-capa">Cancelar</button></div>`;
+    return;
+  }
   if (c.tipo === 'liga') {
     el.innerHTML = `<div class="capa-in"><div class="fin-duelo ${c.sube ? 'gana' : 'pierde'}">${c.sube ? '¡Has subido!' : 'Has bajado'}</div>
       <div class="capa-txt"><b>Liga ${esc(c.liga)}</b><span>${c.sube ? 'Nueva semana, nuevos rivales.' : 'Esta semana puedes recuperarla.'}</span></div>
@@ -1681,6 +1695,7 @@ function statsSesion(s) {
   const mins = ts.length && fin > ini ? Math.round((fin - ini) / 60000) : 0;
   return {ejercicios: s.ejercicios.filter(e => e.sets.length).length, series, vol, mins};
 }
+const ICON_BASURA = `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>`;
 function vistaHistorial() {
   if (state.histSel) return vistaSesion(state.histSel);
   const ss = state.sesiones.filter(conSets).slice().reverse();
@@ -1702,13 +1717,13 @@ function vistaHistorial() {
       h += `<div class="month"><span class="label">${parseISO(s.fecha).toLocaleDateString('es-ES', {month: 'long', year: 'numeric'})}</span></div><div class="rows">`;
     }
     const st = statsSesion(s), pr = nRecords(s), d = parseISO(s.fecha);
-    h += `<button class="srow" data-accion="ver-sesion" data-id="${esc(s.id)}">
+    h += `<div class="srow-w"><button class="srow" data-accion="ver-sesion" data-id="${esc(s.id)}">
       <span class="dd"><b class="num">${d.getDate()}</b><span>${d.toLocaleDateString('es-ES', {weekday: 'short'}).replace('.', '')}</span></span>
       <span class="mid"><span class="tt">${esc(s.titulo)}</span>
         <span class="meta num">${st.ejercicios} ${st.ejercicios === 1 ? 'ejercicio' : 'ejercicios'} · ${st.series} series · ${fmt(Math.round(st.vol))} kg${st.mins ? ` · ${st.mins} min` : ''}</span>
         <span class="exs">${esc(s.ejercicios.filter(e => e.sets.length).map(e => e.nombre).join(' · '))}</span></span>
-      <span class="rt">${pr ? `<span class="tag">${pr} ${pr === 1 ? 'récord' : 'récords'}</span>` : ''}${ICON_RIGHT}</span>
-    </button>`;
+      <span class="rt">${pr ? `<span class="tag">${pr} ${pr === 1 ? 'récord' : 'récords'}</span>` : ''}</span>
+    </button><button class="srow-del" data-accion="pedir-borrar" data-id="${esc(s.id)}" aria-label="Eliminar sesión">${ICON_BASURA}</button></div>`;
   }
   return h + `</div>` + copiaSeguridad();
 }
@@ -1802,7 +1817,7 @@ function vistaSesion(id) {
       : `<button class="ghost" data-accion="guardar-rutina" data-id="${esc(s.id)}">Guardar como rutina</button>`) : ''}
     <button class="ghost" data-accion="editar-series" data-id="${esc(s.id)}">Editar pesos y repeticiones</button>
     <button class="ghost" data-accion="editar-sesion" data-id="${esc(s.id)}">Añadir ejercicios o series</button>
-    <button class="chip danger${state.borrarSes ? ' sure' : ''}" data-accion="borrar-sesion" data-id="${esc(s.id)}" style="align-self:center">${state.borrarSes ? '¿Seguro? Se borra entero' : 'Borrar entreno'}</button>
+    <button class="chip danger" data-accion="pedir-borrar" data-id="${esc(s.id)}" style="align-self:center">Eliminar sesión</button>
   </div></div>`;
   return h;
 }
@@ -2108,7 +2123,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 40;
+const VERSION = 41;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -3371,7 +3386,7 @@ function replicar(grupos, copias) {
   if (previa && conSets(previa)) cerrarAbierta(previa);
   else if (previa && !previa.fin) guardarSesion({...previa, ejercicios: [], grupos: []});
   const ses = {id: idNuevo(hoy), fecha: hoy, grupos, titulo: '', ts: 0, creada: Date.now(), inicio: Date.now(), ejercicios};
-  Object.assign(state, {actual: ses, fecha: hoy, nueva: false, editGrupos: false, plan: null, vista: 'entreno', detalle: null, histSel: null, borrarSes: false,
+  Object.assign(state, {actual: ses, fecha: hoy, nueva: false, editGrupos: false, plan: null, vista: 'entreno', detalle: null, histSel: null,
     activo: ejercicios[0].clave, menu: null, cambiando: null, setSel: null, hint: null, busca: ''});
   guardarSesion(ses); render(true); scrollTo(0, 0);
   toast('Sesión replicada', ses.titulo);
@@ -3443,7 +3458,7 @@ document.addEventListener('click', ev => {
   if (b.dataset.vista) {
     const antes = state.vista, misma = antes === b.dataset.vista;
     scrolls[antes] = scrollY;
-    state.vista = b.dataset.vista; state.detalle = null; state.histSel = null; state.borrarSes = false; state.edita = null; state.salirSes = false;
+    state.vista = b.dataset.vista; state.detalle = null; state.histSel = null; state.edita = null; state.salirSes = false;
     Object.assign(state.amigos, {ejercicio: null, perfil: null, perfilPosts: null, verAvisos: false, club: null, clubPosts: null, gym: null, gymPosts: null, guardaRutina: null});
     render(true);
     if (misma) scrollTo({top: 0, behavior: 'smooth'}); else scrollTo(0, scrolls[state.vista] || 0);
@@ -3665,7 +3680,9 @@ document.addEventListener('click', ev => {
       guardarSesion({...ses, ejercicios: [], grupos: []});
       if (ses.fecha === hoy) dejarEntrenando();
       Object.assign(state, {actual: null, nueva: sesionesDe(state.fecha).length > 0, fechaPrevia: state.fecha, salirSes: false, activo: null, menu: null, cambiando: null, setSel: null, hint: null, plan: null});
-      render(true); scrollTo(0, 0); break;
+      render(true); scrollTo(0, 0);
+      if (conSets(ses) && nubeLista()) subirMarcas().catch(() => {});
+      break;
     }
     case 'reabrir':
       delete ses.fin; guardarSesion(ses);
@@ -3673,8 +3690,8 @@ document.addEventListener('click', ev => {
       render(true); break;
     case 'exportar': exportar(); break;
     case 'ver-progreso': state.vista = 'yo'; state.yoTab = 'prog'; state.detalle = clave; state.menu = null; render(true); scrollTo(0, 0); break;
-    case 'ver-sesion': state.histSel = b.dataset.id; state.borrarSes = false; render(true); scrollTo(0, 0); break;
-    case 'volver-hist': state.histSel = null; state.borrarSes = false; render(true); break;
+    case 'ver-sesion': state.histSel = b.dataset.id; render(true); scrollTo(0, 0); break;
+    case 'volver-hist': state.histSel = null; render(true); break;
     case 'editar-series': {
       const vuelta = state.vista === 'entreno';
       state.edita = {id: b.dataset.id, v: {}, vuelta};
@@ -3689,15 +3706,18 @@ document.addEventListener('click', ev => {
       state.vista = 'entreno'; state.fecha = s.fecha; state.actual = clone(s); state.nueva = false; state.activo = null; state.histSel = null; state.editGrupos = false;
       abrirUltimo(); render(true); scrollTo(0, 0); break;
     }
-    case 'borrar-sesion': {
-      if (!state.borrarSes) { state.borrarSes = true; render(true); return; }
-      const s = state.sesiones.find(x => x.id === b.dataset.id);
-      if (s) {
-        if (s.publicada) quitarRemota(s.id).catch(() => {});
-        const v = clone(s); v.ejercicios = []; v.grupos = []; guardarSesion(v);
-      }
-      if (state.actual?.id === b.dataset.id) state.actual = null;
-      state.histSel = null; state.borrarSes = false; render(true); break;
+    case 'pedir-borrar': state.capa = {tipo: 'borrar-ses', id: b.dataset.id}; pintarCapa(); break;
+    case 'confirmar-borrar': {
+      const a = state.amigos, s = state.sesiones.find(x => x.id === state.capa.id), desdeDetalle = !!state.histSel;
+      state.capa = null; pintarCapa();
+      if (s.publicada) { quitarRemota(s.id).catch(() => {}); a.feed = null; a.yoPosts = a.yoPosts?.filter(p => p.sesion !== s.id); }
+      guardarSesion({...s, ejercicios: [], grupos: []});
+      if (state.actual?.id === s.id) state.actual = null;
+      state.histSel = null; render(true);
+      if (desdeDetalle) scrollTo(0, 0);
+      toast('Sesión eliminada', s.titulo);
+      if (nubeLista()) subirMarcas().catch(() => {});
+      break;
     }
     case 'detalle': state.detalle = b.dataset.clave; render(true); scrollTo(0, 0); break;
     case 'volver': state.detalle = null; render(true); break;
