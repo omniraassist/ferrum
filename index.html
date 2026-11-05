@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Ferrum</title>
 <meta name="description" content="Diario de fuerza: apunta tus series y mira tus récords.">
-<meta name="theme-color" content="#0A0D06">
+<meta name="theme-color" content="#0E1A11">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -15,18 +15,19 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Outfit:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap">
 <style>
 /* Layout: una columna de app nativa con pestañas flotantes (Entreno · Historial · Progreso · Récords).
    Dirección: oliva casi negro con resplandor suave, tarjetas tipo cristal muy redondeadas, panel lima de cabecera,
    accesos en cuadrados con icono y barra inferior con la pestaña activa desplegada. */
 :root{
-  --bg:#0A0D06; --surface:#171B10; --surface-2:#232819; --surface-3:#303623; --line:#292F1E; --line-2:#3C4330;
-  --ink:#F5F8EA; --muted:#A1A891; --faint:#666D56;
-  --lime:#D4F53C; --lime-ink:#DDF85E; --lime-soft:#262E10; --on-lime:#0A0D06;
+  --bg:#0E1A11; --surface:rgba(255,255,255,.06); --surface-2:rgba(255,255,255,.09); --surface-3:rgba(255,255,255,.14); --line:rgba(236,246,207,.12); --line-2:rgba(236,246,207,.2);
+  --ink:#ECF6CF; --muted:rgba(236,246,207,.62); --faint:rgba(236,246,207,.38);
+  --lime:#DDF3A2; --lime-ink:#DDF3A2; --lime-soft:rgba(221,243,162,.12); --on-lime:#0E1A11;
   --gold:var(--lime); --gold-ink:var(--lime-ink); --gold-deep:#A9C62A; --gold-soft:var(--lime-soft); --on-gold:var(--on-lime);
   --danger:#FF7066; --ok:var(--lime);
-  --f-body:"Outfit",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-serif:"Instrument Serif",Georgia,serif;
+  --f-body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -361,59 +362,54 @@ button.set-chip.vacia{box-shadow:inset 0 0 0 1px var(--line-2)}
 .dias button{flex:1;min-height:40px;border-radius:14px;background:var(--surface-2);font-weight:800;color:var(--muted)}
 .dias button[aria-pressed="true"]{background:var(--lime);color:var(--on-lime)}
 .cartas{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-/* carta graduada: cápsula de metacrilato con etiqueta, y la carta holográfica dentro */
-.carta{--c:#D8D8D2;--e1:#EDEDE7;--e2:#CFCFC8;--et:#101010;--foil:0;display:block;position:relative;width:100%;aspect-ratio:5/8;text-align:left;container-type:inline-size;font-family:var(--f-body)}
-.carta.rara{--c:#6FC2FF;--e1:#0E2C4E;--e2:#16487C;--et:#E8F4FF;--foil:.18}
-.carta.epica{--c:#D39BFF;--e1:#22104A;--e2:#4B1F93;--et:#F4E9FF;--foil:.32}
-.carta.legendaria{--c:#FFD76A;--e1:#FFE9A8;--e2:#E2A42C;--et:#1C1200;--foil:.42}
-.carta.dorada{--e1:#FFE9A8;--e2:#E2A42C;--et:#1C1200;--c:#FFD76A;--foil:.4}
+/* carta de bestia: fina, con marco según la rareza y lámina holográfica en las mejores */
+.carta{--a:#C9D6BF;--b:#8FA585;--in1:#F4F7E8;--in2:#DDE6CF;--foil:0;display:block;position:relative;width:100%;aspect-ratio:5/7;text-align:left;container-type:inline-size;font-family:var(--f-body);color:#16261A}
+.carta.rara{--a:#D6F2FF;--b:#6FB7E8;--in1:#EEF8FF;--in2:#CFE4F2;--foil:.12}
+.carta.epica{--a:#E9D9FF;--b:#A17BE0;--in1:#F6F0FF;--in2:#DFD0F4;--foil:.2}
+.carta.legendaria{--a:#FFF0B5;--b:#E2A42C;--in1:#FFF8DC;--in2:#F1DDA6;--foil:.3}
+.carta.dorada{--a:#FFE9A8;--b:#D49A12;--foil:.3}
 .slab{position:absolute;inset:0;display:block;transform-style:preserve-3d;transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg))}
-.cara{position:absolute;inset:0;display:flex;flex-direction:column;gap:2.4cqw;padding:3cqw;border-radius:4.5cqw;background:linear-gradient(135deg,#34343A,#121214 34%,#26262B 62%,#0E0E10);box-shadow:inset 0 0 0 .7cqw rgba(255,255,255,.34),inset 0 0 6cqw rgba(255,255,255,.1);backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden}
-.frente{transform:translateZ(2.6cqw)}
-.dorso{transform:rotateY(180deg) translateZ(2.6cqw);align-items:center;justify-content:center;gap:4cqw;color:var(--c);text-align:center;font-size:4.4cqw;font-weight:700;letter-spacing:.14em}
-.dorso img{width:34%;border-radius:22%}
-.dorso small{font-size:3.4cqw;color:var(--muted);letter-spacing:.06em;font-weight:500}
-.canto{position:absolute;background:linear-gradient(90deg,#55555C,#C8C8CF 45%,#3B3B42)}
-.canto.i,.canto.d{top:2cqw;bottom:2cqw;width:5.2cqw;left:50%;margin-left:-2.6cqw}
+.cara{position:absolute;inset:0;display:block;padding:3cqw;border-radius:5cqw;background:linear-gradient(135deg,var(--a),var(--b) 55%,var(--a));backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;box-shadow:0 3cqw 7cqw -3cqw rgba(0,0,0,.7)}
+.frente{transform:translateZ(1cqw)}
+.dorso{transform:rotateY(180deg) translateZ(1cqw);display:grid;place-items:center;align-content:center;gap:2cqw;color:var(--ink);background:radial-gradient(70% 80% at 50% 62%,#1D3A24,#3C5A3E 55%,#B8C9AC)}
+.dorso b{font-size:13cqw;font-weight:600;letter-spacing:-.03em}.dorso b i{font-family:var(--f-serif);font-weight:400}
+.dorso small{font-size:3.2cqw;opacity:.8}
+.canto{position:absolute;background:var(--b)}
+.canto.i,.canto.d{top:4cqw;bottom:4cqw;width:2cqw;left:50%;margin-left:-1cqw}
 .canto.i{transform:translateX(-50cqw) rotateY(-90deg)}
 .canto.d{transform:translateX(50cqw) rotateY(90deg)}
-.canto.s,.canto.f{left:2cqw;right:2cqw;height:5.2cqw;top:50%;margin-top:-2.6cqw;background:linear-gradient(0deg,#55555C,#C8C8CF 45%,#3B3B42)}
-.canto.s{transform:translateY(-80cqw) rotateX(90deg)}
-.canto.f{transform:translateY(80cqw) rotateX(-90deg)}
-.etq{display:grid;grid-template-columns:1fr auto;gap:2cqw;align-items:center;padding:2.4cqw 3cqw;border-radius:1.8cqw;background:linear-gradient(100deg,var(--e1),var(--e2));color:var(--et);box-shadow:0 0 0 .5cqw rgba(0,0,0,.5)}
-.etq span{display:block;min-width:0}
-.etq-i{font-size:3.5cqw;line-height:1.28;font-weight:600;letter-spacing:.02em;text-transform:uppercase}
-.etq-i b{display:block;font-size:4.7cqw;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nota{text-align:right;line-height:1}
-.nota b{display:block;font-family:"Anton",Impact,sans-serif;font-weight:400;font-size:10.5cqw}
-.nota small{font-size:2.8cqw;font-weight:800;letter-spacing:.04em}
-.ventana{position:relative;flex:1;min-height:0;display:block;padding:2.6cqw;border-radius:1.6cqw;background:#D9D9D2}
-.rara .ventana,.epica .ventana,.legendaria .ventana,.dorada .ventana{background:linear-gradient(115deg,#FF5FB2,#FFE36B,#5CF2C8,#6FA0FF,#FF5FB2);background-size:300% 300%;background-position:var(--mx,30%) var(--my,30%)}
-.ventana::after{content:"";position:absolute;inset:0;border-radius:inherit;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='48'%3E%3Cpath d='M0 48L28 0l28 48z' fill='none' stroke='white' stroke-opacity='.55'/%3E%3Cpath d='M28 48L14 24h28z' fill='white' fill-opacity='.14'/%3E%3C/svg%3E");background-size:24cqw 20cqw;mix-blend-mode:overlay;pointer-events:none}
-.carta-in{position:relative;display:block;height:100%;overflow:hidden;background:#0A0A0C;isolation:isolate;z-index:1}
-.carta-a{position:absolute;inset:0;display:block;background-size:cover;background-position:center}
-.titulo{position:absolute;left:-2%;right:-2%;top:2.5cqw;text-align:center;font-family:"Anton",Impact,sans-serif;font-weight:400;line-height:1;text-transform:uppercase;white-space:nowrap;background:linear-gradient(100deg,#fff 10%,var(--c) 45%,#fff 60%,var(--c));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 .6cqw 1.2cqw rgba(0,0,0,.7))}
-.franja{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:center;gap:2cqw;padding:2cqw 3cqw;background:linear-gradient(90deg,rgba(0,0,0,.88),rgba(0,0,0,.55));color:#fff;font-size:3.7cqw;line-height:1.2;font-weight:600}
-.franja b{flex:none;font-family:"Anton",Impact,sans-serif;font-weight:400;font-size:7cqw;color:var(--c)}
-.foil{position:absolute;inset:0;opacity:var(--foil);mix-blend-mode:color-dodge;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='48'%3E%3Cpath d='M0 48L28 0l28 48z' fill='none' stroke='white' stroke-opacity='.55'/%3E%3Cpath d='M28 48L14 24h28z' fill='white' fill-opacity='.14'/%3E%3C/svg%3E"),linear-gradient(115deg,transparent 18%,#FF4FA8 32%,#FFE96B 44%,#4CFFC4 56%,#5C8CFF 68%,transparent 82%);background-size:24cqw 20cqw,280% 280%;background-position:0 0,var(--mx,30%) var(--my,30%)}
-.reflejo{position:absolute;inset:0;pointer-events:none;background:linear-gradient(112deg,transparent 40%,rgba(255,255,255,.2) 48%,rgba(255,255,255,.04) 54%,transparent 60%);background-size:260% 100%;background-position:var(--mx,70%) 0}
-.carta.legendaria .cara{box-shadow:inset 0 0 0 .7cqw rgba(255,226,140,.75),0 0 7cqw 1cqw rgba(255,190,60,.5)}
-.carta.epica .cara{box-shadow:inset 0 0 0 .7cqw rgba(214,160,255,.6),0 0 6cqw .5cqw rgba(170,90,255,.45)}
-.carta.rara .cara{box-shadow:inset 0 0 0 .7cqw rgba(120,195,255,.5),0 0 5cqw 0 rgba(70,160,255,.35)}
-.carta.bloqueada{--foil:0;--e1:#2A2F20;--e2:#1F2318;--et:#8D947D}
-.carta.bloqueada .cara{box-shadow:inset 0 0 0 .7cqw rgba(255,255,255,.1)}
-.carta.bloqueada .ventana{background:#2A2F20}
-.carta.bloqueada .carta-a{filter:grayscale(1) brightness(.34) contrast(1.2) blur(1.2px)}
-.carta.bloqueada .titulo{opacity:.2}
-.copias{position:absolute;right:3%;top:-2%;z-index:3;background:var(--lime);color:var(--on-lime);border-radius:999px;padding:1px 8px;font-size:11.5px;font-weight:800}
+.canto.s,.canto.f{left:4cqw;right:4cqw;height:2cqw;top:50%;margin-top:-1cqw}
+.canto.s{transform:translateY(-70cqw) rotateX(90deg)}
+.canto.f{transform:translateY(70cqw) rotateX(-90deg)}
+.k-in{display:flex;flex-direction:column;gap:1.4cqw;height:100%;padding:2.4cqw 2.8cqw;border-radius:3cqw;background:linear-gradient(170deg,var(--in1),var(--in2))}
+.k-h{display:flex;align-items:center;gap:1.8cqw}
+.k-n{flex:1;min-width:0;font-size:5.4cqw;font-weight:700;letter-spacing:-.03em;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.k-fz{font-size:5.4cqw;font-weight:700;color:#A5281B;white-space:nowrap}.k-fz small{font-size:2.4cqw;margin-right:.4cqw}
+.k-t{display:grid;place-items:center;flex:none;width:6cqw;height:6cqw;border-radius:50%;background:#16261A;color:#DDF3A2;font-size:2.8cqw;font-weight:700}
+.carta-a{display:block;flex:0 0 46%;border-radius:1.4cqw;background-color:#22352A;background-size:cover;background-position:center 30%;box-shadow:0 0 0 .6cqw var(--b)}
+.k-s{text-align:center;font-size:2.5cqw;font-weight:600;opacity:.65}
+.k-at{flex:1;display:flex;flex-direction:column;justify-content:center;gap:1.8cqw;min-height:0}
+.k-a{display:grid;grid-template-columns:1fr auto;gap:2cqw;align-items:center}
+.k-a b{display:block;font-size:3.5cqw;font-weight:700;line-height:1.1}.k-a small{display:block;font-size:2.6cqw;line-height:1.15;opacity:.72}.k-a strong{font-size:5.2cqw;font-weight:700}
+.k-st{display:grid;grid-template-columns:repeat(3,1fr);padding-top:1.1cqw;border-top:.2cqw solid rgba(22,38,26,.22);font-size:2.1cqw;text-align:center;opacity:.8}.k-st b{display:block;font-size:2.5cqw}
+.k-f{font-family:var(--f-serif);font-style:italic;font-size:3cqw;line-height:1.15;text-align:center;opacity:.8}
+.k-p{display:flex;justify-content:space-between;align-items:baseline;font-size:2.3cqw;font-weight:600}.k-p b{font-size:3cqw;font-weight:600}.k-p i{font-family:var(--f-serif);font-weight:400}
+.foil{position:absolute;inset:0;opacity:var(--foil);mix-blend-mode:color-dodge;pointer-events:none;background:linear-gradient(115deg,transparent 22%,#FF4FA8 36%,#FFE96B 47%,#4CFFC4 58%,#5C8CFF 70%,transparent 84%);background-size:280% 280%;background-position:var(--mx,30%) var(--my,30%)}
+.reflejo{position:absolute;inset:0;pointer-events:none;background:linear-gradient(112deg,transparent 42%,rgba(255,255,255,.28) 49%,transparent 56%);background-size:260% 100%;background-position:var(--mx,70%) 0}
+.carta.legendaria .cara{box-shadow:0 0 7cqw .5cqw rgba(255,200,70,.55)}
+.carta.bloqueada{--a:rgba(255,255,255,.14);--b:rgba(255,255,255,.08);--in1:#1C2B20;--in2:#16231A;--foil:0;color:var(--ink)}
+.carta.bloqueada .carta-a{filter:grayscale(1) brightness(.4) blur(1px)}
+.carta.bloqueada .k-t{background:rgba(255,255,255,.14);color:var(--muted)}
+.carta.bloqueada .k-fz{color:var(--muted)}
+.copias{position:absolute;right:3%;top:-2%;z-index:3;background:var(--lime);color:var(--on-lime);border-radius:999px;padding:1px 8px;font-size:11.5px;font-weight:700}
 .carta.tres{touch-action:none;cursor:grab}
 .tres .slab{animation:balanceo 7s ease-in-out infinite}
-.tres .foil,.tres .ventana,.tres .reflejo{animation:corre 7s ease-in-out infinite alternate}
-.tres.manual .slab,.tres.manual .foil,.tres.manual .ventana,.tres.manual .reflejo{animation:none}
+.tres .foil,.tres .reflejo{animation:corre 7s ease-in-out infinite alternate}
+.tres.manual .slab,.tres.manual .foil,.tres.manual .reflejo{animation:none}
 .tres.nueva:not(.manual) .slab{animation:giro3d 1.5s cubic-bezier(.16,.8,.24,1) both,balanceo 7s 1.5s ease-in-out infinite}
-@keyframes balanceo{0%,100%{transform:rotateY(-20deg) rotateX(4deg)}50%{transform:rotateY(20deg) rotateX(-3deg)}}
-@keyframes giro3d{from{transform:translateZ(-340px) rotateY(-780deg) rotateX(14deg)}to{transform:rotateY(-20deg) rotateX(4deg)}}
-@keyframes corre{from{--mx:0%;--my:10%;background-position:0% 10%}to{--mx:100%;--my:90%;background-position:100% 90%}}
+@keyframes balanceo{0%,100%{transform:rotateY(-16deg) rotateX(3deg)}50%{transform:rotateY(16deg) rotateX(-2deg)}}
+@keyframes giro3d{from{transform:translateZ(-340px) rotateY(-780deg) rotateX(14deg)}to{transform:rotateY(-16deg) rotateX(3deg)}}
+@keyframes corre{from{background-position:0% 10%}to{background-position:100% 90%}}
 #capa{position:fixed;inset:0;z-index:40;display:none;place-items:center;padding:24px;background:rgba(6,6,8,.93);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 #capa.on{display:grid}
 .capa-in{width:min(300px,78vw);display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center}
@@ -612,6 +608,72 @@ textarea{touch-action:manipulation}
 .tab[aria-pressed="true"]{flex:0 0 auto;padding:0 18px;font-size:14px;font-weight:700}
 .tab svg{width:21px;height:21px}
 .tab.dot::after{top:9px;right:calc(50% - 15px)}
+/* Bruma: fondo de niebla verde, sin cajas pesadas, una sola cosa protagonista por pantalla */
+html{background:var(--bg)}
+body{background:radial-gradient(70% 34% at 66% 6%,#4E6B45 0%,transparent 72%) no-repeat,radial-gradient(90% 40% at 12% 100%,#2B4A2F 0%,transparent 72%) fixed no-repeat,var(--bg)}
+body::before,body:has(.hub)::before{background:transparent}
+.hero h1,.det h1,.hub h1,.pf h1{font-weight:600;letter-spacing:-.035em;font-size:clamp(36px,10.5vw,46px);line-height:1.02}
+h2,.card-h h2,.next h2,.sec-h h2{font-family:var(--f-serif);font-style:italic;font-weight:400;font-size:24px;letter-spacing:-.01em}
+.label{font-weight:500}
+.card,.next,.week,.ex,.rows,.post,.sx,.empty,.stats > div,.sumrow > div,.aviso,.empezar,.hoytoca,.pareja,.tile{background:var(--surface);box-shadow:none;border-radius:22px;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.ex.on{box-shadow:inset 0 0 0 1px var(--line-2)}
+.stats > div,.sumrow > div{border-radius:18px}
+.apuntar,.finbtn,.sobre-btn,.ghost,.seguir,.mini,.post-act,.chip,.gchip,.datepill,.go,.tab,.editbtn,.back{border-radius:16px;font-weight:600}
+.apuntar{background:var(--lime);color:var(--on-lime)}
+.apuntar::after{content:none}
+.finbtn{box-shadow:none;background:var(--surface-2);color:var(--ink)}
+.finbtn::before{content:none}
+.sobre-btn,.hub .sobre-btn{background:var(--lime);color:var(--on-lime);animation:none}
+/* cabecera sin bloque de color */
+.hub{margin:0 0 14px;padding:calc(10px + env(safe-area-inset-top,0px)) 0 0;border-radius:0;background:none;color:var(--ink)}
+.hub-h .label{color:var(--muted)}
+.hub .datepill{background:var(--surface);color:var(--ink)}
+.hub h1{margin:14px 0 14px;font-weight:600}
+.hub-in{background:var(--surface);border-radius:20px;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.hub-n small,.hub .hub-msg{color:var(--muted)}
+.hub .barra{background:var(--line)}.hub .barra i{background:var(--lime)}
+.hub .ring circle:first-child{stroke:var(--line)}.hub .ring circle:last-child{stroke:var(--lime)}
+.accion{color:var(--muted);font-weight:500}
+.accion i{background:var(--surface);color:var(--ink);border-radius:16px}
+.tile[aria-pressed="true"]{background:var(--surface-3);color:var(--ink)}
+.tile[aria-pressed="true"] i{background:var(--lime);color:var(--on-lime)}
+.tile[aria-pressed="true"] small{color:var(--muted)}
+.tile i{background:var(--surface-2);color:var(--ink)}
+/* récords y resúmenes: sin bloques lima */
+.pr,.fin-card,.liga{background:var(--surface);color:var(--ink);box-shadow:none;border-radius:22px}
+.pr .label,.fin-card .label{color:var(--muted)}
+.pr-h small,.fin-grid div{background:var(--surface-2)}
+.last{color:var(--muted)}.last b{color:var(--ink)}
+.rep,.goal{background:var(--surface-2);color:var(--ink)}
+.rep .r,.goal span{color:var(--muted)}
+.liga b{font-family:var(--f-serif);font-style:italic;font-weight:400;font-size:32px}
+.liga strong{color:var(--lime);font-weight:600}
+.rival,.duelo{background:var(--surface);box-shadow:none;border-radius:22px}
+.rival-h,.duelo-h,.rival small,.duelo-f small{color:var(--muted)}
+.rival-h b{color:var(--ink);font-family:var(--f-serif);font-style:italic;font-weight:400;font-size:24px}
+.rival-f,.duelo-f,.marcador{color:var(--ink)}
+.rival-f .barra{background:var(--line)}.rival-f.el .barra i{background:var(--muted)}
+.hoytoca{background:none;padding:6px 2px 8px;-webkit-backdrop-filter:none;backdrop-filter:none}
+.hoytoca b{font-family:var(--f-serif);font-style:italic;font-weight:400;font-size:46px;line-height:1.02}
+.hoytoca .label{color:var(--muted)}
+.ava{background:var(--lime);color:var(--on-lime)}
+.tag{background:var(--lime-soft);color:var(--lime-ink);font-weight:600}
+.nv{background:var(--surface-2);color:var(--muted)}
+.ex-n,.ex.on .ex-n{background:var(--surface-2);color:var(--ink)}
+.seg{background:var(--surface);border-radius:18px}
+.seg button{border-radius:14px}
+.seg button[aria-pressed="true"]{background:var(--surface-3);color:var(--ink)}
+.gchip[aria-pressed="true"],.mini[aria-pressed="true"],.dias button[aria-pressed="true"]{background:var(--lime);color:var(--on-lime)}
+.logger .step{background:var(--surface);border-radius:18px}
+.step-row button{background:var(--surface-2)}
+/* barra inferior discreta */
+.tabbar{border-radius:22px;background:rgba(14,26,17,.72);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);box-shadow:inset 0 0 0 1px var(--line)}
+.tab{border-radius:16px;background:none!important;color:var(--faint)}
+.tab[aria-pressed="true"]{flex:1;padding:0;font-size:0;color:var(--ink)}
+#tab-entreno,#tab-entreno[aria-pressed="true"]{flex:1;width:auto;height:50px;min-height:50px;margin:0;font-size:0;border-radius:16px;background:var(--lime)!important;color:var(--on-lime);box-shadow:none}
+#tab-entreno svg{width:24px;height:24px}
+.tab.dot::after{top:10px;right:calc(50% - 14px);width:7px;height:7px;background:var(--lime)}
+.fin-duelo.gana{color:var(--lime)}
 </style>
 </head>
 <body>
@@ -1080,23 +1142,22 @@ function retosMes() {
 }
 /* ---------- progreso: XP, objetivos, misiones y cartas ---------- */
 const CARTAS = [
-  {id: 'dios', t: 'Dios', n: 'Dios del Hierro', r: 'legendaria', lema: 'Levanta lo que nadie más puede.', c: '100 sesiones', ok: e => e.ses >= 100},
-  {id: 'barra', t: 'Barra', n: 'Barra Eterna', r: 'legendaria', lema: 'Nunca deja de arder.', c: '12 semanas seguidas', ok: e => e.racha >= 12},
-  {id: 'trono', t: 'Trono', n: 'Trono del Millón', r: 'legendaria', lema: 'Mil toneladas para sentarse aquí.', c: '1.000 toneladas levantadas', ok: e => e.vol >= 1e6},
-  {id: 'peso-muerto', t: 'Muerto', n: 'Peso Muerto Supremo', r: 'epica', lema: 'El suelo suelta lo que tú agarras.', c: '50 sesiones', ok: e => e.ses >= 50},
-  {id: 'press', t: 'Tormenta', n: 'Press de la Tormenta', r: 'epica', lema: 'Rompe el techo.', c: '25 récords', ok: e => e.recs >= 25},
-  {id: 'sentadilla', t: 'Imposible', n: 'Sentadilla Imposible', r: 'epica', lema: 'Cuando bajas, tiembla todo.', c: '100 toneladas levantadas', ok: e => e.vol >= 1e5},
-  {id: 'disco', t: 'Voltaico', n: 'Disco Voltaico', r: 'rara', lema: 'No frena, no duda.', c: '4 semanas seguidas', ok: e => e.racha >= 4},
-  {id: 'rack', t: 'Acero', n: 'Rack de Acero', r: 'rara', lema: 'La fuerza se construye despacio.', c: '10 sesiones', ok: e => e.ses >= 10},
-  {id: 'cinturon', t: 'Fuego', n: 'Cinturón de Fuego', r: 'rara', lema: 'Aprieta y a por la marca.', c: '5 récords', ok: e => e.recs >= 5},
-  {id: 'mancuerna', t: 'Inicio', n: 'Primera Mancuerna', r: 'comun', lema: 'Todo empieza con la primera.', c: 'Primera sesión', ok: e => e.ses >= 1},
-  {id: 'shaker', t: 'Alba', n: 'Shaker del Alba', r: 'comun', lema: 'El día es de quien madruga.', c: 'Entrena antes de las 9', ok: e => e.temprano},
-  {id: 'kettlebell', t: 'Noche', n: 'Kettlebell Nocturna', r: 'comun', lema: 'La noche también cuenta.', c: 'Entrena después de las 21', ok: e => e.noche},
+  {id: 'dios', tipo: 'Fuerza', fz: 250, ataques: [{n: 'Levantada divina', d: 'Nadie la ha visto bajar la barra.', p: 150}, {n: 'Récord absoluto', d: 'Roba la corona del rival.', p: 220}], debil: 'Ninguna', resiste: 'Todo', t: 'Dios', n: 'Dios del Hierro', r: 'legendaria', lema: 'Levanta lo que nadie más puede.', c: '100 sesiones', ok: e => e.ses >= 100},
+  {id: 'barra', tipo: 'Fuerza', fz: 230, ataques: [{n: 'Fuego eterno', d: 'Arde mientras dure tu racha.', p: 140}, {n: 'Clean & Jerk', d: 'Suma 2 semanas a tu racha.', p: 200}], debil: 'Ninguna', resiste: 'Cansancio', t: 'Barra', n: 'Barra Eterna', r: 'legendaria', lema: 'Nunca deja de arder.', c: '12 semanas seguidas', ok: e => e.racha >= 12},
+  {id: 'trono', tipo: 'Fuerza', fz: 240, ataques: [{n: 'Millón de kilos', d: 'Aplasta todo el volumen rival.', p: 160}, {n: 'Reinado', d: 'Conserva tu liga una semana.', p: 210}], debil: 'Ninguna', resiste: 'Descensos', t: 'Trono', n: 'Trono del Millón', r: 'legendaria', lema: 'Mil toneladas para sentarse aquí.', c: '1.000 toneladas levantadas', ok: e => e.vol >= 1e6},
+  {id: 'peso-muerto', tipo: 'Tirón', fz: 170, ataques: [{n: 'Peso muerto', d: 'Levanta lo que otros dejan.', p: 100}, {n: 'Agarre total', d: 'Impide soltar la barra.', p: 130}], debil: 'Lumbares', resiste: 'Gravedad', t: 'Muerto', n: 'Peso Muerto Supremo', r: 'epica', lema: 'El suelo suelta lo que tú agarras.', c: '50 sesiones', ok: e => e.ses >= 50},
+  {id: 'press', tipo: 'Empuje', fz: 160, ataques: [{n: 'Press militar', d: 'Rompe el techo del gimnasio.', p: 90}, {n: 'Rayo', d: 'Golpea dos veces en días de hombro.', p: 120}], debil: 'Hombros', resiste: 'Lluvia', t: 'Tormenta', n: 'Press de la Tormenta', r: 'epica', lema: 'Rompe el techo.', c: '25 récords', ok: e => e.recs >= 25},
+  {id: 'sentadilla', tipo: 'Pierna', fz: 180, ataques: [{n: 'Sentadilla', d: 'El suelo tiembla al bajar.', p: 110}, {n: 'Última repetición', d: 'Duplica su fuerza al fallo.', p: 140}], debil: 'Escaleras', resiste: 'Dolor', t: 'Imposible', n: 'Sentadilla Imposible', r: 'epica', lema: 'Cuando bajas, tiembla todo.', c: '100 toneladas levantadas', ok: e => e.vol >= 1e5},
+  {id: 'disco', tipo: 'Empuje', fz: 110, ataques: [{n: 'Descarga', d: 'Da energía para otra serie.', p: 50}, {n: 'Disco de 20', d: 'Añade peso al rival.', p: 80}], debil: 'Humedad', resiste: 'Óxido', t: 'Voltaico', n: 'Disco Voltaico', r: 'rara', lema: 'No frena, no duda.', c: '4 semanas seguidas', ok: e => e.racha >= 4},
+  {id: 'rack', tipo: 'Pierna', fz: 120, ataques: [{n: 'Sentadilla', d: 'Cubre a todo el equipo.', p: 60}, {n: 'Barra de seguridad', d: 'Evita un fallo.', p: 70}], debil: 'Colas', resiste: 'Golpes', t: 'Acero', n: 'Rack de Acero', r: 'rara', lema: 'La fuerza se construye despacio.', c: '10 sesiones', ok: e => e.ses >= 10},
+  {id: 'cinturon', tipo: 'Core', fz: 100, ataques: [{n: 'Apretón', d: 'Sube 5 la fuerza de la serie.', p: 40}, {n: 'Fuego lumbar', d: 'Quema la siguiente repetición.', p: 70}], debil: 'Comida', resiste: 'Dolor', t: 'Fuego', n: 'Cinturón de Fuego', r: 'rara', lema: 'Aprieta y a por la marca.', c: '5 récords', ok: e => e.recs >= 5},
+  {id: 'mancuerna', tipo: 'Empuje', fz: 60, ataques: [{n: 'Curl', d: 'Primer golpe de todos.', p: 20}, {n: 'Constancia', d: 'Suma si vuelves mañana.', p: 30}], debil: 'Pereza', resiste: 'Nada', t: 'Inicio', n: 'Primera Mancuerna', r: 'comun', lema: 'Todo empieza con la primera.', c: 'Primera sesión', ok: e => e.ses >= 1},
+  {id: 'shaker', tipo: 'Core', fz: 50, ataques: [{n: 'Batido', d: 'Recupera energía.', p: 20}, {n: 'Madrugón', d: 'Actúa antes que nadie.', p: 30}], debil: 'Sueño', resiste: 'Frío', t: 'Alba', n: 'Shaker del Alba', r: 'comun', lema: 'El día es de quien madruga.', c: 'Entrena antes de las 9', ok: e => e.temprano},
+  {id: 'kettlebell', tipo: 'Tirón', fz: 70, ataques: [{n: 'Swing', d: 'Oscila y golpea.', p: 30}, {n: 'Turno de noche', d: 'Más fuerte tras las 21.', p: 40}], debil: 'Madrugar', resiste: 'Sombras', t: 'Noche', n: 'Kettlebell Nocturna', r: 'comun', lema: 'La noche también cuenta.', c: 'Entrena después de las 21', ok: e => e.noche},
 ];
 /* cartas aún sin ilustración: se ven como próximamente y no salen en los sobres */
 const SIN_ARTE = new Set();
 const RAREZA = {comun: 'Común', rara: 'Rara', epica: 'Épica', legendaria: 'Legendaria'};
-const NOTA = {comun: ['7', 'NM'], rara: ['8.5', 'NM-MT'], epica: ['9.5', 'MINT'], legendaria: ['10', 'GEM MT']};
 const RANGOS = [[30, 'Titán'], [20, 'Élite'], [15, 'Guerrero'], [10, 'Atleta'], [5, 'Aprendiz'], [1, 'Novato']];
 const hash = t => { let h = 2166136261; for (const c of String(t)) { h ^= c.codePointAt(0); h = Math.imul(h, 16777619); } h ^= h >>> 15; h = Math.imul(h, 2246822519); h ^= h >>> 13; return (h >>> 0) / 2 ** 32; };
 /* el sobre sale del id, así da la misma carta en todos los móviles */
@@ -1191,20 +1252,23 @@ function hub(titulo) {
     </div></section>`;
 }
 function htmlCarta(c, {copias = 0, bloqueada = false, nueva = false, accion = '', tres = false} = {}) {
-  const num = String(CARTAS.indexOf(c) + 1).padStart(3, '0'), [nota, grado] = NOTA[c.r];
+  const num = String(CARTAS.indexOf(c) + 1).padStart(3, '0'), total = String(CARTAS.length).padStart(3, '0');
   const clases = `carta ${c.r}${bloqueada ? ' bloqueada' : ''}${copias >= 3 ? ' dorada' : ''}${nueva ? ' nueva' : ''}${tres ? ' tres' : ''}`;
   const tag = accion ? `button data-accion="${accion}" data-c="${c.id}"` : 'div';
   const arte = SIN_ARTE.has(c.id) ? '' : ` style="background-image:url(cartas/${c.id}.jpg)"`;
+  const ataques = bloqueada ? `<span class="k-a"><span><b>Por descubrir</b><small>${esc(c.c)}</small></span></span>`
+    : c.ataques.map(a => `<span class="k-a"><span><b>${esc(a.n)}</b><small>${esc(a.d)}</small></span><strong class="num">${a.p}</strong></span>`).join('');
   return `<${tag} class="${clases}" aria-label="${esc(bloqueada ? `Carta bloqueada: ${c.c}` : c.n)}">${copias > 1 ? `<span class="copias num">×${copias}</span>` : ''}
-    <span class="slab"><span class="cara frente">
-      <span class="etq"><span class="etq-i">2026 Ferrum · Serie 1<b>${bloqueada ? '???' : esc(c.n)}</b>#${num} · ${RAREZA[c.r]}</span>
-        <span class="nota">${bloqueada ? '<b>?</b>' : `<b>${nota}</b><small>${grado}</small>`}</span></span>
-      <span class="ventana"><span class="carta-in"><span class="carta-a"${arte}></span>
-        <span class="titulo" style="font-size:${Math.min(24, 118 / c.t.length).toFixed(1)}cqw">${esc(c.t)}</span>
-        <span class="foil"></span>
-        <span class="franja"><span>${esc(SIN_ARTE.has(c.id) ? 'Próximamente' : bloqueada ? c.c : c.lema)}</span><b class="num">${num}</b></span></span></span>
-      <span class="reflejo"></span></span>
-    ${tres ? `<span class="cara dorso"><img src="ferrum-trazo-180.png" alt="">FERRUM<small>Serie 1 · ${RAREZA[c.r]} · ${num}/${String(CARTAS.length).padStart(3, '0')}</small></span>
+    <span class="slab"><span class="cara frente"><span class="k-in">
+      <span class="k-h"><span class="k-n">${bloqueada ? '???' : esc(c.n)}</span><span class="k-fz num"><small>FZ</small>${bloqueada ? '?' : c.fz}</span><span class="k-t">${esc(c.tipo[0])}</span></span>
+      <span class="carta-a"${arte}></span>
+      <span class="k-s">Bestia de hierro · ${RAREZA[c.r]}</span>
+      <span class="k-at">${ataques}</span>
+      <span class="k-st"><span>Debilidad<b>${bloqueada ? '?' : esc(c.debil)}</b></span><span>Resiste<b>${bloqueada ? '?' : esc(c.resiste)}</b></span><span>Tipo<b>${esc(c.tipo)}</b></span></span>
+      <span class="k-f">${esc(SIN_ARTE.has(c.id) ? 'Próximamente' : bloqueada ? 'Sigue entrenando para encontrarla.' : c.lema)}</span>
+      <span class="k-p"><b>Ferr<i>um</i></b><span class="num">${RAREZA[c.r]} · ${num}/${total}</span></span>
+    </span><span class="foil"></span><span class="reflejo"></span></span>
+    ${tres ? `<span class="cara dorso"><b>Ferr<i>um</i></b><small>Serie 1 · ${num}/${total}</small></span>
       <span class="canto i"></span><span class="canto d"></span><span class="canto s"></span><span class="canto f"></span>` : ''}</span></${tag.split(' ')[0]}>`;
 }
 function vistaColeccion() {
@@ -1523,7 +1587,7 @@ async function compartirSesion(id) {
   if (!s) return;
   await document.fonts?.ready;
   const c = document.createElement('canvas'); c.width = 1080; c.height = 1350;
-  const x = c.getContext('2d'), st = statsSesion(s), esf = esfuerzo(s), F = (p, w = 700) => `${w} ${p}px Outfit, system-ui, sans-serif`;
+  const x = c.getContext('2d'), st = statsSesion(s), esf = esfuerzo(s), F = (p, w = 700) => `${w} ${p}px Instrument Sans, system-ui, sans-serif`;
   const g = x.createLinearGradient(0, 0, 0, 1350); g.addColorStop(0, '#2A3512'); g.addColorStop(.55, '#0A0D06'); x.fillStyle = g; x.fillRect(0, 0, 1080, 1350);
   x.fillStyle = '#D4F53C'; x.beginPath(); x.roundRect(60, 60, 960, 360, 48); x.fill();
   x.fillStyle = '#0A0D06'; x.font = F(34, 600); x.fillText(fechaLarga(s.fecha), 104, 130);
@@ -1693,7 +1757,7 @@ function graficaBarras(sems) {
   const tk = ticks(0, max), y1 = tk.at(-1);
   const Y = v => T + (1 - v / y1) * (H - T - B);
   const paso = (W - L - R) / sems.length, bw = paso * 0.62;
-  const txt = 'font-size="10.5" fill="var(--muted)" font-family="Outfit, system-ui, sans-serif"';
+  const txt = 'font-size="10.5" fill="var(--muted)" font-family="Instrument Sans, system-ui, sans-serif"';
   const corto = v => v >= 1000 ? fmt(Math.round(v / 100) / 10) + 'k' : fmt(v);
   let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Volumen por semana en kilos">`;
   for (const v of tk) s += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L - 8}" y="${Y(v) + 4}" text-anchor="end" ${txt}>${corto(v)}</text>`;
@@ -1768,7 +1832,7 @@ function grafica(pts, met) {
   const t0 = parseISO(pts[0].x).getTime(), t1 = parseISO(pts.at(-1).x).getTime();
   const X = x => pts.length === 1 ? (L + W - R) / 2 : L + (parseISO(x).getTime() - t0) / (t1 - t0 || 1) * (W - L - R);
   const Y = y => T + (1 - (y - y0) / (y1 - y0 || 1)) * (H - T - B);
-  const txt = 'font-size="11" fill="var(--muted)" font-family="Outfit, system-ui, sans-serif"';
+  const txt = 'font-size="11" fill="var(--muted)" font-family="Instrument Sans, system-ui, sans-serif"';
   let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Evolución"><defs><linearGradient id="gArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--gold);stop-opacity:.3"/><stop offset="1" style="stop-color:var(--gold);stop-opacity:0"/></linearGradient></defs>`;
   for (const v of tk) s += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L - 8}" y="${Y(v) + 4}" text-anchor="end" ${txt}>${fmt(v)}</text>`;
   s += `<text x="${L}" y="${H - 6}" ${txt}>${fechaCorta(pts[0].x)}</text>`;
@@ -1781,7 +1845,7 @@ function grafica(pts, met) {
   }
   const u = pts.at(-1), ux = X(u.x), uy = Y(u.y);
   s += `<circle cx="${ux}" cy="${uy}" r="9" fill="var(--gold)" opacity=".18"/><circle cx="${ux}" cy="${uy}" r="5" fill="var(--gold)"/>`;
-  s += `<text x="${Math.min(ux, W - R)}" y="${Math.max(uy - 13, 13)}" text-anchor="${ux > W - 70 ? 'end' : 'middle'}" font-size="13" font-weight="700" fill="var(--ink)" font-family="Outfit, system-ui, sans-serif">${fmt(Math.round(u.y * 10) / 10)}${met === 'vol' ? '' : ' kg'}</text>`;
+  s += `<text x="${Math.min(ux, W - R)}" y="${Math.max(uy - 13, 13)}" text-anchor="${ux > W - 70 ? 'end' : 'middle'}" font-size="13" font-weight="700" fill="var(--ink)" font-family="Instrument Sans, system-ui, sans-serif">${fmt(Math.round(u.y * 10) / 10)}${met === 'vol' ? '' : ' kg'}</text>`;
   s += `</svg>`;
   if (pts.length === 1) s += `<div class="note">Con la próxima sesión verás la línea de progreso.</div>`;
   return s;
@@ -1845,7 +1909,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 26;
+const VERSION = 27;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
