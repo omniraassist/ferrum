@@ -492,6 +492,10 @@ body:has(.hub)::before{background:#C9EC35}
 .stats div,.sumrow div{background:none;padding:0}
 .stats > div,.sumrow > div{border-radius:22px;padding:12px}
 .historias{display:flex;gap:10px;margin:0 0 14px}
+.pareja{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:13px 16px;margin-bottom:12px;border-radius:22px;background:linear-gradient(150deg,#23300E,#171B10);box-shadow:inset 0 0 0 1px rgba(212,245,60,.25)}
+.pareja b{display:block;font-weight:700;overflow-wrap:anywhere}
+.pareja small{display:block;font-size:12.5px;color:var(--muted)}
+.pareja strong{font-size:24px;font-weight:800;color:var(--lime-ink);white-space:nowrap}
 .hoytoca{padding:16px;margin-bottom:14px;border-radius:26px;background:linear-gradient(150deg,#2E3A12,#171B10);box-shadow:inset 0 0 0 1.5px rgba(212,245,60,.4)}
 .hoytoca .label{color:var(--lime-ink)}
 .hoytoca b{display:block;margin-top:2px;font-size:24px;font-weight:800;letter-spacing:-.03em;overflow-wrap:anywhere}
@@ -684,7 +688,7 @@ const state = {
   modo: 'cargando', cargado: false, aviso: '', hint: null,
   nube: '', recTab: 'marcas', capa: null, yoTab: 'perfil', rutEdit: null, calMes: 0, inicio: null, abiertas: new Set(['Objetivo semanal', 'Misiones de la semana']),
   amigos: {modo: 'crear', google: false, pestana: 'feed', feed: null, marcas: null, cargando: false, error: '', ejercicio: null, busca: '', salir: false, abiertos: new Set(),
-    seg: [], gente: null, solo: false, yoPosts: null, desafios: [], desafiosOk: false, subida: null, subiendo: false, comunidad: 'gente', clubes: null, miembros: [], rutinas: null, club: null, clubPosts: null, borrarClub: false, guardaRutina: null, perfil: null, perfilPosts: null, avisos: [], verAvisos: false, buscaGente: ''},
+    seg: [], gente: null, solo: false, yoPosts: null, desafios: [], desafiosOk: false, parejas: [], parejasOk: false, subida: null, subiendo: false, comunidad: 'gente', clubes: null, miembros: [], rutinas: null, club: null, clubPosts: null, borrarClub: false, guardaRutina: null, perfil: null, perfilPosts: null, avisos: [], verAvisos: false, buscaGente: ''},
 };
 const conSets = s => s.ejercicios.some(e => e.sets.length);
 const grupoDe = e => e.grupo || IDEA_GRUPO[e.clave] || null;
@@ -1226,7 +1230,7 @@ function pintarCapa() {
     el.innerHTML = `<div class="capa-in"><div class="fin-duelo ${c.ganado ? 'gana' : 'pierde'}">${c.ganado ? '¡Victoria!' : 'Derrota'}</div>
       <div class="marcador num">${c.yo} – ${c.rival}</div>
       <div class="capa-txt"><span>${c.ganado ? `Has superado a ${esc(c.nombre)}. +300 XP y un sobre.` : `${esc(c.nombre)} sigue por delante. Vuelve a intentarlo.`}</span></div>
-      <button class="apuntar" data-accion="cerrar-capa">Seguir</button></div>`;
+      ${!c.ganado && c.publicacion ? `<button class="apuntar" data-accion="revancha" data-id="${esc(c.publicacion)}">Revancha</button><button class="ghost" style="width:100%" data-accion="cerrar-capa">Ahora no</button>` : `<button class="apuntar" data-accion="cerrar-capa">Seguir</button>`}</div>`;
     return;
   }
   if (c.tipo === 'discos') {
@@ -1822,7 +1826,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 24;
+const VERSION = 25;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -1874,7 +1878,7 @@ async function subirMarcas() {
   const lista = misMarcas();
   if (lista.length) await pedir('marcas?on_conflict=usuario,clave', {method: 'POST', body: lista, prefer: 'resolution=merge-duplicates,return=minimal'});
   await pedir(`marcas?usuario=eq.${cuenta.uid}${lista.length ? `&clave=not.in.(${lista.map(m => m.clave).join(',')})` : ''}`, {method: 'DELETE'});
-  await pedir(`perfiles?id=eq.${cuenta.uid}`, {method: 'PATCH', body: {resumen: {racha: rachaSemanas(), nivel: progresoNivel().n, cartas: coleccion().size, objetivo: objetivoSemana(), metas: metasFuerza(), ...semanaActual()}}, prefer: 'return=minimal'});
+  await pedir(`perfiles?id=eq.${cuenta.uid}`, {method: 'PATCH', body: {resumen: {racha: rachaSemanas(), nivel: progresoNivel().n, cartas: coleccion().size, objetivo: objetivoSemana(), metas: metasFuerza(), semanas: misSemanas().slice(-14), ...semanaActual()}}, prefer: 'return=minimal'});
 }
 const COLS_POST = 'select=*,perfiles(nombre),fuerzas(usuario),medios(id,usuario,ruta,tipo,ejercicio,serie,etiqueta),comentarios(id,usuario,texto,creado,perfiles(nombre))&comentarios.order=creado.asc';
 const sigoA = () => state.amigos.seg.filter(x => x.seguidor === cuenta.uid).map(x => x.seguido);
@@ -1898,6 +1902,7 @@ async function cargarAmigos() {
       ]);
       a.clubsOk = true;
     } catch { a.clubsOk = false; }
+    try { a.parejas = await pedir(`parejas?select=*&or=(a.eq.${cuenta.uid},b.eq.${cuenta.uid})`); a.parejasOk = true; } catch { a.parejasOk = false; }
     try {
       a.desafios = await pedir('desafios?select=*,retador_p:perfiles!desafios_retador_fkey(nombre),rival_p:perfiles!desafios_rival_fkey(nombre)&order=creado.desc&limit=100');
       a.desafiosOk = true;
@@ -2331,6 +2336,59 @@ function bloqueMedio(m, p) {
       ? `<button data-accion="borrar-medio" data-id="${esc(p.id)}" data-m="${esc(m.id)}">Borrar</button>`
       : `<button data-accion="denunciar" data-m="${esc(m.id)}">Denunciar</button>`}</div></div>`;
 }
+/* ---------- racha en pareja: si uno falla una semana, se rompe para los dos ---------- */
+const misSemanas = () => [...new Set(state.sesiones.filter(conSets).map(s => lunesDe(s.fecha)))].sort();
+const otroDe = p => p.a === cuenta.uid ? p.b : p.a;
+const nombreDe = u => state.amigos.gente?.find(g => g.id === u)?.nombre || 'Alguien';
+function rachaPareja(p) {
+  const yo = new Set(misSemanas()), el = new Set(state.amigos.gente?.find(g => g.id === otroDe(p))?.resumen?.semanas || []);
+  const ahora = lunesDe(hoy), hecho = w => yo.has(w) && el.has(w);
+  let l = hecho(ahora) ? ahora : sumarDias(ahora, -7), n = 0;
+  while (hecho(l)) { n++; l = sumarDias(l, -7); }
+  return {n, yo: yo.has(ahora), el: el.has(ahora)};
+}
+function tarjetasPareja() {
+  const a = state.amigos;
+  if (!a.parejasOk) return '';
+  return a.parejas.map(p => {
+    const nombre = nombreDe(otroDe(p));
+    if (p.estado === 'pendiente') return p.b === cuenta.uid
+      ? `<section class="pareja"><span><b>${esc(nombre)} quiere una racha contigo</b><small>Si uno falla una semana, se rompe para los dos</small></span><button class="seguir" data-accion="aceptar-pareja" data-id="${esc(p.id)}">Aceptar</button></section>` : '';
+    const r = rachaPareja(p);
+    return `<section class="pareja"><span><b>Racha con ${esc(nombre)}</b><small>Esta semana: tú ${r.yo ? '✓' : '✗'} · ${esc(nombre)} ${r.el ? '✓' : '✗'}</small></span><strong class="num">${r.n} sem</strong></section>`;
+  }).join('');
+}
+async function invitarPareja(uid) {
+  const a = state.amigos;
+  try {
+    const [p] = await pedir('parejas?select=*', {method: 'POST', body: {a: cuenta.uid, b: uid}, prefer: 'return=representation'});
+    a.parejas = [...a.parejas, p]; render(true); toast('Invitación enviada', nombreDe(uid));
+  } catch (e) { toast(e.code === '23505' ? 'Ya tenéis una racha' : 'Sin conexión', e.code === '23505' ? 'O una invitación' : 'Inténtalo otra vez'); }
+}
+async function aceptarPareja(id) {
+  const a = state.amigos;
+  try {
+    await pedir(`parejas?id=eq.${id}`, {method: 'PATCH', body: {estado: 'activa'}, prefer: 'return=minimal'});
+    a.parejas = a.parejas.map(p => p.id === id ? {...p, estado: 'activa'} : p); render(true);
+  } catch { toast('Sin conexión', 'Inténtalo otra vez'); }
+}
+/* ---------- notificaciones en el móvil ---------- */
+const CLAVE_PUSH = 'BMOeEZ_wGY-ygW1SJWvD3UDp7ZShXC6d4HvDiCZm1uhxt9Xy4ZR_gfH8Y7_ODRhvvd-4pGWdawWyijzU7ZYBgkw';
+const bytesClave = t => Uint8Array.from(atob(t.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - t.length % 4) % 4)), c => c.charCodeAt(0));
+const pushDisponible = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const instalada = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+async function activarPush() {
+  if (!instalada()) { toast('Primero instálala', 'Añade Ferrum a tu pantalla de inicio'); return; }
+  if (!pushDisponible()) { toast('No disponible', 'Actualiza tu iPhone a iOS 16.4 o más'); return; }
+  try {
+    if (await Notification.requestPermission() !== 'granted') { toast('Sin permiso', 'Actívalas en Ajustes del iPhone'); return; }
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: bytesClave(CLAVE_PUSH)});
+    const j = sub.toJSON();
+    await pedir('suscripciones?on_conflict=endpoint', {method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: {usuario: cuenta.uid, endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth}});
+    ls.set('fr_push', 1); render(true); toast('Notificaciones activadas', 'Te avisaremos de lo importante');
+  } catch { toast('No se han activado', 'Inténtalo otra vez'); }
+}
 const ICON_DUELO = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4l6 0 0 6-9 9-3-3zM4 4l5 5M4 4v4M4 4h4M15 15l5 5M5 19l3-3"/></svg>';
 const LIGAS = [[30, 'Titán'], [20, 'Diamante'], [15, 'Platino'], [10, 'Oro'], [5, 'Plata'], [1, 'Bronce']];
 const ligaDe = n => LIGAS.find(l => n >= l[0])[1];
@@ -2361,18 +2419,27 @@ async function aceptarDesafio(id) {
     a.desafios = [{...r, retador_p: {nombre: cuenta.nombre}, rival_p: {nombre: p.perfiles?.nombre}}, ...a.desafios];
     state.capa = null; pintarCapa(); a.perfil = a.club = null;
     replicarPublicacion(p);
-    state.actual.desafio = {id: r.id, rival: p.usuario, nombre: String(p.perfiles?.nombre || 'Alguien'), objetivos};
+    state.actual.desafio = {id: r.id, rival: p.usuario, nombre: String(p.perfiles?.nombre || 'Alguien'), publicacion: p.id, objetivos};
     guardarSesion(state.actual); render(true);
   } catch (e) {
     state.capa = null; pintarCapa();
     toast(e.code === '23505' ? 'Ya tienes este desafío' : 'Sin conexión', e.code === '23505' ? 'Termínalo antes' : 'No se ha creado');
   }
 }
+async function revancha(id) {
+  const a = state.amigos;
+  if (!postsDe(id).length) {
+    const [p] = await pedir(`publicaciones?${COLS_POST}&id=eq.${id}`).catch(() => []);
+    if (!p) { toast('Ya no existe', 'Esa sesión se ha borrado'); return; }
+    a.feed = [...(a.feed || []), p];
+  }
+  aceptarDesafio(id);
+}
 async function resolverDesafio(ses) {
   const m = marcadorDuelo(ses), ganado = m.yo > m.rival;
   ses.desafio.res = {ganado, yo: m.yo, rival: m.rival};
   guardarSesion(ses);
-  state.capa = {tipo: 'duelo', ganado, yo: m.yo, rival: m.rival, nombre: ses.desafio.nombre}; pintarCapa();
+  state.capa = {tipo: 'duelo', ganado, yo: m.yo, rival: m.rival, nombre: ses.desafio.nombre, publicacion: ses.desafio.publicacion}; pintarCapa();
   await pedir(`desafios?id=eq.${ses.desafio.id}`, {method: 'PATCH', prefer: 'return=minimal', body: {estado: ganado ? 'ganado' : 'perdido', puntos_retador: m.yo, puntos_rival: m.rival, resuelto: new Date().toISOString()}}).catch(() => {});
 }
 function balance(uid) {
@@ -2398,7 +2465,7 @@ function vistaDuelos() {
   const hechos = a.desafios.filter(d => d.estado !== 'activo').slice(0, 30);
   h += `<div class="sec-h"><h2>Últimos duelos</h2></div>`;
   h += hechos.length ? `<div class="rows">${hechos.map(d => `<button class="frow" data-accion="perfil" data-u="${esc(d.retador)}"><span class="mid"><span class="tt">${esc(d.retador_p?.nombre)} contra ${esc(d.rival_p?.nombre)}</span><span class="meta">${esc(d.titulo)}</span></span>
-    <span class="rt">${d.estado === 'ganado' ? '<span class="tag">Victoria</span>' : '<span class="tag soft">Derrota</span>'}<b class="num">${+d.puntos_retador} – ${+d.puntos_rival}</b></span></button>`).join('')}</div>` : `<div class="empty"><b>Sin duelos todavía</b>Sé el primero en desafiar una sesión.</div>`;
+    <span class="rt">${d.estado === 'ganado' ? (d.rival === cuenta.uid ? '<span class="tag soft">Revancha</span>' : '<span class="tag">Victoria</span>') : '<span class="tag soft">Derrota</span>'}<b class="num">${+d.puntos_retador} – ${+d.puntos_rival}</b></span></button>`).join('')}</div>` : `<div class="empty"><b>Sin duelos todavía</b>Sé el primero en desafiar una sesión.</div>`;
   return h;
 }
 const ICON_FUERZA = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 7v10M3 9.5v5M18 7v10M21 9.5v5M6 12h12"/></svg>';
@@ -2464,6 +2531,7 @@ function vistaPerfil(uid, propio) {
   const marcasDe = (a.marcas || []).filter(r => r.usuario === uid);
   let h = `<div class="det">${propio ? '' : '<button class="back" data-accion="volver-perfil">‹ Volver</button>'}
     <div class="pf">${avatar(nombre)}<h1>${esc(nombre)}</h1>${botonSeguir(uid)}</div>
+    ${!propio && a.parejasOk ? (p => p ? (p.estado === 'activa' ? `<p class="num">Racha juntos: ${rachaPareja(p).n} semanas</p>` : `<p>Invitación de racha pendiente</p>`) : `<button class="ghost" style="width:100%;margin-bottom:12px" data-accion="invitar-pareja" data-u="${esc(uid)}">Hacer racha juntos</button>`)(a.parejas.find(x => otroDe(x) === uid)) : ''}
     ${(r => { const b = balance(uid), n = nivelDe(uid); return `<p class="num">Nivel ${n} · Liga ${ligaDe(n)} · ${fmt(+r?.cartas || 0)}/${CARTAS.length} cartas${a.desafiosOk ? ` · ${b.v}V–${b.l}D` : ''}</p>`; })(a.gente?.find(x => x.id === uid)?.resumen)}</div>
     <div class="sumrow">
       <div><div class="label">Sesiones</div><div class="v num">${posts?.length ?? '–'}</div></div>
@@ -2612,7 +2680,7 @@ function vistaAmigos() {
     <form class="search" data-form="alta"><input id="in-nombre" name="nombre" maxlength="24" placeholder="Tu nombre" autocomplete="off" autocapitalize="words" enterkeyhint="go" aria-label="Tu nombre"><button class="go" type="submit" ${a.cargando ? 'disabled' : ''}>${a.cargando ? 'Entrando…' : 'Entrar'}</button></form></section>`;
   if (!cuenta.email) h += `<section class="next" style="margin:0 0 12px"><h2>Protege tu cuenta</h2>
     <p>Pon un email y una contraseña. Conservas tu nombre y tus entrenos quedan a salvo si cambias de móvil.</p>${camposCuenta('proteger')}</section>`;
-  if (esFeed) h += tarjetaHoy() + historias();
+  if (esFeed) h += tarjetaHoy() + tarjetasPareja() + (a.parejasOk && !ls.get('fr_push', 0) ? `<button class="empezar" data-accion="activar-push">Activa los avisos para no perderte duelos<b>→</b></button>` : '') + historias();
   else h += `<div class="seg" style="--n:${a.desafiosOk ? 4 : 3}" role="group" aria-label="Sección">
     <button data-accion="pestana-amigos" data-p="liga" aria-pressed="${pest === 'liga'}">Liga</button>
     <button data-accion="pestana-amigos" data-p="ranking" aria-pressed="${pest === 'ranking'}">Marcas</button>
@@ -2963,6 +3031,10 @@ document.addEventListener('click', ev => {
       if (state.capa.paso < 2) state.capa.paso++;
       else { state.capa = null; ls.set('fr_intro', 1); }
       pintarCapa(); break;
+    case 'revancha': revancha(b.dataset.id); break;
+    case 'invitar-pareja': invitarPareja(b.dataset.u); break;
+    case 'aceptar-pareja': aceptarPareja(b.dataset.id); break;
+    case 'activar-push': activarPush(); break;
     case 'desafiar': state.capa = {tipo: 'desafio', id: b.dataset.id}; pintarCapa(); break;
     case 'aceptar-desafio': aceptarDesafio(b.dataset.id); break;
     case 'fuerza': darFuerza(b.dataset.id); break;
