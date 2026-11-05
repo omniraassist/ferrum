@@ -492,8 +492,7 @@ body:has(.hub)::before{background:#C9EC35}
 .foto-v{position:relative;width:280px;height:280px;border-radius:50%;overflow:hidden;background:#0E1A11;touch-action:none;cursor:grab;box-shadow:0 0 0 2px var(--lime)}
 .foto-prev{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--muted)}
 .foto-prev canvas{width:64px;height:64px;border-radius:50%;box-shadow:0 0 0 1.5px var(--line-2)}
-.foto-v canvas{position:absolute;left:0;top:0;max-width:none;transform-origin:0 0;pointer-events:none}
-.ava{background-size:cover;background-position:center}
+.foto-v canvas{display:block;width:100%;height:100%;pointer-events:none}
 .ahora{margin-bottom:12px}
 .ahora-f{display:grid;grid-template-columns:40px 1fr auto;gap:10px;align-items:center;width:100%;padding:9px 0;text-align:left;border-bottom:1px solid var(--line)}
 .ahora-f:last-child{border-bottom:0}
@@ -1347,12 +1346,11 @@ function pintarCapa() {
   }
   if (c.tipo === 'foto') {
     el.innerHTML = `<div class="capa-in"><div class="capa-txt"><b>Ajusta tu foto</b><span>Arrastra para moverla y pellizca para acercar</span></div>
-      <div class="foto-v" id="foto-v"></div>
+      <div class="foto-v" id="foto-v"><canvas id="foto-c" width="840" height="840"></canvas></div>
       <div class="foto-prev"><canvas id="foto-p" width="192" height="192"></canvas><span>Así se verá tu foto</span></div>
       <label class="rc">Zoom<input id="foto-z" type="range" min="1" max="6" step="0.01" value="${c.z}"></label>
       <button class="apuntar" data-accion="usar-foto">Usar esta foto</button>
       <button class="ghost" style="width:100%" data-accion="cancelar-foto">Cancelar</button></div>`;
-    $('#foto-v').append(c.lienzo);
     return;
   }
   if (c.tipo === 'espera') {
@@ -1937,7 +1935,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 34;
+const VERSION = 35;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -2529,7 +2527,6 @@ function subirFoto(file) {
     lienzo.width = Math.round(img.naturalWidth * k); lienzo.height = Math.round(img.naturalHeight * k);
     lienzo.getContext('2d').drawImage(img, 0, 0, lienzo.width, lienzo.height);
     URL.revokeObjectURL(url);
-    lienzo.id = 'foto-img';
     /* base: la foto entera cabe en el círculo; desde ahí se puede acercar */
     const base = FOTO_V / Math.max(lienzo.width, lienzo.height);
     state.capa = {tipo: 'foto', lienzo, base, z: 1, x: (FOTO_V - lienzo.width * base) / 2, y: (FOTO_V - lienzo.height * base) / 2};
@@ -2539,14 +2536,13 @@ function subirFoto(file) {
 }
 /* si la foto es mayor que el círculo no deja huecos; si es menor, se queda centrada */
 function moverFoto() {
-  const c = state.capa, el = $('#foto-img');
+  const c = state.capa, el = $('#foto-c');
   if (c?.tipo !== 'foto' || !el) return;
   const e = c.base * c.z;
   const ajusta = (v, lado) => lado <= FOTO_V ? (FOTO_V - lado) / 2 : Math.min(0, Math.max(FOTO_V - lado, v));
   c.x = ajusta(c.x, c.lienzo.width * e); c.y = ajusta(c.y, c.lienzo.height * e);
-  el.style.transform = `translate(${c.x}px,${c.y}px) scale(${e})`;
-  const p = $('#foto-p');
-  if (p) pintarRecorte(p);
+  pintarRecorte(el);
+  pintarRecorte($('#foto-p'));
 }
 function pintarRecorte(t) {
   const c = state.capa, e = c.base * c.z, k = t.width / FOTO_V, x = t.getContext('2d');
@@ -2753,7 +2749,7 @@ const ICON_FUERZA = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none"
 const ICON_COMENTAR = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.8 7L4 20l1-5.1A8 8 0 1 1 21 12z"/></svg>';
 const avatar = (n, uid) => {
   const u = urlMedio(state.amigos.gente?.find(g => g.id === uid)?.avatar || '');
-  return u ? `<span class="ava" style="background-image:url(${u})"></span>` : `<span class="ava">${esc(String(n || '?')[0].toUpperCase())}</span>`;
+  return u ? `<span class="ava" style="background:url(${u}) center/cover no-repeat"></span>` : `<span class="ava">${esc(String(n || '?')[0].toUpperCase())}</span>`;
 };
 function botonSeguir(uid) {
   if (uid === cuenta.uid) return '';
