@@ -381,25 +381,26 @@ button.set-chip.vacia{box-shadow:inset 0 0 0 1px var(--line-2)}
 .canto.s,.canto.f{left:4cqw;right:4cqw;height:2cqw;top:50%;margin-top:-1cqw}
 .canto.s{transform:translateY(-70cqw) rotateX(90deg)}
 .canto.f{transform:translateY(70cqw) rotateX(-90deg)}
-.k-in{display:flex;flex-direction:column;gap:1.4cqw;height:100%;padding:2.4cqw 2.8cqw;border-radius:3cqw;background:linear-gradient(170deg,var(--in1),var(--in2))}
+.k-in{position:relative;display:flex;flex-direction:column;gap:1.2cqw;height:100%;padding:3cqw 3.4cqw;border-radius:3cqw;overflow:hidden;background:#0E1A11;color:#fff}
+.k-in::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.62) 0,transparent 20%,transparent 54%,rgba(0,0,0,.86) 80%,rgba(0,0,0,.94) 100%)}
+.k-in > :not(.carta-a){position:relative;z-index:2}
 .k-h{display:flex;align-items:center;gap:1.8cqw}
 .k-n{flex:1;min-width:0;font-size:5.4cqw;font-weight:700;letter-spacing:-.03em;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.k-fz{font-size:5.4cqw;font-weight:700;color:#A5281B;white-space:nowrap}.k-fz small{font-size:2.4cqw;margin-right:.4cqw}
-.k-t{display:grid;place-items:center;flex:none;width:6cqw;height:6cqw;border-radius:50%;background:#16261A;color:#DDF3A2;font-size:2.8cqw;font-weight:700}
-.carta-a{display:block;flex:0 0 46%;border-radius:1.4cqw;background-color:#22352A;background-size:cover;background-position:center 30%;box-shadow:0 0 0 .6cqw var(--b)}
-.k-s{text-align:center;font-size:2.5cqw;font-weight:600;opacity:.65}
-.k-at{flex:1;display:flex;flex-direction:column;justify-content:center;gap:1.8cqw;min-height:0}
+.k-fz{font-size:5.4cqw;font-weight:700;color:var(--a);white-space:nowrap}.k-fz small{font-size:2.4cqw;margin-right:.4cqw}
+.k-t{display:grid;place-items:center;flex:none;width:6cqw;height:6cqw;border-radius:50%;background:var(--a);color:#16261A;font-size:2.8cqw;font-weight:700}
+.carta-a{position:absolute;inset:0;display:block;background-color:#22352A;background-size:cover;background-position:center}
+.k-s,.k-f{display:none}
+.k-at{flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:1.5cqw;min-height:0}
 .k-a{display:grid;grid-template-columns:1fr auto;gap:2cqw;align-items:center}
 .k-a b{display:block;font-size:3.5cqw;font-weight:700;line-height:1.1}.k-a small{display:block;font-size:2.6cqw;line-height:1.15;opacity:.72}.k-a strong{font-size:5.2cqw;font-weight:700}
-.k-st{display:grid;grid-template-columns:repeat(3,1fr);padding-top:1.1cqw;border-top:.2cqw solid rgba(22,38,26,.22);font-size:2.1cqw;text-align:center;opacity:.8}.k-st b{display:block;font-size:2.5cqw}
-.k-f{font-family:var(--f-serif);font-style:italic;font-size:3cqw;line-height:1.15;text-align:center;opacity:.8}
+.k-st{display:grid;grid-template-columns:repeat(3,1fr);padding-top:1.1cqw;border-top:.2cqw solid rgba(255,255,255,.28);font-size:2.1cqw;text-align:center;opacity:.8}.k-st b{display:block;font-size:2.5cqw}
 .k-p{display:flex;justify-content:space-between;align-items:baseline;font-size:2.3cqw;font-weight:600}.k-p b{font-size:3cqw;font-weight:600}.k-p i{font-family:var(--f-serif);font-weight:400}
 .foil{position:absolute;inset:0;opacity:var(--foil);mix-blend-mode:color-dodge;pointer-events:none;background:linear-gradient(115deg,transparent 22%,#FF4FA8 36%,#FFE96B 47%,#4CFFC4 58%,#5C8CFF 70%,transparent 84%);background-size:280% 280%;background-position:var(--mx,30%) var(--my,30%)}
 .reflejo{position:absolute;inset:0;pointer-events:none;background:linear-gradient(112deg,transparent 42%,rgba(255,255,255,.28) 49%,transparent 56%);background-size:260% 100%;background-position:var(--mx,70%) 0}
 .carta.legendaria .cara{box-shadow:0 0 7cqw .5cqw rgba(255,200,70,.55)}
 .carta.bloqueada{--a:rgba(255,255,255,.14);--b:rgba(255,255,255,.08);--in1:#1C2B20;--in2:#16231A;--foil:0;color:var(--ink)}
-.carta.bloqueada .carta-a{filter:grayscale(1) brightness(.4) blur(1px)}
-.carta.bloqueada .k-t{background:rgba(255,255,255,.14);color:var(--muted)}
+.carta.bloqueada .carta-a{filter:grayscale(1) brightness(.34) blur(1.5px)}
+.carta.bloqueada .k-t{background:rgba(255,255,255,.18);color:var(--ink)}
 .carta.bloqueada .k-fz{color:var(--muted)}
 .copias{position:absolute;right:3%;top:-2%;z-index:3;background:var(--lime);color:var(--on-lime);border-radius:999px;padding:1px 8px;font-size:11.5px;font-weight:700}
 .carta.tres{touch-action:none;cursor:grab}
@@ -1909,7 +1910,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 27;
+const VERSION = 28;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
