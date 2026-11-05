@@ -492,6 +492,12 @@ body:has(.hub)::before{background:#C9EC35}
 .stats div,.sumrow div{background:none;padding:0}
 .stats > div,.sumrow > div{border-radius:22px;padding:12px}
 .historias{display:flex;gap:10px;margin:0 0 14px}
+.hoytoca{padding:16px;margin-bottom:14px;border-radius:26px;background:linear-gradient(150deg,#2E3A12,#171B10);box-shadow:inset 0 0 0 1.5px rgba(212,245,60,.4)}
+.hoytoca .label{color:var(--lime-ink)}
+.hoytoca b{display:block;margin-top:2px;font-size:24px;font-weight:800;letter-spacing:-.03em;overflow-wrap:anywhere}
+.hoytoca small{display:block;margin-top:2px;font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.hoytoca .row2{margin-top:12px}
+.hoytoca .ghost{min-height:52px;font-size:15px}
 .bento{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
 .tile{display:grid;gap:8px;align-content:start;min-height:112px;padding:13px 11px;border-radius:22px;text-align:left;font-weight:700;font-size:14.5px;background:linear-gradient(160deg,#1E2415,#13170C);box-shadow:inset 0 0 0 1px rgba(255,255,255,.055)}
 .tile i{display:grid;place-items:center;width:38px;height:38px;border-radius:13px;background:var(--surface-3);color:var(--lime)}
@@ -796,7 +802,7 @@ function vistaEntreno() {
   const delDia = sesionesDe(state.fecha);
   const nSes = ses && delDia.length > 1 ? delDia.findIndex(x => x.id === ses.id) + 1 : 0;
   const conHub = !state.editGrupos && !state.rutEdit && (!ses || ses.fin);
-  let h = conHub ? hub(ses ? ses.titulo : state.nueva ? 'Nueva sesión' : '¿Qué toca hoy?') : `
+  let h = conHub ? hub(ses ? ses.titulo : state.nueva ? 'Nueva sesión' : rutinaDeHoy() ? `Hoy: ${rutinaDeHoy().nombre}` : '¿Qué toca hoy?') : `
   <section class="hero">
     <div class="hero-row">
       <span class="label">${esc(fechaHero(state.fecha))}${state.fecha === hoy ? ' · hoy' : ''}${nSes ? ` · sesión ${nSes}` : ''}</span>
@@ -828,6 +834,18 @@ function vistaEntreno() {
 }
 
 const DIAS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+const diaSemana = f => (parseISO(f).getDay() + 6) % 7;
+const rutinaDeHoy = () => ajustes().rutinas.find(r => r.dias?.includes(diaSemana(hoy)));
+function tarjetaHoy() {
+  const r = rutinaDeHoy(), rs = ajustes().rutinas, ses = sesionesDe(hoy).at(-1);
+  const caja = (etq, tit, sub, a, b) => `<section class="hoytoca"><span class="label">${etq}</span><b>${esc(tit)}</b><small>${esc(sub)}</small><div class="row2">${a}${b}</div></section>`;
+  const otra = t => `<button class="ghost" data-accion="otra-sesion">${t}</button>`;
+  if (ses && !ses.fin && conSets(ses)) return caja('Sesión en curso', ses.titulo, `${statsSesion(ses).series} ${statsSesion(ses).series === 1 ? 'serie apuntada' : 'series apuntadas'}`, otra('Otra sesión'), `<button class="apuntar" data-vista="entreno">Continuar</button>`);
+  if (sesionesDe(hoy).some(s => s.fin && conSets(s))) return caja('Hoy ya has entrenado', '¡Buen trabajo!', 'Mira qué han hecho los demás o suma otra sesión.', otra('Otra sesión'), `<button class="apuntar" data-accion="ir-coleccion">Mis cartas</button>`);
+  if (r) return caja('Hoy te toca', r.nombre, r.ejercicios.map(e => e.nombre).join(' · '), otra('Otra sesión'), `<button class="apuntar" data-accion="empezar-rutina" data-id="${esc(r.id)}">Empezar</button>`);
+  if (rs.length) return caja('Hoy no tienes rutina', 'Día libre', 'Descansa o entrena lo que te apetezca.', `<button class="ghost" data-accion="ver-rutinas">Mis rutinas</button>`, `<button class="apuntar" data-accion="otra-sesion">Entrenar</button>`);
+  return caja('Tu semana', 'Añade tu rutina', 'Elige qué entrenas cada día y lo verás aquí al abrir la app.', otra('Entrenar ya'), `<button class="apuntar" data-accion="nueva-rutina">Añadir</button>`);
+}
 const modoInicio = () => state.inicio || (ajustes().rutinas.length ? 'rutina' : state.sesiones.some(conSets) ? 'replicar' : 'libre');
 function inicioRapido() {
   const hoyN = (parseISO(state.fecha).getDay() + 6) % 7, rs = ajustes().rutinas, modo = modoInicio();
@@ -1804,7 +1822,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 23;
+const VERSION = 24;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -2594,7 +2612,7 @@ function vistaAmigos() {
     <form class="search" data-form="alta"><input id="in-nombre" name="nombre" maxlength="24" placeholder="Tu nombre" autocomplete="off" autocapitalize="words" enterkeyhint="go" aria-label="Tu nombre"><button class="go" type="submit" ${a.cargando ? 'disabled' : ''}>${a.cargando ? 'Entrando…' : 'Entrar'}</button></form></section>`;
   if (!cuenta.email) h += `<section class="next" style="margin:0 0 12px"><h2>Protege tu cuenta</h2>
     <p>Pon un email y una contraseña. Conservas tu nombre y tus entrenos quedan a salvo si cambias de móvil.</p>${camposCuenta('proteger')}</section>`;
-  if (esFeed) h += historias() + `<button class="empezar" data-vista="entreno">¿Hoy toca entrenar?<b>→</b></button>`;
+  if (esFeed) h += tarjetaHoy() + historias();
   else h += `<div class="seg" style="--n:${a.desafiosOk ? 4 : 3}" role="group" aria-label="Sección">
     <button data-accion="pestana-amigos" data-p="liga" aria-pressed="${pest === 'liga'}">Liga</button>
     <button data-accion="pestana-amigos" data-p="ranking" aria-pressed="${pest === 'ranking'}">Marcas</button>
@@ -2892,7 +2910,13 @@ document.addEventListener('click', ev => {
       render(true); scrollTo(0, 0); break;
     case 'pestana-explorar': state.vista = 'explorar'; state.amigos.pestana = 'gente'; state.amigos.comunidad = 'gente'; render(true); scrollTo(0, 0); break;
     case 'ir-coleccion': state.recTab = 'cartas'; state.vista = 'records'; state.detalle = null; render(true); scrollTo(0, 0); break;
-    case 'nueva-rutina': state.rutEdit = {id: '', nombre: '', dias: [], ejercicios: []}; render(true); scrollTo(0, 0); break;
+    case 'nueva-rutina': state.vista = 'entreno'; state.rutEdit = {id: '', nombre: '', dias: [], ejercicios: []}; render(true); scrollTo(0, 0); break;
+    case 'otra-sesion': {
+      const s = sesion(); state.vista = 'entreno'; state.inicio = 'libre';
+      if (s) { state.fechaPrevia = state.fecha; state.fecha = hoy; state.nueva = true; state.plan = null; state.editGrupos = false; state.activo = null; }
+      render(true); scrollTo(0, 0); break;
+    }
+    case 'ver-rutinas': state.vista = 'entreno'; state.inicio = 'rutina'; render(true); scrollTo(0, 0); break;
     case 'editar-rutina': state.rutEdit = clone(ajustes().rutinas.find(r => r.id === b.dataset.id)); render(true); scrollTo(0, 0); break;
     case 'empezar-rutina': empezarRutina(b.dataset.id); break;
     case 'rut-dia': { const r = state.rutEdit, i = +b.dataset.i; r.dias = r.dias.includes(i) ? r.dias.filter(x => x !== i) : [...r.dias, i].sort(); render(true); break; }
