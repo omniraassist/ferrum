@@ -492,6 +492,27 @@ body:has(.hub)::before{background:#C9EC35}
 .stats div,.sumrow div{background:none;padding:0}
 .stats > div,.sumrow > div{border-radius:22px;padding:12px}
 .historias{display:flex;gap:10px;margin:0 0 14px}
+.fila{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;width:100%;padding:12px 0;border-bottom:1px solid var(--line);text-align:left}
+.fila:last-child{border-bottom:0}
+.fila b{display:block;font-weight:700;font-size:15px;overflow-wrap:anywhere}
+.fila small{display:block;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.fila-a{min-width:0;text-align:left}
+.tipos{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tipos span{font-size:12px;font-weight:600;color:var(--muted);margin-right:2px}
+.mini{min-height:34px;padding:0 11px;border-radius:999px;background:var(--surface-2);color:var(--muted);font-size:12.5px;font-weight:700}
+.mini[aria-pressed="true"]{background:var(--lime);color:var(--on-lime)}
+.anterior{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.anterior b{color:var(--ink)}
+.nota-ej{display:block;width:100%;min-height:42px;margin-bottom:12px;padding:10px 14px;border:0;border-radius:16px;background:var(--surface-2);color:var(--ink);font:inherit;font-size:16px;resize:none;outline:none}
+.ex.ss{margin-top:-6px;box-shadow:inset 3px 0 0 var(--lime)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}
+.cal span,.cal button{display:grid;place-items:center;aspect-ratio:1;border-radius:12px;font-size:13px;font-weight:600;color:var(--muted)}
+.cal .sem{aspect-ratio:auto;font-size:11px;color:var(--faint)}
+.cal button{background:var(--lime);color:var(--on-lime);font-weight:800}
+.cal .hoy{box-shadow:inset 0 0 0 1.5px var(--lime)}
+.discos{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.disco{display:grid;place-items:center;min-width:46px;height:46px;padding:0 8px;border-radius:12px;background:var(--lime);color:var(--on-lime);font-weight:800}
+textarea{touch-action:manipulation}
 .hist{flex:0 0 calc(20% - 8px);min-width:0;display:grid;justify-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--muted)}
 .hist span:last-child{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hist .ava{width:54px;height:54px;font-size:20px;box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--line-2)}
@@ -614,7 +635,7 @@ const state = {
   busca: '', buscaProg: '', filtroGrupo: null, filtroRec: null, rango: 7,
   detalle: null, metrica: 'max', histSel: null, borrarSes: false, msgCopia: '',
   modo: 'cargando', cargado: false, aviso: '', hint: null,
-  nube: '', recTab: 'marcas', capa: null, yoTab: 'perfil',
+  nube: '', recTab: 'marcas', capa: null, yoTab: 'perfil', rutEdit: null, calMes: 0,
   amigos: {modo: 'crear', google: false, pestana: 'feed', feed: null, marcas: null, cargando: false, error: '', ejercicio: null, busca: '', salir: false, abiertos: new Set(),
     seg: [], gente: null, solo: false, yoPosts: null, subida: null, subiendo: false, comunidad: 'gente', clubes: null, miembros: [], rutinas: null, club: null, clubPosts: null, borrarClub: false, guardaRutina: null, perfil: null, perfilPosts: null, avisos: [], verAvisos: false, buscaGente: ''},
 };
@@ -643,15 +664,17 @@ function marcas(clave, {excluir, antes} = {}) {
   if (!hs.length) return null;
   let max = null, rm = null;
   for (const h of hs) for (const s of h.sets) {
+    if (s.tipo === 'c') continue;
     if (!max || s.peso > max.peso || (s.peso === max.peso && s.reps > max.reps)) max = {...s, fecha: h.fecha};
     if (!rm || e1rm(s) > rm.v) rm = {v: e1rm(s), peso: s.peso, reps: s.reps, fecha: h.fecha};
   }
   let rangos = [1, 3, 5, 6, 8, 10, 12, 15, 20].map(r => {
     let b = null;
-    for (const h of hs) for (const s of h.sets) if (s.reps >= r && (!b || s.peso > b.peso)) b = {r, peso: s.peso, fecha: h.fecha};
+    for (const h of hs) for (const s of h.sets) if (s.tipo !== 'c' && s.reps >= r && (!b || s.peso > b.peso)) b = {r, peso: s.peso, fecha: h.fecha};
     return b;
   }).filter(Boolean);
   rangos = rangos.filter((b, i) => !(rangos[i + 1] && rangos[i + 1].peso === b.peso));
+  if (!max) return null;
   return {max, rm, rangos, ultima: hs.at(-1), n: hs.length};
 }
 /* series que batieron récord respecto a todo lo anterior a esa sesión */
@@ -660,6 +683,7 @@ function etiquetas(e, ses) {
   if (!m) return e.sets.map(() => '');
   let maxP = m.max.peso, rmP = m.rm.v;
   return e.sets.map(s => {
+    if (s.tipo === 'c') return '';
     if (s.peso > maxP) { maxP = s.peso; rmP = Math.max(rmP, e1rm(s)); return 'pr'; }
     if (e1rm(s) > rmP) { rmP = e1rm(s); return 'rm'; }
     return '';
@@ -689,11 +713,15 @@ function guardarSesion(ses) {
   programarSync();
 }
 
+/* rutinas, notas y medidas: privados de cada usuario, viajan con su cuenta en una fila aparte */
+const ajustes = () => ({rutinas: [], medidas: [], notas: {}, ts: 0, ...ls.get('fr_ajustes', {})});
+function guardarAjustes(cambio) { ls.set('fr_ajustes', {...ajustes(), ...cambio, ts: Date.now()}); programarSync(); }
+
 /* ---------- render ---------- */
 let renderPendiente = false;
 function escribiendo() {
   const a = document.activeElement;
-  return a && a.tagName === 'INPUT' && a.closest('#main') && a.type !== 'date';
+  return a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA') && a.closest('#main') && a.type !== 'date';
 }
 function render(forzar) {
   if (!forzar && escribiendo()) { renderPendiente = true; return; }
@@ -708,7 +736,7 @@ function vistaEntreno() {
   const ses = sesion();
   const delDia = sesionesDe(state.fecha);
   const nSes = ses && delDia.length > 1 ? delDia.findIndex(x => x.id === ses.id) + 1 : 0;
-  const conHub = !state.editGrupos && (!ses || ses.fin);
+  const conHub = !state.editGrupos && !state.rutEdit && (!ses || ses.fin);
   let h = conHub ? hub(ses ? ses.titulo : state.nueva ? 'Nueva sesión' : '¿Qué toca hoy?') : `
   <section class="hero">
     <div class="hero-row">
@@ -718,12 +746,13 @@ function vistaEntreno() {
         <label class="datepill" for="in-fecha">Otra fecha<input id="in-fecha" type="date" value="${state.fecha}" max="${hoy}" aria-label="Fecha del entreno"></label>
       </div>
     </div>
-    <h1>${ses && !state.editGrupos ? esc(ses.titulo) : state.editGrupos ? 'Grupos de la sesión' : state.nueva ? 'Nueva sesión' : '¿Qué toca hoy?'}</h1>
+    <h1>${state.rutEdit ? 'Mi rutina' : ses && !state.editGrupos ? esc(ses.titulo) : state.editGrupos ? 'Grupos de la sesión' : state.nueva ? 'Nueva sesión' : '¿Qué toca hoy?'}</h1>
     ${ses && !state.editGrupos && !ses.fin ? `<button class="editg" data-accion="editar-grupos">Cambiar grupos musculares</button>` : ''}
   </section>`;
   if (state.aviso) h += `<div class="aviso">${esc(state.aviso)}</div>`;
   if (!ses && !state.cargado && state.modo === 'cargando') return h + `<div class="empty"><b>Cargando</b>Recuperando tus marcas…</div>`;
-  if (!ses || state.editGrupos) return h + planificador(ses);
+  if (state.rutEdit) return h + editorRutina();
+  if (!ses || state.editGrupos) return h + (ses ? '' : inicioRapido()) + planificador(ses);
   if (ses.fin) return h + resumenFin(ses);
   const st = statsSesion(ses);
   if (ses.ejercicios.length) h += `
@@ -737,6 +766,44 @@ function vistaEntreno() {
   return h + buscador(ses) + (st.series ? `<button class="finbtn" data-accion="finalizar">Finalizar sesión</button>` : '');
 }
 
+const DIAS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+function inicioRapido() {
+  const hoyN = (parseISO(state.fecha).getDay() + 6) % 7, rs = ajustes().rutinas;
+  const lista = [...rs].sort((a, b) => (b.dias?.includes(hoyN) ? 1 : 0) - (a.dias?.includes(hoyN) ? 1 : 0));
+  const ultimas = state.sesiones.filter(conSets).slice(-3).reverse();
+  let h = `<section class="card"><div class="card-h"><h2>Mis rutinas</h2><button class="mini" data-accion="nueva-rutina">+ Crear</button></div>`;
+  h += lista.length ? lista.map(r => `<div class="fila"><button class="fila-a" data-accion="empezar-rutina" data-id="${esc(r.id)}"><b>${esc(r.nombre)}${r.dias?.includes(hoyN) ? ' <span class="tag">Hoy</span>' : ''}</b>
+      <small>${r.ejercicios.length} ${r.ejercicios.length === 1 ? 'ejercicio' : 'ejercicios'}${r.dias?.length ? ` · ${r.dias.map(d => DIAS[d]).join(' ')}` : ''}</small></button>
+      <button class="mini" data-accion="editar-rutina" data-id="${esc(r.id)}">Editar</button></div>`).join('')
+    : `<p class="note" style="margin:0">Crea tu rutina una vez y empieza cada sesión con un toque.</p>`;
+  h += `</section>`;
+  if (ultimas.length) h += `<section class="card"><div class="card-h"><h2>Replicar sesión</h2></div>${ultimas.map(x => `<button class="fila" data-accion="replicar-sesion" data-id="${esc(x.id)}"><span class="fila-a"><b>${esc(x.titulo)}</b>
+      <small>${fechaCorta(x.fecha)} · ${esc(x.ejercicios.filter(e => e.sets.length).map(e => e.nombre).join(' · '))}</small></span>${ICON_RIGHT}</button>`).join('')}
+    <p class="note" style="margin:8px 0 0">Durante el entreno puedes cambiar cualquier ejercicio.</p></section>`;
+  return h;
+}
+function editorRutina() {
+  const r = state.rutEdit, ideas = [...new Set([...[...catalogo().values()].map(c => c.nombre), ...GRUPOS.flatMap(g => g.ideas)])];
+  return `<section class="card">
+    <input class="campo" id="in-rut-nombre" maxlength="60" placeholder="Nombre, por ejemplo Empuje" autocomplete="off" value="${esc(r.nombre)}" aria-label="Nombre de la rutina">
+    <div class="label" style="margin:14px 0 6px">Días (opcional)</div>
+    <div class="dias">${DIAS.map((d, i) => `<button data-accion="rut-dia" data-i="${i}" aria-pressed="${r.dias.includes(i)}">${d}</button>`).join('')}</div>
+    <div class="label" style="margin:16px 0 2px">Ejercicios</div>
+    ${r.ejercicios.map((e, i) => `<div class="fila"><span class="fila-a"><b>${esc(e.nombre)}</b><small class="num">${e.series} series × ${e.reps} repeticiones</small></span><button class="del" data-accion="rut-quitar" data-i="${i}">Quitar</button></div>`).join('') || '<p class="note" style="margin:6px 0">Añade al menos un ejercicio.</p>'}
+    <form class="crear" data-form="rut-ej" style="margin:12px 0 0;flex-wrap:wrap"><input name="nombre" list="dl-ej" placeholder="Ejercicio" autocomplete="off" aria-label="Ejercicio" style="flex:1 1 100%;background:var(--surface-2)">
+      <datalist id="dl-ej">${ideas.map(n => `<option value="${esc(n)}">`).join('')}</datalist>
+      <input name="series" inputmode="numeric" value="3" aria-label="Series" style="flex:1 1 60px;background:var(--surface-2)"><input name="reps" inputmode="numeric" value="10" aria-label="Repeticiones" style="flex:1 1 60px;background:var(--surface-2)"><button type="submit">Añadir</button></form>
+  </section>
+  <div class="row2"><button class="ghost" data-accion="rut-cancelar">Cancelar</button><button class="apuntar" data-accion="rut-guardar" ${r.ejercicios.length ? '' : 'disabled'}>Guardar</button></div>
+  ${r.id ? `<button class="chip danger" style="display:block;margin:12px auto 0" data-accion="rut-borrar">Borrar rutina</button>` : ''}`;
+}
+function empezarRutina(id) {
+  const r = ajustes().rutinas.find(x => x.id === id);
+  if (!r) return;
+  const copias = r.ejercicios.map(e => { const c = ejercicioCopiado(e.nombre); if (c) c.plan = {series: e.series, reps: e.reps}; return c; });
+  const usados = new Set(copias.map(c => c?.grupo).filter(Boolean));
+  replicar(GRUPOS.map(g => g.id).filter(g => usados.has(g)), copias);
+}
 function planificador(ses) {
   if (!state.plan || state.planFecha !== state.fecha) {
     state.plan = ses ? [...ses.grupos] : [];
@@ -762,10 +829,10 @@ function bloque(e, i, ses) {
   const m = marcas(e.clave, {excluir: ses.id});
   const g = grupoDe(e);
   const mejorHoy = e.sets.length ? e.sets.reduce((a, s) => (s.peso > a.peso || (s.peso === a.peso && s.reps > a.reps)) ? s : a) : null;
-  const resumen = (g ? GRUPO[g].n + ' · ' : '') + (e.sets.length
+  const resumen = (e.ss ? 'Superserie · ' : '') + (g ? GRUPO[g].n + ' · ' : '') + (e.sets.length
     ? `${e.sets.length} ${e.sets.length === 1 ? 'serie' : 'series'} · mejor <b>${fmt(mejorHoy.peso)} × ${fmt(mejorHoy.reps)}</b>`
     : m ? `récord <b>${fmt(m.max.peso)} kg × ${fmt(m.max.reps)}</b> · ${fechaCorta(m.max.fecha)}` : 'ejercicio nuevo');
-  let h = `<article class="ex${on ? ' on' : ''}" data-clave="${esc(e.clave)}">
+  let h = `<article class="ex${on ? ' on' : ''}${e.ss ? ' ss' : ''}" data-clave="${esc(e.clave)}">
     <div class="ex-h">
       <span class="ex-n num">${String(i + 1).padStart(2, '0')}</span>
       <button class="ex-t" data-accion="activar" aria-expanded="${on}"><span class="nm">${esc(e.nombre)}</span><span class="sm">${resumen}</span></button>
@@ -779,6 +846,8 @@ function bloque(e, i, ses) {
     <div class="res" id="res-cambiar">${resultados(state.buscaCambio, 'cambiar-a')}</div>
     <button class="chip" data-accion="cancelar-cambio" style="margin-top:8px">Cancelar</button></div>`;
   if (!g && ses.grupos.length > 1) h += `<div class="askg"><span class="label">¿Qué grupo trabaja?</span><div class="gchips">${ses.grupos.map(id => `<button class="gchip sm" data-accion="set-grupo" data-g="${id}" aria-pressed="false">${GRUPO[id]?.n || id}</button>`).join('')}</div></div>`;
+  if (e.plan) h += `<div class="ref"><span>Tu rutina</span><b class="num">${e.sets.filter(x => x.tipo !== 'c').length} / ${e.plan.series} series × ${e.plan.reps}</b><button class="mini" data-accion="cambiar">Cambiar</button></div>`;
+  h += `<textarea class="nota-ej" id="in-nota" rows="1" maxlength="200" placeholder="Nota para este ejercicio (asiento, agarre…)" aria-label="Nota del ejercicio">${esc(ajustes().notas[e.clave] || '')}</textarea>`;
   if (e.ref) h += `<div class="ref"><span>${esc(e.ref.de)} hizo</span><b class="num">${e.ref.sets.map(x => `${fmt(x[0])}×${fmt(x[1])}`).join(' · ')}</b></div>`;
   h += m ? panelMarcas(m) : `<div class="first"><b>Primera vez con este ejercicio</b>Lo que apuntes hoy será tu marca de referencia.</div>`;
   if (e.sets.length) {
@@ -786,10 +855,11 @@ function bloque(e, i, ses) {
     h += `<div class="sets"><span class="label">Series de hoy</span>`;
     e.sets.forEach((s, k) => {
       const sel = state.setSel === `${e.clave}:${k}`;
+      const tipo = {c: 'C', f: 'F', d: 'D'}[s.tipo];
       const tag = tags[k] === 'pr' ? '<span class="tag">Récord</span>' : tags[k] === 'rm' ? '<span class="tag soft">1RM</span>' : '';
       h += `<button class="setrow${state.hint?.nuevo === `${e.clave}:${k}` ? ' nuevo' : ''}" data-accion="set" data-k="${k}">
-        <span class="i num">${k + 1}</span>
-        <span class="w num">${fmt(s.peso)}<small>kg ×</small>${fmt(s.reps)}</span>
+        <span class="i num">${tipo || k + 1}</span>
+        <span class="w num">${fmt(s.peso)}<small>kg ×</small>${fmt(s.reps)}${s.rpe ? `<small> RPE ${s.rpe}</small>` : ''}</span>
         <span class="x">${sel ? `<span class="del" data-accion="borrar-set" data-k="${k}">Borrar</span>` : `${tag}<span class="num">1RM ${fmt(Math.round(e1rm(s)))}</span>`}</span>
       </button>`;
     });
@@ -809,6 +879,9 @@ function bloque(e, i, ses) {
         <input id="in-reps" name="reps" inputmode="numeric" autocomplete="off" value="${esc(inp.reps)}" placeholder="0" aria-label="Repeticiones">
         <button type="button" data-accion="paso" data-c="reps" data-d="1" aria-label="Más repeticiones">+</button></div>
       </div>
+      <div class="tipos"><span>Tipo</span>${[['', 'Normal'], ['c', 'Calentar'], ['f', 'Fallo'], ['d', 'Drop']].map(([k, n]) => `<button type="button" class="mini" data-accion="set-tipo" data-t="${k}" aria-pressed="${(inp.tipo || '') === k}">${n}</button>`).join('')}</div>
+      <div class="tipos"><span>RPE</span>${['', 7, 8, 9, 10].map(n => `<button type="button" class="mini" data-accion="set-rpe" data-r="${n}" aria-pressed="${String(inp.rpe || '') === String(n)}">${n || '–'}</button>`).join('')}</div>
+      <div class="anterior"><span>${(a => a ? `Anterior: <b class="num">${fmt(a.peso)} × ${fmt(a.reps)}</b>` : 'Sin serie anterior')(m?.ultima.sets[e.sets.length])}</span><button type="button" class="mini" data-accion="discos">Discos</button></div>
       <button class="apuntar" type="submit">Apuntar serie ${e.sets.length + 1}</button>
       ${state.hint?.err ? `<div class="hint err">${esc(state.hint.err)}</div>` : `<div class="hint">Toca una serie para borrarla.</div>`}
     </form>`;
@@ -819,6 +892,7 @@ function menuEjercicio(e, g, ses) {
       <div class="row">
         <button class="chip" data-accion="cambiar">Cambiar ejercicio</button>
         <button class="chip" data-accion="ver-progreso">Ver progreso</button>
+        <button class="chip" data-accion="superserie">${e.ss ? 'Quitar superserie' : 'Superserie con el anterior'}</button>
         <button class="chip danger${state.borrar === e.clave ? ' sure' : ''}" data-accion="quitar">${state.borrar === e.clave ? '¿Seguro? Toca otra vez' : 'Quitar del entreno'}</button>
       </div>
       <div><span class="label" style="display:block;margin-bottom:8px">Grupo muscular</span>
@@ -849,7 +923,7 @@ function objetivo(m) {
 }
 function prefill(e, m) {
   const r = e.ref?.sets[0];
-  const s = e.sets.at(-1) || m?.ultima.sets[0] || (r && {peso: r[0], reps: r[1]});
+  const s = e.sets.at(-1) || m?.ultima.sets[0] || (r && {peso: r[0], reps: r[1]}) || (e.plan && {peso: '', reps: e.plan.reps});
   return s ? {peso: String(s.peso), reps: String(s.reps)} : {peso: '', reps: ''};
 }
 
@@ -1039,6 +1113,17 @@ function pintarCapa() {
   const el = $('#capa'), c = state.capa;
   el.classList.toggle('on', !!c);
   if (!c) { el.innerHTML = ''; return; }
+  if (c.tipo === 'discos') {
+    const kg = c.kg, porLado = Math.max(0, (kg - 20) / 2), discos = []; let resto = porLado;
+    for (const d of [25, 20, 15, 10, 5, 2.5, 1.25]) while (resto >= d - .001) { discos.push(d); resto -= d; }
+    const calent = [[.4, 8], [.6, 5], [.8, 3]].map(([p, r]) => [Math.round(kg * p / 2.5) * 2.5, r]);
+    el.innerHTML = `<div class="capa-in"><div class="capa-txt"><b class="num">${fmt(kg)} kg</b><span>Por cada lado, con barra de 20 kg</span></div>
+      <div class="discos">${discos.map(d => `<span class="disco num">${fmt(d)}</span>`).join('') || '<span class="note">Solo la barra</span>'}</div>
+      ${resto > .01 ? `<span class="note">Sobran ${fmt(resto)} kg por lado</span>` : ''}
+      <div style="width:100%"><div class="label" style="margin-bottom:6px;text-align:left">Calentamiento</div>${calent.map(([p, r]) => `<div class="mision"><span class="num">${fmt(p)} kg</span><small class="num">${r} repeticiones</small></div>`).join('')}</div>
+      <button class="ghost" style="width:100%" data-accion="cerrar-capa">Cerrar</button></div>`;
+    return;
+  }
   if (c.tipo === 'espera') {
     el.innerHTML = `<div class="capa-in"><div class="giro"></div><div class="capa-txt"><b>${esc(c.texto)}</b><span>Puede tardar lo que dura el vídeo. No bloquees el móvil ni salgas de la app.</span></div></div>`;
     return;
@@ -1084,6 +1169,7 @@ function resumenFin(ses) {
   if (nubeLista()) h += ses.publicada
     ? `<button class="finbtn" data-accion="despublicar">Publicada · toca para quitarla</button>`
     : `<button class="apuntar" style="width:100%;margin-top:12px" data-accion="publicar">Publicar en el feed</button>`;
+  h += `<button class="finbtn pub" data-accion="compartir-sesion" data-id="${esc(ses.id)}">Compartir tarjeta</button>`;
   const esf = esfuerzo(ses);
   h += `<div class="card" style="margin-top:12px"><div class="esf"><b class="num">${fmt(esf)}</b><span>Esfuerzo ${nivelEsfuerzo(esf)}</span></div>${mapaMuscular(musculos(ses))}</div>`;
   const hechos = ses.ejercicios.filter(e => e.sets.length);
@@ -1242,6 +1328,7 @@ function vistaHistorial() {
     <div><div class="label">Este mes</div><div class="v num">${ss.filter(s => s.fecha.startsWith(mes)).length}</div></div>
     <div><div class="label">Series</div><div class="v num">${fmt(ss.reduce((a, s) => a + statsSesion(s).series, 0))}</div></div>
   </div>`;
+  h += calendario();
   let actualMes = '';
   for (const s of ss) {
     const m = s.fecha.slice(0, 7);
@@ -1260,6 +1347,64 @@ function vistaHistorial() {
     </button>`;
   }
   return h + `</div>` + copiaSeguridad();
+}
+function calendario() {
+  const base = new Date(); base.setDate(1); base.setMonth(base.getMonth() + state.calMes);
+  const y = base.getFullYear(), mes = base.getMonth(), hueco = (base.getDay() + 6) % 7, dias = new Date(y, mes + 1, 0).getDate();
+  const por = new Map(state.sesiones.filter(conSets).map(s => [s.fecha, s.id]));
+  let celdas = DIAS.map(d => `<span class="sem">${d}</span>`).join('') + '<span></span>'.repeat(hueco);
+  for (let d = 1; d <= dias; d++) {
+    const f = iso(new Date(y, mes, d)), id = por.get(f), c = f === hoy ? ' class="hoy"' : '';
+    celdas += id ? `<button${c} data-accion="ver-sesion" data-id="${esc(id)}">${d}</button>` : `<span${c}>${d}</span>`;
+  }
+  return `<div class="card" style="margin-top:12px"><div class="card-h"><h2 style="text-transform:capitalize">${base.toLocaleDateString('es-ES', {month: 'long', year: 'numeric'})}</h2>
+    <span><button class="mini" data-accion="cal" data-d="-1" aria-label="Mes anterior">‹</button> <button class="mini" data-accion="cal" data-d="1" aria-label="Mes siguiente" ${state.calMes >= 0 ? 'disabled' : ''}>›</button></span></div><div class="cal num">${celdas}</div></div>`;
+}
+function datosMes(pref) {
+  const ss = state.sesiones.filter(s => conSets(s) && s.fecha.startsWith(pref)), st = ss.map(statsSesion);
+  return {ses: ss.length, vol: st.reduce((a, x) => a + x.vol, 0), series: st.reduce((a, x) => a + x.series, 0), recs: ss.reduce((a, s) => a + nRecords(s), 0)};
+}
+function informeMes() {
+  const d = new Date(); d.setDate(1);
+  const act = datosMes(iso(d).slice(0, 7)); d.setMonth(d.getMonth() - 1);
+  const ant = datosMes(iso(d).slice(0, 7));
+  const dif = (a, b) => b ? ` <small class="num">${a >= b ? '+' : ''}${Math.round((a - b) / b * 100)}%</small>` : '';
+  return `<div class="card"><div class="card-h"><h2>Informe del mes</h2><span class="r">frente al anterior</span></div>
+    ${[['Sesiones', act.ses, ant.ses], ['Series', act.series, ant.series], ['Volumen', Math.round(act.vol), Math.round(ant.vol)], ['Récords', act.recs, ant.recs]].map(([n, a, b]) => `<div class="mision"><span>${n}</span><small class="num">${fmt(a)}${dif(a, b)}</small></div>`).join('')}</div>`;
+}
+function medidasCard() {
+  const ms = ajustes().medidas, ult = ms.at(-1);
+  return `<div class="card"><div class="card-h"><h2>Medidas</h2>${ult ? `<span class="r">Última<br><b class="num">${fmt(ult.peso)} kg</b></span>` : ''}</div>
+    ${ms.filter(m => m.peso).length > 1 ? `<div class="chart">${grafica(ms.filter(m => m.peso).map(m => ({x: m.fecha, y: m.peso})), 'max')}</div>` : ''}
+    <form class="crear" data-form="medida" style="margin:${ms.length > 1 ? '12px' : '0'} 0 0"><input name="peso" inputmode="decimal" placeholder="Peso" aria-label="Peso corporal en kg" style="background:var(--surface-2)"><input name="cintura" inputmode="decimal" placeholder="Cintura" aria-label="Cintura en cm" style="background:var(--surface-2)"><button type="submit">Guardar</button></form></div>`;
+}
+/* tarjeta para compartir en redes */
+async function compartirSesion(id) {
+  const s = state.sesiones.find(x => x.id === id);
+  if (!s) return;
+  await document.fonts?.ready;
+  const c = document.createElement('canvas'); c.width = 1080; c.height = 1350;
+  const x = c.getContext('2d'), st = statsSesion(s), esf = esfuerzo(s), F = (p, w = 700) => `${w} ${p}px Outfit, system-ui, sans-serif`;
+  const g = x.createLinearGradient(0, 0, 0, 1350); g.addColorStop(0, '#2A3512'); g.addColorStop(.55, '#0A0D06'); x.fillStyle = g; x.fillRect(0, 0, 1080, 1350);
+  x.fillStyle = '#D4F53C'; x.beginPath(); x.roundRect(60, 60, 960, 360, 48); x.fill();
+  x.fillStyle = '#0A0D06'; x.font = F(34, 600); x.fillText(fechaLarga(s.fecha), 104, 130);
+  x.font = F(82, 800); x.fillText(s.titulo.slice(0, 20), 100, 232);
+  x.font = F(40, 700); x.fillText(`${st.series} series · ${fmt(Math.round(st.vol))} kg${st.mins ? ` · ${st.mins} min` : ''}`, 104, 310);
+  x.font = F(34, 600); x.fillText(`Esfuerzo ${esf} · ${nivelEsfuerzo(esf)}`, 104, 372);
+  let y = 500;
+  for (const e of s.ejercicios.filter(q => q.sets.length).slice(0, 7)) {
+    const top = e.sets.reduce((a, q) => q.peso > a.peso ? q : a);
+    x.fillStyle = '#F5F8EA'; x.font = F(40, 700); x.fillText(e.nombre.slice(0, 26), 70, y);
+    x.fillStyle = '#D4F53C'; x.textAlign = 'right'; x.fillText(`${fmt(top.peso)} kg × ${fmt(top.reps)}`, 1010, y); x.textAlign = 'left';
+    y += 92;
+  }
+  x.fillStyle = '#A1A891'; x.font = F(34, 600); x.fillText('Entrenado con Ferrum', 70, 1290);
+  const b = await new Promise(k => c.toBlob(k, 'image/png')), file = new File([b], `ferrum-${s.fecha}.png`, {type: 'image/png'});
+  try {
+    if (navigator.canShare?.({files: [file]})) { await navigator.share({files: [file]}); return; }
+  } catch (e) { if (e.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = file.name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 function vistaSesion(id) {
   const s = state.sesiones.find(x => x.id === id);
@@ -1286,6 +1431,7 @@ function vistaSesion(id) {
   }
   h += `<div class="foot-actions">
     <button class="apuntar" data-accion="replicar-sesion" data-id="${esc(s.id)}">Replicar sesión</button>
+    <button class="ghost" data-accion="compartir-sesion" data-id="${esc(s.id)}">Compartir tarjeta</button>
     ${nubeLista() && state.amigos.clubsOk ? (state.amigos.guardaRutina === s.id
       ? `<form class="crear" data-form="rutina" data-id="${esc(s.id)}" style="margin:0"><input name="nombre" maxlength="60" value="${esc(s.titulo)}" autocomplete="off" aria-label="Nombre de la rutina"><button type="submit">Guardar</button></form>`
       : `<button class="ghost" data-accion="guardar-rutina" data-id="${esc(s.id)}">Guardar como rutina</button>`) : ''}
@@ -1355,6 +1501,7 @@ function vistaProgreso() {
   <div class="card"><div class="card-h"><h2>Metas de fuerza</h2></div>
     ${metasFuerza().map((m, i) => { const v = marcas(m.clave)?.max.peso || 0; return `<div class="reto"><div class="reto-h"><span>${esc(m.nombre)}${v >= m.kg ? ' <span class="tag">Conseguida</span>' : ''}</span><small class="num">${fmt(v)} / ${fmt(m.kg)} kg · <button class="del" data-accion="quitar-meta" data-i="${i}">Quitar</button></small></div><div class="barra"><i style="width:${Math.min(100, v / m.kg * 100).toFixed(1)}%"></i></div></div>`; }).join('')}
     <form class="crear" data-form="meta" style="margin:${metasFuerza().length ? '10px' : '0'} 0 0"><input name="nombre" maxlength="60" placeholder="Ejercicio" autocomplete="off" aria-label="Ejercicio" style="background:var(--surface-2)"><input name="kg" inputmode="decimal" placeholder="kg" autocomplete="off" aria-label="Peso objetivo en kg" style="background:var(--surface-2);flex:0 0 74px"><button type="submit">Añadir</button></form></div>`;
+  h += informeMes() + medidasCard();
   h += `<div class="card"><div class="card-h"><h2>Retos del mes</h2><span class="r">Racha<br><b class="num">${racha} ${racha === 1 ? 'semana' : 'semanas'}</b></span></div>
     ${retosMes().map(r => `<div class="reto"><div class="reto-h"><span>${r.n}</span><small class="num">${fmt(Math.round(r.v))} / ${fmt(r.meta)} ${r.u}</small></div><div class="barra"><i style="width:${Math.min(100, r.v / r.meta * 100).toFixed(1)}%"></i></div></div>`).join('')}</div>`;
   if (!catalogo().size) return h + `<div class="empty"><b>Aún no hay marcas</b>Apunta tu primera serie en Entreno y aquí verás tus gráficas de progreso.</div>`;
@@ -1559,7 +1706,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 21;
+const VERSION = 22;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -1862,6 +2009,11 @@ async function sincronizarYa() {
   const uid = cuenta.uid;
   try {
     const remotas = new Map((await pedir(`sesiones?select=id,ts&usuario=eq.${uid}`)).map(r => [r.id, +r.ts]));
+    const tsAj = remotas.get('_ajustes') ?? -1, aj = ajustes();
+    remotas.delete('_ajustes');
+    let ajCambio = false;
+    if (tsAj > aj.ts) { const [r] = await pedir(`sesiones?select=doc&usuario=eq.${uid}&id=eq._ajustes`); if (r?.doc) { ls.set('fr_ajustes', r.doc); ajCambio = true; } }
+    else if (aj.ts > tsAj && aj.ts) await pedir('sesiones?on_conflict=usuario,id', {method: 'POST', body: [{usuario: uid, id: '_ajustes', ts: aj.ts, doc: aj}], prefer: 'resolution=merge-duplicates,return=minimal'});
     const tumbas = ls.get('fr_borradas', {});
     const locales = new Map(state.sesiones.map(x => [x.id, x.ts || 1]));
     const bajar = [...remotas].filter(([id, ts]) => ts > (locales.get(id) ?? tumbas[id] ?? -1)).map(x => x[0]);
@@ -1884,7 +2036,7 @@ async function sincronizarYa() {
     for (const id of Object.keys(tumbas)) if (quedan[id] === tumbas[id]) delete quedan[id];
     ls.set('fr_borradas', quedan);
     state.nube = 'ok';
-    if (cambios || state.vista !== 'entreno') render();
+    if (cambios || ajCambio || state.vista !== 'entreno') render();
   } catch { state.nube = 'error'; if (state.vista !== 'entreno') render(); }
 }
 function aplicarRemota(r) {
@@ -2433,14 +2585,16 @@ function apuntar(form) {
   const m = marcas(e.clave, {excluir: ses.id, antes: ses});
   const maxAntes = Math.max(m ? m.max.peso : -Infinity, ...e.sets.map(s => s.peso));
   const rmAntes = Math.max(m ? m.rm.v : -Infinity, ...e.sets.map(e1rm));
-  const s = {peso, reps, t: Date.now()};
+  const inp = state.inputs[e.clave] || {};
+  const s = {peso, reps, t: Date.now(), ...(inp.tipo ? {tipo: inp.tipo} : {}), ...(inp.rpe ? {rpe: inp.rpe} : {})};
   e.sets.push(s);
-  state.inputs[e.clave] = {peso: String(peso), reps: String(reps)};
+  state.inputs[e.clave] = {peso: String(peso), reps: String(reps), tipo: inp.tipo === 'c' ? 'c' : ''};
   state.hint = {nuevo: `${e.clave}:${e.sets.length - 1}`};
   state.setSel = null;
   document.activeElement?.blur();
   guardarSesion(ses);
   render(true);
+  if (s.tipo === 'c') return;
   if (m && peso > maxAntes) toast('Nuevo récord de peso', `${fmt(peso)} kg × ${fmt(reps)}`);
   else if (m && e1rm(s) > rmAntes) toast('Nuevo 1RM estimado', `${fmt(Math.round(e1rm(s) * 2) / 2)} kg`);
 }
@@ -2556,6 +2710,25 @@ document.addEventListener('click', ev => {
       render(true); scrollTo(0, 0); break;
     case 'pestana-explorar': state.vista = 'explorar'; state.amigos.pestana = 'gente'; state.amigos.comunidad = 'gente'; render(true); scrollTo(0, 0); break;
     case 'ir-coleccion': state.recTab = 'cartas'; state.vista = 'records'; state.detalle = null; render(true); scrollTo(0, 0); break;
+    case 'nueva-rutina': state.rutEdit = {id: '', nombre: '', dias: [], ejercicios: []}; render(true); scrollTo(0, 0); break;
+    case 'editar-rutina': state.rutEdit = clone(ajustes().rutinas.find(r => r.id === b.dataset.id)); render(true); scrollTo(0, 0); break;
+    case 'empezar-rutina': empezarRutina(b.dataset.id); break;
+    case 'rut-dia': { const r = state.rutEdit, i = +b.dataset.i; r.dias = r.dias.includes(i) ? r.dias.filter(x => x !== i) : [...r.dias, i].sort(); render(true); break; }
+    case 'rut-quitar': state.rutEdit.ejercicios.splice(+b.dataset.i, 1); render(true); break;
+    case 'rut-cancelar': state.rutEdit = null; render(true); break;
+    case 'rut-guardar': {
+      const r = state.rutEdit, rs = ajustes().rutinas;
+      r.nombre = r.nombre.trim() || 'Mi rutina';
+      if (!r.id) { r.id = 'r' + Date.now().toString(36); rs.push(r); } else rs[rs.findIndex(x => x.id === r.id)] = r;
+      guardarAjustes({rutinas: rs}); state.rutEdit = null; render(true); scrollTo(0, 0); break;
+    }
+    case 'rut-borrar': guardarAjustes({rutinas: ajustes().rutinas.filter(x => x.id !== state.rutEdit.id)}); state.rutEdit = null; render(true); break;
+    case 'set-tipo': state.inputs[clave].tipo = b.dataset.t; render(true); break;
+    case 'set-rpe': state.inputs[clave].rpe = +b.dataset.r || 0; render(true); break;
+    case 'discos': state.capa = {tipo: 'discos', kg: num(state.inputs[clave]?.peso) || 20}; pintarCapa(); break;
+    case 'superserie': { const e = ses.ejercicios.find(x => x.clave === clave); e.ss = !e.ss; guardarSesion(ses); render(true); break; }
+    case 'cal': state.calMes += +b.dataset.d; render(true); break;
+    case 'compartir-sesion': compartirSesion(b.dataset.id); break;
     case 'rec-tab': state.recTab = b.dataset.t; state.detalle = null; render(true); break;
     case 'abrir-sobre': { const id = sobresPendientes()[0]; if (id) { state.capa = {tipo: 'sobre', id}; pintarCapa(); } break; }
     case 'rasgar-sobre': marcarSobre(state.capa.id); state.capa.abierto = true; pintarCapa(); break;
@@ -2658,6 +2831,19 @@ document.addEventListener('submit', ev => {
     ls.set('fr_metas', [...metasFuerza(), {clave: claveDe(nombre), nombre: catalogo().get(claveDe(nombre))?.nombre || nombre, kg}].slice(-6));
     render(true);
   }
+  if (f.dataset.form === 'rut-ej') {
+    const nombre = mejorCoincidencia(f.nombre.value).trim();
+    if (!nombre) return;
+    state.rutEdit.ejercicios.push({nombre, series: Math.max(1, Math.round(num(f.series.value) || 3)), reps: Math.max(1, Math.round(num(f.reps.value) || 10))});
+    document.activeElement?.blur(); render(true);
+  }
+  if (f.dataset.form === 'medida') {
+    const peso = num(f.peso.value), cintura = num(f.cintura.value);
+    if (!peso && !cintura) return;
+    document.activeElement?.blur();
+    guardarAjustes({medidas: [...ajustes().medidas.filter(m => m.fecha !== hoy), {fecha: hoy, peso, cintura}]});
+    render(true); toast('Medidas guardadas', peso ? `${fmt(peso)} kg` : `${fmt(cintura)} cm`);
+  }
   if (f.dataset.form === 'club') crearClub(f);
   if (f.dataset.form === 'rutina') guardarRutina(f);
   if (f.dataset.form === 'cambiar') cambiarEjercicio(state.cambiando, mejorCoincidencia(f.q.value));
@@ -2666,6 +2852,8 @@ document.addEventListener('input', ev => {
   const el = ev.target;
   if (el.id === 'in-busca') { state.busca = el.value; $('#res').innerHTML = resultados(); return; }
   if (el.id === 'in-cambiar') { state.buscaCambio = el.value; $('#res-cambiar').innerHTML = resultados(el.value, 'cambiar-a'); return; }
+  if (el.id === 'in-rut-nombre') { state.rutEdit.nombre = el.value; return; }
+  if (el.id === 'in-nota') { const n = {...ajustes().notas}; const v = el.value.trim(); if (v) n[state.activo] = v; else delete n[state.activo]; guardarAjustes({notas: n}); return; }
   if (el.id === 'rc-ini' || el.id === 'rc-largo') {
     const c = state.capa, ini = $('#rc-ini');
     if (el.id === 'rc-largo') { c.largo = +el.value; ini.max = (c.total - c.largo).toFixed(1); $('#rc-largo-t').textContent = c.largo + ' s'; }
