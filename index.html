@@ -489,6 +489,20 @@ body:has(.hub)::before{background:#C9EC35}
 .stats div,.sumrow div{background:none;padding:0}
 .stats > div,.sumrow > div{border-radius:22px;padding:12px}
 .historias{display:flex;gap:10px;margin:0 0 14px}
+/* marco de la foto según el nivel: fino y sobrio al principio, animado y holográfico al final */
+.ava{position:relative}
+.ava[class*="mc"]::after{content:"";position:absolute;inset:-5px;border-radius:50%;padding:3px;pointer-events:none;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+.ava.mc1::after{background:#8FA585}
+.ava.mc2::after{background:linear-gradient(135deg,#F2F4F0,#9AA2A0 50%,#F2F4F0)}
+.ava.mc3::after{background:conic-gradient(#D6F2FF,#4FA6E8,#D6F2FF,#4FA6E8,#D6F2FF);padding:3.5px}
+.ava.mc4::after{background:conic-gradient(#E9D9FF,#8A4FE0,#F0B8FF,#8A4FE0,#E9D9FF);padding:4px;filter:drop-shadow(0 0 4px rgba(170,90,255,.7))}
+.ava.mc5::after{background:conic-gradient(#FFF0B5,#D49A12,#FFF7D6,#B9770F,#FFF0B5);padding:4px;filter:drop-shadow(0 0 5px rgba(255,200,70,.75))}
+.ava.mc6::after{inset:-6px;padding:4.5px;background:conic-gradient(#FFD24A,#FF6A2B,#FF2F87,#9B6BFF,#5CF2FF,#7DFFB0,#FFD24A);filter:drop-shadow(0 0 7px rgba(255,210,120,.8));animation:gira 5s linear infinite}
+.marcos{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 8px;text-align:center}
+.marco{display:grid;justify-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink)}
+.marco small{display:block;font-size:11.5px;font-weight:500;color:var(--muted)}
+.marco.no{opacity:.42}
+.marco .ava{width:52px;height:52px;font-size:18px}
 .foto-v{position:relative;width:280px;height:280px;border-radius:50%;overflow:hidden;background:#0E1A11;touch-action:none;cursor:grab;box-shadow:0 0 0 2px var(--lime)}
 .foto-prev{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--muted)}
 .foto-prev canvas{width:64px;height:64px;border-radius:50%;box-shadow:0 0 0 1.5px var(--line-2)}
@@ -496,7 +510,6 @@ body:has(.hub)::before{background:#C9EC35}
 .ahora{margin-bottom:12px}
 .ahora-f{display:grid;grid-template-columns:40px 1fr auto;gap:10px;align-items:center;width:100%;padding:9px 0;text-align:left;border-bottom:1px solid var(--line)}
 .ahora-f:last-child{border-bottom:0}
-.ahora-f .ava{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--lime)}
 .ahora-f b{display:block;font-weight:600;overflow-wrap:anywhere}.ahora-f small{display:block;font-size:12.5px;color:var(--muted)}
 .ahora-f .v{font-size:12.5px;color:var(--muted);white-space:nowrap}
 .pf-d{margin:-6px 0 14px;color:var(--muted);font-size:14.5px;line-height:1.35;overflow-wrap:anywhere}
@@ -591,7 +604,8 @@ textarea{touch-action:manipulation}
 .hist{flex:0 0 calc(20% - 8px);min-width:0;display:grid;justify-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--muted)}
 .hist span:last-child{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hist .ava{width:54px;height:54px;font-size:20px;box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--line-2)}
-.hist.activa .ava{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--lime)}
+.hist .ava[class*="mc"]{box-shadow:none}
+.hist.activa .ava::before,.ahora-f .ava::before{content:"";position:absolute;right:-2px;bottom:-2px;z-index:1;width:13px;height:13px;border-radius:50%;background:var(--lime);box-shadow:0 0 0 2.5px var(--bg)}
 .hist .mas{background:var(--surface-2);color:var(--lime)}
 .empezar{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;margin-bottom:14px;padding:12px 12px 12px 18px;border-radius:24px;background:linear-gradient(160deg,#1E2415,#13170C);box-shadow:inset 0 0 0 1px rgba(255,255,255,.055);font-weight:600;text-align:left}
 .empezar b{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--lime);color:var(--on-lime);font-size:18px;flex:none}
@@ -864,9 +878,11 @@ function escribiendo() {
   const a = document.activeElement;
   return a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA') && a.closest('#main') && a.type !== 'date';
 }
+let miNivel = 0;
 function render(forzar) {
   if (!forzar && escribiendo()) { renderPendiente = true; return; }
   renderPendiente = false;
+  miNivel = 0;
   for (const v of ['amigos', 'explorar', 'entreno', 'records', 'yo']) $('#tab-' + v).setAttribute('aria-pressed', state.vista === v);
   $('#tab-amigos').classList.toggle('dot', avisosNuevos() > 0);
   requestAnimationFrame(aplicarPliegues);
@@ -1935,7 +1951,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 35;
+const VERSION = 36;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -2662,7 +2678,7 @@ function tarjetaRival() {
   const fila = (nom, v, c) => `<span class="rival-f ${c}"><span>${esc(nom)}</span><span class="barra"><i style="width:${(v / max * 100).toFixed(1)}%"></i></span><span class="num">${fmt(v)}</span></span>`;
   return `<button class="rival" data-accion="perfil" data-u="${esc(yo.rival)}"><span class="rival-h"><span>Tu rival de la semana</span><b>${esc(n)}</b></span>${fila('Tú', mio, '')}${fila(n, suyo, 'el')}<small>${esc(msg)} Termina el domingo.</small></button>`;
 }
-const nivelDe = uid => uid === cuenta?.uid ? progresoNivel().n : +state.amigos.gente?.find(g => g.id === uid)?.resumen?.nivel || 1;
+const nivelDe = uid => uid === cuenta?.uid ? (miNivel ||= progresoNivel().n) : +state.amigos.gente?.find(g => g.id === uid)?.resumen?.nivel || 1;
 /* cada ejercicio del rival es un punto: gana quien tenga mejor 1RM estimado (repeticiones si no hay peso) */
 const valorSerie = (peso, reps) => peso ? peso * (1 + reps / 30) : reps;
 function marcadorDuelo(ses) {
@@ -2747,10 +2763,16 @@ function vistaDuelos() {
 }
 const ICON_FUERZA = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 7v10M3 9.5v5M18 7v10M21 9.5v5M6 12h12"/></svg>';
 const ICON_COMENTAR = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.8 7L4 20l1-5.1A8 8 0 1 1 21 12z"/></svg>';
+const MARCOS = [[30, 'Titán'], [20, 'Élite'], [15, 'Guerrero'], [10, 'Atleta'], [5, 'Aprendiz'], [1, 'Novato']];
+const marcoDe = n => 6 - MARCOS.findIndex(m => n >= m[0]);
 const avatar = (n, uid) => {
-  const u = urlMedio(state.amigos.gente?.find(g => g.id === uid)?.avatar || '');
-  return u ? `<span class="ava" style="background:url(${u}) center/cover no-repeat"></span>` : `<span class="ava">${esc(String(n || '?')[0].toUpperCase())}</span>`;
+  const u = urlMedio(state.amigos.gente?.find(g => g.id === uid)?.avatar || ''), c = uid ? ` mc${marcoDe(nivelDe(uid))}` : '';
+  return u ? `<span class="ava${c}" style="background:url(${u}) center/cover no-repeat"></span>` : `<span class="ava${c}">${esc(String(n || '?')[0].toUpperCase())}</span>`;
 };
+function seccionMarcos() {
+  const n = nivelDe(cuenta.uid);
+  return `<div class="sec-h"><h2>Marcos</h2></div><section class="card"><div class="marcos">${[...MARCOS].reverse().map(([nv, t], i) => `<div class="marco${n >= nv ? '' : ' no'}"><span class="ava mc${i + 1}">${esc(cuenta.nombre[0].toUpperCase())}</span><span>${t}<small>${n >= nv ? 'Conseguido' : `Nivel ${nv}`}</small></span></div>`).join('')}</div></section>`;
+}
 function botonSeguir(uid) {
   if (uid === cuenta.uid) return '';
   const ya = sigoA().includes(uid);
@@ -3010,7 +3032,7 @@ function vistaYo() {
   if (t === 'prog') return seg + `<div class="plegable">${vistaProgreso()}</div>`;
   if (!cuenta?.nombre) return seg + vistaAmigos();
   const mios = a.bloqueos.filter(b => b.bloqueador === cuenta.uid);
-  return seg + vistaPerfil(cuenta.uid, true) + (mios.length ? `<div class="sec-h"><h2>Bloqueados</h2></div><div class="rows">${mios.map(b => `<div class="persona"><span>Usuario bloqueado</span><button class="mini" data-accion="desbloquear" data-u="${esc(b.bloqueado)}">Desbloquear</button></div>`).join('')}</div>` : '') + `<div class="cuenta-txt">${cuenta.email ? `${esc(cuenta.email)} · ` : ''}Ferrum ${VERSION}</div><div class="salir">
+  return seg + vistaPerfil(cuenta.uid, true) + seccionMarcos() + (mios.length ? `<div class="sec-h"><h2>Bloqueados</h2></div><div class="rows">${mios.map(b => `<div class="persona"><span>Usuario bloqueado</span><button class="mini" data-accion="desbloquear" data-u="${esc(b.bloqueado)}">Desbloquear</button></div>`).join('')}</div>` : '') + `<div class="cuenta-txt">${cuenta.email ? `${esc(cuenta.email)} · ` : ''}Ferrum ${VERSION}</div><div class="salir">
     ${cuenta.email ? `<button class="chip" data-accion="cerrar-cuenta">Cerrar sesión</button>` : ''}
     <button class="chip danger${a.salir ? ' sure' : ''}" data-accion="borrar-cuenta">${a.salir ? '¿Seguro? Se borra para siempre' : 'Borrar mi cuenta'}</button></div>`;
 }
