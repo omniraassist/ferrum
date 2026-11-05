@@ -492,6 +492,18 @@ body:has(.hub)::before{background:#C9EC35}
 .stats div,.sumrow div{background:none;padding:0}
 .stats > div,.sumrow > div{border-radius:22px;padding:12px}
 .historias{display:flex;gap:10px;margin:0 0 14px}
+.rival{display:block;width:100%;padding:15px 16px;margin-bottom:12px;border-radius:24px;text-align:left;background:linear-gradient(150deg,#2A1548,#150B26);box-shadow:inset 0 0 0 1.5px rgba(190,130,255,.45)}
+.rival-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13px;font-weight:700;color:#D9BEFF}
+.rival-h b{font-size:19px;font-weight:800;color:#fff;overflow-wrap:anywhere}
+.rival-f{display:grid;grid-template-columns:62px 1fr 56px;gap:8px;align-items:center;margin-top:8px;font-size:12.5px;font-weight:600;color:#fff}
+.rival-f span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rival-f span:last-child{text-align:right;font-weight:800}
+.rival-f .barra{height:9px;background:rgba(255,255,255,.12)}
+.rival-f.el .barra i{background:#C89BFF}
+.rival small{display:block;margin-top:9px;font-size:12.5px;color:#D9BEFF}
+.zona{display:block;padding:7px 16px;font-size:11.5px;font-weight:700;letter-spacing:.02em}
+.zona.sube{background:var(--lime-soft);color:var(--lime-ink)}
+.zona.baja{background:rgba(255,112,102,.12);color:#FF9C94}
 .pareja{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:13px 16px;margin-bottom:12px;border-radius:22px;background:linear-gradient(150deg,#23300E,#171B10);box-shadow:inset 0 0 0 1px rgba(212,245,60,.25)}
 .pareja b{display:block;font-weight:700;overflow-wrap:anywhere}
 .pareja small{display:block;font-size:12.5px;color:var(--muted)}
@@ -688,7 +700,7 @@ const state = {
   modo: 'cargando', cargado: false, aviso: '', hint: null,
   nube: '', recTab: 'marcas', capa: null, yoTab: 'perfil', rutEdit: null, calMes: 0, inicio: null, abiertas: new Set(['Objetivo semanal', 'Misiones de la semana']),
   amigos: {modo: 'crear', google: false, pestana: 'feed', feed: null, marcas: null, cargando: false, error: '', ejercicio: null, busca: '', salir: false, abiertos: new Set(),
-    seg: [], gente: null, solo: false, yoPosts: null, desafios: [], desafiosOk: false, parejas: [], parejasOk: false, subida: null, subiendo: false, comunidad: 'gente', clubes: null, miembros: [], rutinas: null, club: null, clubPosts: null, borrarClub: false, guardaRutina: null, perfil: null, perfilPosts: null, avisos: [], verAvisos: false, buscaGente: ''},
+    seg: [], gente: null, solo: false, yoPosts: null, desafios: [], desafiosOk: false, parejas: [], parejasOk: false, ligas: [], ligasOk: false, subida: null, subiendo: false, comunidad: 'gente', clubes: null, miembros: [], rutinas: null, club: null, clubPosts: null, borrarClub: false, guardaRutina: null, perfil: null, perfilPosts: null, avisos: [], verAvisos: false, buscaGente: ''},
 };
 const conSets = s => s.ejercicios.some(e => e.sets.length);
 const grupoDe = e => e.grupo || IDEA_GRUPO[e.clave] || null;
@@ -1117,6 +1129,7 @@ function misionesDe(lunes) {
 function sobresGanados() {
   const ids = state.sesiones.filter(s => s.fin && statsSesion(s).series >= 3).map(s => 's:' + s.id);
   ids.push(...state.sesiones.filter(s => s.desafio?.res?.ganado).map(s => 'd:' + s.id));
+  for (let i = 0; i < (filaLiga(cuenta?.uid)?.ganados || 0); i++) ids.push('r:' + i);
   for (const l of new Set(state.sesiones.filter(conSets).map(s => lunesDe(s.fecha)))) ids.push(...misionesDe(l).filter(m => m.hecha).map(m => m.id));
   return ids;
 }
@@ -1139,7 +1152,7 @@ function progresoNivel() {
   const e = estadisticas(), obj = objetivoSemana();
   const cumplidas = [...new Set(state.sesiones.filter(conSets).map(s => lunesDe(s.fecha)))].filter(l => datosSemana(l).dias >= obj).length;
   const metas = metasFuerza().filter(m => (marcas(m.clave)?.max.peso || 0) >= m.kg).length;
-  const xp = e.series * 10 + state.sesiones.filter(s => s.fin && conSets(s)).length * 100 + e.recs * 150 + cumplidas * 300 + metas * 500 + coleccion().size * 50 + e.ganados * 300;
+  const xp = e.series * 10 + state.sesiones.filter(s => s.fin && conSets(s)).length * 100 + e.recs * 150 + cumplidas * 300 + metas * 500 + coleccion().size * 50 + e.ganados * 300 + (filaLiga(cuenta?.uid)?.ganados || 0) * 200;
   let n = 1; while (100 * n * (n + 1) <= xp) n++;
   const base = 100 * (n - 1) * n, sig = 100 * n * (n + 1);
   return {xp, n, rango: RANGOS.find(r => n >= r[0])[1], falta: sig - xp, pct: (xp - base) / (sig - base) * 100};
@@ -1216,6 +1229,12 @@ function pintarCapa() {
       <div class="capa-txt"><b style="font-size:30px">${P[1]}</b><span style="font-size:15px">${P[2]}</span></div>
       <div class="puntos">${[0, 1, 2].map(i => `<i${i === c.paso ? ' class="on"' : ''}></i>`).join('')}</div>
       <button class="apuntar" data-accion="intro">${c.paso < 2 ? 'Siguiente' : 'Empezar'}</button></div>`;
+    return;
+  }
+  if (c.tipo === 'liga') {
+    el.innerHTML = `<div class="capa-in"><div class="fin-duelo ${c.sube ? 'gana' : 'pierde'}">${c.sube ? '¡Has subido!' : 'Has bajado'}</div>
+      <div class="capa-txt"><b>Liga ${esc(c.liga)}</b><span>${c.sube ? 'Nueva semana, nuevos rivales.' : 'Esta semana puedes recuperarla.'}</span></div>
+      <button class="apuntar" data-accion="cerrar-capa">Seguir</button></div>`;
     return;
   }
   if (c.tipo === 'desafio') {
@@ -1826,7 +1845,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 25;
+const VERSION = 26;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -1902,6 +1921,7 @@ async function cargarAmigos() {
       ]);
       a.clubsOk = true;
     } catch { a.clubsOk = false; }
+    try { a.ligas = await pedir('ligas?select=*&limit=2000'); a.ligasOk = true; avisarCambioLiga(); } catch { a.ligasOk = false; }
     try { a.parejas = await pedir(`parejas?select=*&or=(a.eq.${cuenta.uid},b.eq.${cuenta.uid})`); a.parejasOk = true; } catch { a.parejasOk = false; }
     try {
       a.desafios = await pedir('desafios?select=*,retador_p:perfiles!desafios_retador_fkey(nombre),rival_p:perfiles!desafios_rival_fkey(nombre)&order=creado.desc&limit=100');
@@ -2392,6 +2412,24 @@ async function activarPush() {
 const ICON_DUELO = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4l6 0 0 6-9 9-3-3zM4 4l5 5M4 4v4M4 4h4M15 15l5 5M5 19l3-3"/></svg>';
 const LIGAS = [[30, 'Titán'], [20, 'Diamante'], [15, 'Platino'], [10, 'Oro'], [5, 'Plata'], [1, 'Bronce']];
 const ligaDe = n => LIGAS.find(l => n >= l[0])[1];
+const NOMBRES_LIGA = ['Bronce', 'Plata', 'Oro', 'Platino', 'Diamante', 'Titán'];
+const filaLiga = uid => state.amigos.ligas.find(l => l.usuario === uid);
+const ligaU = uid => { const l = filaLiga(uid); return l ? NOMBRES_LIGA[l.liga] : ligaDe(nivelDe(uid)); };
+const xpSemana = uid => { if (uid === cuenta.uid) return semanaActual().xps; const r = state.amigos.gente?.find(g => g.id === uid)?.resumen; return r?.semana === lunesDe(hoy) ? +r.xps || 0 : 0; };
+function avisarCambioLiga() {
+  const yo = filaLiga(cuenta.uid);
+  if (!yo?.cambio || ls.get('fr_liga_visto', '') === yo.semana || state.capa) return;
+  ls.set('fr_liga_visto', yo.semana);
+  state.capa = {tipo: 'liga', sube: yo.cambio > 0, liga: NOMBRES_LIGA[yo.liga]}; pintarCapa();
+}
+function tarjetaRival() {
+  const a = state.amigos, yo = filaLiga(cuenta.uid);
+  if (!a.ligasOk || !yo?.rival || yo.semana !== lunesDe(hoy)) return '';
+  const mio = xpSemana(cuenta.uid), suyo = xpSemana(yo.rival), max = Math.max(1, mio, suyo), dif = Math.abs(mio - suyo), n = nombreDe(yo.rival);
+  const msg = mio > suyo ? `Vas ganando por ${fmt(dif)} XP.` : mio < suyo ? `${n} te saca ${fmt(dif)} XP.` : 'Empate. Entrena para ponerte por delante.';
+  const fila = (nom, v, c) => `<span class="rival-f ${c}"><span>${esc(nom)}</span><span class="barra"><i style="width:${(v / max * 100).toFixed(1)}%"></i></span><span class="num">${fmt(v)}</span></span>`;
+  return `<button class="rival" data-accion="perfil" data-u="${esc(yo.rival)}"><span class="rival-h"><span>Tu rival de la semana</span><b>${esc(n)}</b></span>${fila('Tú', mio, '')}${fila(n, suyo, 'el')}<small>${esc(msg)} Termina el domingo.</small></button>`;
+}
 const nivelDe = uid => uid === cuenta?.uid ? progresoNivel().n : +state.amigos.gente?.find(g => g.id === uid)?.resumen?.nivel || 1;
 /* cada ejercicio del rival es un punto: gana quien tenga mejor 1RM estimado (repeticiones si no hay peso) */
 const valorSerie = (peso, reps) => peso ? peso * (1 + reps / 30) : reps;
@@ -2449,13 +2487,20 @@ function balance(uid) {
   return {v, l};
 }
 function vistaLiga() {
-  const a = state.amigos, semana = lunesDe(hoy), p = progresoNivel();
-  const filas = (a.gente || []).map(g => ({...g, nivel: nivelDe(g.id), xps: g.id === cuenta.uid ? semanaActual().xps : g.resumen?.semana === semana ? +g.resumen.xps || 0 : 0})).sort((x, y) => y.xps - x.xps || y.nivel - x.nivel);
-  const yo = filas.findIndex(f => f.id === cuenta.uid) + 1;
-  return `<section class="liga"><span><b>Liga ${ligaDe(p.n)}</b><small class="num">Nivel ${p.n} · ${fmt(semanaActual().xps)} XP esta semana</small></span><strong class="num">${yo ? yo + '.º' : '–'}</strong></section>
-    <div class="rows">${filas.map((f, i) => `<button class="rk${f.id === cuenta.uid ? ' yo' : ''}${i < 3 ? ' sube' : ''}" data-accion="perfil" data-u="${esc(f.id)}"><span class="p num">${i + 1}</span>
-      <span class="mid"><b>${esc(f.nombre)}</b><small class="num">Nivel ${f.nivel} · ${ligaDe(f.nivel)}</small></span><span class="v num">${fmt(f.xps)}<small>XP</small></span></button>`).join('')}</div>
-    <p class="note">La clasificación se reinicia cada lunes. Las series, sesiones, récords y desafíos ganados suman XP.</p>`;
+  const a = state.amigos, p = progresoNivel(), mi = filaLiga(cuenta.uid);
+  const filas = (a.gente || []).filter(g => !a.ligasOk || filaLiga(g.id)?.liga === (mi?.liga ?? 0)).map(g => ({...g, nivel: nivelDe(g.id), xps: xpSemana(g.id)})).sort((x, y) => y.xps - x.xps || y.nivel - x.nivel);
+  const n = filas.length, yo = filas.findIndex(f => f.id === cuenta.uid) + 1, cupo = Math.max(1, Math.ceil(n * .3));
+  const puedeSubir = a.ligasOk && (mi?.liga ?? 0) < 5, puedeBajar = a.ligasOk && (mi?.liga ?? 0) > 0 && n >= 3;
+  let lista = '';
+  filas.forEach((f, i) => {
+    if (puedeBajar && i === n - cupo) lista += `<span class="zona baja">Zona de descenso</span>`;
+    lista += `<button class="rk${f.id === cuenta.uid ? ' yo' : ''}${i < 3 ? ' sube' : ''}" data-accion="perfil" data-u="${esc(f.id)}"><span class="p num">${i + 1}</span>
+      <span class="mid"><b>${esc(f.nombre)}</b><small class="num">Nivel ${f.nivel}</small></span><span class="v num">${fmt(f.xps)}<small>XP</small></span></button>`;
+    if (puedeSubir && i === cupo - 1 && n > cupo) lista += `<span class="zona sube">Hasta aquí ascienden el lunes</span>`;
+  });
+  return `<section class="liga"><span><b>Liga ${ligaU(cuenta.uid)}</b><small class="num">Nivel ${p.n} · ${fmt(semanaActual().xps)} XP esta semana</small></span><strong class="num">${yo ? yo + '.º' : '–'}</strong></section>
+    <div class="rows">${lista}</div>
+    <p class="note">Cada lunes los primeros suben de liga y los últimos bajan. Si no entrenas, también bajas.</p>`;
 }
 function vistaDuelos() {
   const a = state.amigos;
@@ -2532,7 +2577,7 @@ function vistaPerfil(uid, propio) {
   let h = `<div class="det">${propio ? '' : '<button class="back" data-accion="volver-perfil">‹ Volver</button>'}
     <div class="pf">${avatar(nombre)}<h1>${esc(nombre)}</h1>${botonSeguir(uid)}</div>
     ${!propio && a.parejasOk ? (p => p ? (p.estado === 'activa' ? `<p class="num">Racha juntos: ${rachaPareja(p).n} semanas</p>` : `<p>Invitación de racha pendiente</p>`) : `<button class="ghost" style="width:100%;margin-bottom:12px" data-accion="invitar-pareja" data-u="${esc(uid)}">Hacer racha juntos</button>`)(a.parejas.find(x => otroDe(x) === uid)) : ''}
-    ${(r => { const b = balance(uid), n = nivelDe(uid); return `<p class="num">Nivel ${n} · Liga ${ligaDe(n)} · ${fmt(+r?.cartas || 0)}/${CARTAS.length} cartas${a.desafiosOk ? ` · ${b.v}V–${b.l}D` : ''}</p>`; })(a.gente?.find(x => x.id === uid)?.resumen)}</div>
+    ${(r => { const b = balance(uid), n = nivelDe(uid); return `<p class="num">Nivel ${n} · Liga ${ligaU(uid)} · ${fmt(+r?.cartas || 0)}/${CARTAS.length} cartas${a.desafiosOk ? ` · ${b.v}V–${b.l}D` : ''}</p>`; })(a.gente?.find(x => x.id === uid)?.resumen)}</div>
     <div class="sumrow">
       <div><div class="label">Sesiones</div><div class="v num">${posts?.length ?? '–'}</div></div>
       <div><div class="label">Seguidores</div><div class="v num">${seguidores}</div></div>
@@ -2680,7 +2725,7 @@ function vistaAmigos() {
     <form class="search" data-form="alta"><input id="in-nombre" name="nombre" maxlength="24" placeholder="Tu nombre" autocomplete="off" autocapitalize="words" enterkeyhint="go" aria-label="Tu nombre"><button class="go" type="submit" ${a.cargando ? 'disabled' : ''}>${a.cargando ? 'Entrando…' : 'Entrar'}</button></form></section>`;
   if (!cuenta.email) h += `<section class="next" style="margin:0 0 12px"><h2>Protege tu cuenta</h2>
     <p>Pon un email y una contraseña. Conservas tu nombre y tus entrenos quedan a salvo si cambias de móvil.</p>${camposCuenta('proteger')}</section>`;
-  if (esFeed) h += tarjetaHoy() + tarjetasPareja() + (a.parejasOk && !ls.get('fr_push', 0) ? `<button class="empezar" data-accion="activar-push">Activa los avisos para no perderte duelos<b>→</b></button>` : '') + historias();
+  if (esFeed) h += tarjetaHoy() + tarjetaRival() + tarjetasPareja() + (a.parejasOk && !ls.get('fr_push', 0) ? `<button class="empezar" data-accion="activar-push">Activa los avisos para no perderte duelos<b>→</b></button>` : '') + historias();
   else h += `<div class="seg" style="--n:${a.desafiosOk ? 4 : 3}" role="group" aria-label="Sección">
     <button data-accion="pestana-amigos" data-p="liga" aria-pressed="${pest === 'liga'}">Liga</button>
     <button data-accion="pestana-amigos" data-p="ranking" aria-pressed="${pest === 'ranking'}">Marcas</button>
