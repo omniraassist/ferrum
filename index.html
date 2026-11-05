@@ -1357,7 +1357,7 @@ function calendario() {
     const f = iso(new Date(y, mes, d)), id = por.get(f), c = f === hoy ? ' class="hoy"' : '';
     celdas += id ? `<button${c} data-accion="ver-sesion" data-id="${esc(id)}">${d}</button>` : `<span${c}>${d}</span>`;
   }
-  return `<div class="card" style="margin-top:12px"><div class="card-h"><h2 style="text-transform:capitalize">${base.toLocaleDateString('es-ES', {month: 'long', year: 'numeric'})}</h2>
+  return `<div class="card" style="margin-top:12px"><div class="card-h"><h2>${(t => t[0].toUpperCase() + t.slice(1))(base.toLocaleDateString('es-ES', {month: 'long', year: 'numeric'}))}</h2>
     <span><button class="mini" data-accion="cal" data-d="-1" aria-label="Mes anterior">‹</button> <button class="mini" data-accion="cal" data-d="1" aria-label="Mes siguiente" ${state.calMes >= 0 ? 'disabled' : ''}>›</button></span></div><div class="cal num">${celdas}</div></div>`;
 }
 function datosMes(pref) {
