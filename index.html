@@ -490,6 +490,8 @@ body:has(.hub)::before{background:#C9EC35}
 .stats > div,.sumrow > div{border-radius:22px;padding:12px}
 .historias{display:flex;gap:10px;margin:0 0 14px}
 .foto-v{position:relative;width:280px;height:280px;border-radius:50%;overflow:hidden;background:#0E1A11;touch-action:none;cursor:grab;box-shadow:0 0 0 2px var(--lime)}
+.foto-prev{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--muted)}
+.foto-prev canvas{width:64px;height:64px;border-radius:50%;box-shadow:0 0 0 1.5px var(--line-2)}
 .foto-v canvas{position:absolute;left:0;top:0;max-width:none;transform-origin:0 0;pointer-events:none}
 .ava{background-size:cover;background-position:center}
 .ahora{margin-bottom:12px}
@@ -1299,6 +1301,7 @@ function vistaColeccion() {
 function pintarCapa() {
   const el = $('#capa'), c = state.capa;
   el.classList.toggle('on', !!c);
+  document.documentElement.style.overflow = c ? 'hidden' : '';
   if (!c) { el.innerHTML = ''; return; }
   if (c.tipo === 'intro') {
     const P = [['<path d="M6 7v10M3 9.5v5M18 7v10M21 9.5v5M6 12h12"/>', 'Entrena', 'Apunta tus series, crea tu rutina y bate tus marcas sesión a sesión.'],
@@ -1343,8 +1346,9 @@ function pintarCapa() {
     return;
   }
   if (c.tipo === 'foto') {
-    el.innerHTML = `<div class="capa-in"><div class="capa-txt"><b>Ajusta tu foto</b><span>Arrastra para moverla</span></div>
+    el.innerHTML = `<div class="capa-in"><div class="capa-txt"><b>Ajusta tu foto</b><span>Arrastra para moverla y pellizca para acercar</span></div>
       <div class="foto-v" id="foto-v"></div>
+      <div class="foto-prev"><canvas id="foto-p" width="192" height="192"></canvas><span>Así se verá tu foto</span></div>
       <label class="rc">Zoom<input id="foto-z" type="range" min="1" max="6" step="0.01" value="${c.z}"></label>
       <button class="apuntar" data-accion="usar-foto">Usar esta foto</button>
       <button class="ghost" style="width:100%" data-accion="cancelar-foto">Cancelar</button></div>`;
@@ -1933,7 +1937,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 33;
+const VERSION = 34;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -2541,13 +2545,25 @@ function moverFoto() {
   const ajusta = (v, lado) => lado <= FOTO_V ? (FOTO_V - lado) / 2 : Math.min(0, Math.max(FOTO_V - lado, v));
   c.x = ajusta(c.x, c.lienzo.width * e); c.y = ajusta(c.y, c.lienzo.height * e);
   el.style.transform = `translate(${c.x}px,${c.y}px) scale(${e})`;
+  const p = $('#foto-p');
+  if (p) pintarRecorte(p);
+}
+function pintarRecorte(t) {
+  const c = state.capa, e = c.base * c.z, k = t.width / FOTO_V, x = t.getContext('2d');
+  x.fillStyle = '#0E1A11'; x.fillRect(0, 0, t.width, t.height);
+  x.drawImage(c.lienzo, c.x * k, c.y * k, c.lienzo.width * e * k, c.lienzo.height * e * k);
+}
+function zoomFoto(z) {
+  const c = state.capa, antes = c.base * c.z; z = Math.min(6, Math.max(1, z));
+  const ahora = c.base * z, m = FOTO_V / 2;
+  c.x = m - (m - c.x) / antes * ahora; c.y = m - (m - c.y) / antes * ahora; c.z = z;
+  const r = $('#foto-z'); if (r) r.value = z;
+  moverFoto();
 }
 function recortarFoto() {
-  const c = state.capa, e = c.base * c.z, t = document.createElement('canvas');
+  const t = document.createElement('canvas');
   t.width = t.height = 512;
-  const k = 512 / FOTO_V, x = t.getContext('2d');
-  x.fillStyle = '#0E1A11'; x.fillRect(0, 0, 512, 512);
-  x.drawImage(c.lienzo, c.x * k, c.y * k, c.lienzo.width * e * k, c.lienzo.height * e * k);
+  pintarRecorte(t);
   return new Promise((ok, mal) => t.toBlob(b => b ? ok(b) : mal(new Error('foto')), 'image/jpeg', .85));
 }
 async function guardarFoto() {
@@ -3422,11 +3438,7 @@ document.addEventListener('input', ev => {
   const el = ev.target;
   if (el.id === 'in-busca') { state.busca = el.value; $('#res').innerHTML = resultados(); return; }
   if (el.id === 'in-cambiar') { state.buscaCambio = el.value; $('#res-cambiar').innerHTML = resultados(el.value, 'cambiar-a'); return; }
-  if (el.id === 'foto-z') {
-    const c = state.capa, antes = c.base * c.z, ahora = c.base * +el.value, m = FOTO_V / 2;
-    c.x = m - (m - c.x) / antes * ahora; c.y = m - (m - c.y) / antes * ahora; c.z = +el.value;
-    moverFoto(); return;
-  }
+  if (el.id === 'foto-z') { zoomFoto(+el.value); return; }
   if (el.id === 'in-rut-nombre') { state.rutEdit.nombre = el.value; return; }
   if (el.id === 'in-nota') { const n = {...ajustes().notas}; const v = el.value.trim(); if (v) n[state.activo] = v; else delete n[state.activo]; guardarAjustes({notas: n}); return; }
   if (el.id === 'rc-ini' || el.id === 'rc-largo') {
@@ -3453,7 +3465,23 @@ document.addEventListener('change', ev => {
   if (ev.target.id === 'in-foto') subirFoto(ev.target.files?.[0]);
 });
 let arrastreFoto = null;
-document.addEventListener('pointerdown', ev => { if (ev.target.closest?.('#foto-v')) arrastreFoto = {px: ev.clientX, py: ev.clientY, x: state.capa.x, y: state.capa.y}; });
+document.addEventListener('pointerdown', ev => { if (ev.pointerType !== 'touch' && ev.target.closest?.('#foto-v')) arrastreFoto = {px: ev.clientX, py: ev.clientY, x: state.capa.x, y: state.capa.y}; });
+/* con el dedo se usan eventos táctiles: en Safari el puntero se corta si el navegador toma el gesto */
+let gestoFoto = null;
+const dist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+const inicioGesto = t => t.length > 1 ? {d: dist(t), z: state.capa.z} : {px: t[0].clientX, py: t[0].clientY, x: state.capa.x, y: state.capa.y};
+document.addEventListener('touchstart', ev => {
+  if (!ev.target.closest?.('#foto-v')) return;
+  ev.preventDefault(); gestoFoto = inicioGesto(ev.touches);
+}, {passive: false});
+document.addEventListener('touchmove', ev => {
+  if (!gestoFoto) return;
+  ev.preventDefault();
+  const t = ev.touches;
+  if (t.length > 1 && gestoFoto.d) zoomFoto(gestoFoto.z * dist(t) / gestoFoto.d);
+  else if (t.length === 1 && gestoFoto.px != null) { state.capa.x = gestoFoto.x + t[0].clientX - gestoFoto.px; state.capa.y = gestoFoto.y + t[0].clientY - gestoFoto.py; moverFoto(); }
+}, {passive: false});
+['touchend', 'touchcancel'].forEach(n => document.addEventListener(n, ev => { if (gestoFoto) gestoFoto = ev.touches.length ? inicioGesto(ev.touches) : null; }));
 document.addEventListener('pointermove', ev => {
   if (!arrastreFoto) return;
   state.capa.x = arrastreFoto.x + ev.clientX - arrastreFoto.px; state.capa.y = arrastreFoto.y + ev.clientY - arrastreFoto.py;
