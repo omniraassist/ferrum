@@ -490,7 +490,7 @@ body:has(.hub)::before{background:#C9EC35}
 .stats > div,.sumrow > div{border-radius:22px;padding:12px}
 .historias{display:flex;gap:10px;margin:0 0 14px}
 .foto-v{position:relative;width:280px;height:280px;border-radius:50%;overflow:hidden;background:#000;touch-action:none;cursor:grab;box-shadow:0 0 0 2px var(--lime)}
-.foto-v img{position:absolute;left:0;top:0;max-width:none;transform-origin:0 0;user-select:none;-webkit-user-drag:none;pointer-events:none}
+.foto-v canvas{position:absolute;left:0;top:0;max-width:none;transform-origin:0 0;pointer-events:none}
 .ava{background-size:cover;background-position:center}
 .ahora{margin-bottom:12px}
 .ahora-f{display:grid;grid-template-columns:40px 1fr auto;gap:10px;align-items:center;width:100%;padding:9px 0;text-align:left;border-bottom:1px solid var(--line)}
@@ -1344,10 +1344,11 @@ function pintarCapa() {
   }
   if (c.tipo === 'foto') {
     el.innerHTML = `<div class="capa-in"><div class="capa-txt"><b>Ajusta tu foto</b><span>Arrastra para moverla</span></div>
-      <div class="foto-v" id="foto-v"><img id="foto-img" src="${c.url}" alt=""></div>
+      <div class="foto-v" id="foto-v"></div>
       <label class="rc">Zoom<input id="foto-z" type="range" min="1" max="4" step="0.01" value="${c.z}"></label>
       <button class="apuntar" data-accion="usar-foto">Usar esta foto</button>
       <button class="ghost" style="width:100%" data-accion="cancelar-foto">Cancelar</button></div>`;
+    $('#foto-v').append(c.lienzo);
     return;
   }
   if (c.tipo === 'espera') {
@@ -1932,7 +1933,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 31;
+const VERSION = 32;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -2518,8 +2519,15 @@ function subirFoto(file) {
   const url = URL.createObjectURL(file), img = new Image();
   img.onerror = () => toast('No se puede abrir', 'Prueba con otra foto');
   img.onload = () => {
-    const base = FOTO_V / Math.min(img.naturalWidth, img.naturalHeight);
-    state.capa = {tipo: 'foto', url, img, base, z: 1, x: (FOTO_V - img.naturalWidth * base) / 2, y: (FOTO_V - img.naturalHeight * base) / 2};
+    /* se aplana en un lienzo: Safari no aplica la orientación del iPhone al recortar una zona de la imagen,
+       así lo que se ve y lo que se guarda salen de los mismos píxeles */
+    const k = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight)), lienzo = document.createElement('canvas');
+    lienzo.width = Math.round(img.naturalWidth * k); lienzo.height = Math.round(img.naturalHeight * k);
+    lienzo.getContext('2d').drawImage(img, 0, 0, lienzo.width, lienzo.height);
+    URL.revokeObjectURL(url);
+    lienzo.id = 'foto-img';
+    const base = FOTO_V / Math.min(lienzo.width, lienzo.height);
+    state.capa = {tipo: 'foto', lienzo, base, z: 1, x: (FOTO_V - lienzo.width * base) / 2, y: (FOTO_V - lienzo.height * base) / 2};
     pintarCapa(); moverFoto();
   };
   img.src = url;
@@ -2529,21 +2537,20 @@ function moverFoto() {
   const c = state.capa, el = $('#foto-img');
   if (c?.tipo !== 'foto' || !el) return;
   const e = c.base * c.z;
-  c.x = Math.min(0, Math.max(FOTO_V - c.img.naturalWidth * e, c.x));
-  c.y = Math.min(0, Math.max(FOTO_V - c.img.naturalHeight * e, c.y));
+  c.x = Math.min(0, Math.max(FOTO_V - c.lienzo.width * e, c.x));
+  c.y = Math.min(0, Math.max(FOTO_V - c.lienzo.height * e, c.y));
   el.style.transform = `translate(${c.x}px,${c.y}px) scale(${e})`;
 }
 function recortarFoto() {
   const c = state.capa, e = c.base * c.z, t = document.createElement('canvas');
   t.width = t.height = 512;
-  t.getContext('2d').drawImage(c.img, -c.x / e, -c.y / e, FOTO_V / e, FOTO_V / e, 0, 0, 512, 512);
+  t.getContext('2d').drawImage(c.lienzo, -c.x / e, -c.y / e, FOTO_V / e, FOTO_V / e, 0, 0, 512, 512);
   return new Promise((ok, mal) => t.toBlob(b => b ? ok(b) : mal(new Error('foto')), 'image/jpeg', .85));
 }
 async function guardarFoto() {
   const a = state.amigos;
   try {
     const b = await recortarFoto();
-    URL.revokeObjectURL(state.capa.url);
     state.capa = {tipo: 'espera', texto: 'Guardando tu foto'}; pintarCapa();
     const ruta = `${cuenta.uid}/${Date.now().toString(36)}avatar.jpg`, vieja = a.gente.find(g => g.id === cuenta.uid)?.avatar;
     const r = await fetch(`${NUBE.url}/storage/v1/object/media/${ruta}`, {method: 'POST', headers: {apikey: NUBE.key, Authorization: 'Bearer ' + await token(), 'Content-Type': 'image/jpeg'}, body: b});
@@ -3297,7 +3304,7 @@ document.addEventListener('click', ev => {
       else { state.capa = null; ls.set('fr_intro', 1); }
       pintarCapa(); break;
     case 'usar-foto': guardarFoto(); break;
-    case 'cancelar-foto': URL.revokeObjectURL(state.capa.url); state.capa = null; pintarCapa(); break;
+    case 'cancelar-foto': state.capa = null; pintarCapa(); break;
     case 'editar-perfil': state.amigos.editando = {...state.amigos.gente?.find(g => g.id === cuenta.uid)}; render(true); scrollTo(0, 0); break;
     case 'cancelar-perfil': state.amigos.editando = null; render(true); break;
     case 'bloquear':
