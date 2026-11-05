@@ -489,6 +489,8 @@ body:has(.hub)::before{background:#C9EC35}
 .stats div,.sumrow div{background:none;padding:0}
 .stats > div,.sumrow > div{border-radius:22px;padding:12px}
 .historias{display:flex;gap:10px;margin:0 0 14px}
+.foto-v{position:relative;width:280px;height:280px;border-radius:50%;overflow:hidden;background:#000;touch-action:none;cursor:grab;box-shadow:0 0 0 2px var(--lime)}
+.foto-v img{position:absolute;left:0;top:0;max-width:none;transform-origin:0 0;user-select:none;-webkit-user-drag:none;pointer-events:none}
 .ava{background-size:cover;background-position:center}
 .ahora{margin-bottom:12px}
 .ahora-f{display:grid;grid-template-columns:40px 1fr auto;gap:10px;align-items:center;width:100%;padding:9px 0;text-align:left;border-bottom:1px solid var(--line)}
@@ -1340,6 +1342,14 @@ function pintarCapa() {
       <button class="ghost" style="width:100%" data-accion="cerrar-capa">Cerrar</button></div>`;
     return;
   }
+  if (c.tipo === 'foto') {
+    el.innerHTML = `<div class="capa-in"><div class="capa-txt"><b>Ajusta tu foto</b><span>Arrastra para moverla</span></div>
+      <div class="foto-v" id="foto-v"><img id="foto-img" src="${c.url}" alt=""></div>
+      <label class="rc">Zoom<input id="foto-z" type="range" min="1" max="4" step="0.01" value="${c.z}"></label>
+      <button class="apuntar" data-accion="usar-foto">Usar esta foto</button>
+      <button class="ghost" style="width:100%" data-accion="cancelar-foto">Cancelar</button></div>`;
+    return;
+  }
   if (c.tipo === 'espera') {
     el.innerHTML = `<div class="capa-in"><div class="giro"></div><div class="capa-txt"><b>${esc(c.texto)}</b><span>Puede tardar lo que dura el vídeo. No bloquees el móvil ni salgas de la app.</span></div></div>`;
     return;
@@ -1922,7 +1932,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 30;
+const VERSION = 31;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -2502,19 +2512,48 @@ async function guardarPerfil(f) {
     a.editando = null; render(true); toast('Perfil guardado', cuenta.nombre);
   } catch (e) { toast(e.code === '23505' ? 'Ese @usuario ya existe' : 'Sin conexión', e.code === '23505' ? 'Prueba con otro' : 'No se ha guardado'); }
 }
-async function subirFoto(file) {
-  const a = state.amigos;
+const FOTO_V = 280;
+function subirFoto(file) {
   if (!file) return;
-  toast('Subiendo', 'Preparando tu foto…');
+  const url = URL.createObjectURL(file), img = new Image();
+  img.onerror = () => toast('No se puede abrir', 'Prueba con otra foto');
+  img.onload = () => {
+    const base = FOTO_V / Math.min(img.naturalWidth, img.naturalHeight);
+    state.capa = {tipo: 'foto', url, img, base, z: 1, x: (FOTO_V - img.naturalWidth * base) / 2, y: (FOTO_V - img.naturalHeight * base) / 2};
+    pintarCapa(); moverFoto();
+  };
+  img.src = url;
+}
+/* mantiene la foto cubriendo todo el círculo */
+function moverFoto() {
+  const c = state.capa, el = $('#foto-img');
+  if (c?.tipo !== 'foto' || !el) return;
+  const e = c.base * c.z;
+  c.x = Math.min(0, Math.max(FOTO_V - c.img.naturalWidth * e, c.x));
+  c.y = Math.min(0, Math.max(FOTO_V - c.img.naturalHeight * e, c.y));
+  el.style.transform = `translate(${c.x}px,${c.y}px) scale(${e})`;
+}
+function recortarFoto() {
+  const c = state.capa, e = c.base * c.z, t = document.createElement('canvas');
+  t.width = t.height = 512;
+  t.getContext('2d').drawImage(c.img, -c.x / e, -c.y / e, FOTO_V / e, FOTO_V / e, 0, 0, 512, 512);
+  return new Promise((ok, mal) => t.toBlob(b => b ? ok(b) : mal(new Error('foto')), 'image/jpeg', .85));
+}
+async function guardarFoto() {
+  const a = state.amigos;
   try {
-    const b = await prepararFoto(file), ruta = `${cuenta.uid}/${Date.now().toString(36)}avatar.jpg`, vieja = a.gente.find(g => g.id === cuenta.uid)?.avatar;
+    const b = await recortarFoto();
+    URL.revokeObjectURL(state.capa.url);
+    state.capa = {tipo: 'espera', texto: 'Guardando tu foto'}; pintarCapa();
+    const ruta = `${cuenta.uid}/${Date.now().toString(36)}avatar.jpg`, vieja = a.gente.find(g => g.id === cuenta.uid)?.avatar;
     const r = await fetch(`${NUBE.url}/storage/v1/object/media/${ruta}`, {method: 'POST', headers: {apikey: NUBE.key, Authorization: 'Bearer ' + await token(), 'Content-Type': 'image/jpeg'}, body: b});
     if (!r.ok) throw new Error('foto');
     await pedir(`perfiles?id=eq.${cuenta.uid}`, {method: 'PATCH', prefer: 'return=minimal', body: {avatar: ruta}});
     if (vieja) borrarArchivos([vieja]).catch(() => {});
     a.gente = a.gente.map(g => g.id === cuenta.uid ? {...g, avatar: ruta} : g);
-    render(true); toast('Foto guardada', cuenta.nombre);
+    toast('Foto guardada', cuenta.nombre);
   } catch { toast('No se ha subido', 'Revisa tu conexión'); }
+  state.capa = null; pintarCapa(); render(true);
 }
 async function bloquear(uid) {
   const a = state.amigos;
@@ -3257,6 +3296,8 @@ document.addEventListener('click', ev => {
       if (state.capa.paso < 2) state.capa.paso++;
       else { state.capa = null; ls.set('fr_intro', 1); }
       pintarCapa(); break;
+    case 'usar-foto': guardarFoto(); break;
+    case 'cancelar-foto': URL.revokeObjectURL(state.capa.url); state.capa = null; pintarCapa(); break;
     case 'editar-perfil': state.amigos.editando = {...state.amigos.gente?.find(g => g.id === cuenta.uid)}; render(true); scrollTo(0, 0); break;
     case 'cancelar-perfil': state.amigos.editando = null; render(true); break;
     case 'bloquear':
@@ -3371,6 +3412,11 @@ document.addEventListener('input', ev => {
   const el = ev.target;
   if (el.id === 'in-busca') { state.busca = el.value; $('#res').innerHTML = resultados(); return; }
   if (el.id === 'in-cambiar') { state.buscaCambio = el.value; $('#res-cambiar').innerHTML = resultados(el.value, 'cambiar-a'); return; }
+  if (el.id === 'foto-z') {
+    const c = state.capa, antes = c.base * c.z, ahora = c.base * +el.value, m = FOTO_V / 2;
+    c.x = m - (m - c.x) / antes * ahora; c.y = m - (m - c.y) / antes * ahora; c.z = +el.value;
+    moverFoto(); return;
+  }
   if (el.id === 'in-rut-nombre') { state.rutEdit.nombre = el.value; return; }
   if (el.id === 'in-nota') { const n = {...ajustes().notas}; const v = el.value.trim(); if (v) n[state.activo] = v; else delete n[state.activo]; guardarAjustes({notas: n}); return; }
   if (el.id === 'rc-ini' || el.id === 'rc-largo') {
@@ -3396,6 +3442,14 @@ document.addEventListener('change', ev => {
   if (ev.target.id === 'in-medio') subirMedio(ev.target.files?.[0]);
   if (ev.target.id === 'in-foto') subirFoto(ev.target.files?.[0]);
 });
+let arrastreFoto = null;
+document.addEventListener('pointerdown', ev => { if (ev.target.closest?.('#foto-v')) arrastreFoto = {px: ev.clientX, py: ev.clientY, x: state.capa.x, y: state.capa.y}; });
+document.addEventListener('pointermove', ev => {
+  if (!arrastreFoto) return;
+  state.capa.x = arrastreFoto.x + ev.clientX - arrastreFoto.px; state.capa.y = arrastreFoto.y + ev.clientY - arrastreFoto.py;
+  moverFoto();
+});
+['pointerup', 'pointercancel'].forEach(t => document.addEventListener(t, () => { arrastreFoto = null; }));
 /* la cápsula se gira con el dedo y vuelve a balancearse al soltarla */
 let arrastre = null, sueltaT = null;
 document.addEventListener('pointerdown', ev => {
