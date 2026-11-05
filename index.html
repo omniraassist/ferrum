@@ -489,6 +489,18 @@ body:has(.hub)::before{background:#C9EC35}
 .stats div,.sumrow div{background:none;padding:0}
 .stats > div,.sumrow > div{border-radius:22px;padding:12px}
 .historias{display:flex;gap:10px;margin:0 0 14px}
+.ava{background-size:cover;background-position:center}
+.ahora{margin-bottom:12px}
+.ahora-f{display:grid;grid-template-columns:40px 1fr auto;gap:10px;align-items:center;width:100%;padding:9px 0;text-align:left;border-bottom:1px solid var(--line)}
+.ahora-f:last-child{border-bottom:0}
+.ahora-f .ava{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--lime)}
+.ahora-f b{display:block;font-weight:600;overflow-wrap:anywhere}.ahora-f small{display:block;font-size:12.5px;color:var(--muted)}
+.ahora-f .v{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.pf-d{margin:-6px 0 14px;color:var(--muted);font-size:14.5px;line-height:1.35;overflow-wrap:anywhere}
+.pf-d b{display:block;font-weight:500;color:var(--ink)}
+.pf-a{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.foto-e{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.foto-e .ava{width:72px;height:72px;font-size:28px}
 .rival{display:block;width:100%;padding:15px 16px;margin-bottom:12px;border-radius:24px;text-align:left;background:linear-gradient(150deg,#2A1548,#150B26);box-shadow:inset 0 0 0 1.5px rgba(190,130,255,.45)}
 .rival-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13px;font-weight:700;color:#D9BEFF}
 .rival-h b{font-size:19px;font-weight:800;color:#fff;overflow-wrap:anywhere}
@@ -763,7 +775,7 @@ const state = {
   modo: 'cargando', cargado: false, aviso: '', hint: null,
   nube: '', recTab: 'marcas', capa: null, yoTab: 'perfil', rutEdit: null, calMes: 0, inicio: null, abiertas: new Set(['Objetivo semanal', 'Misiones de la semana']),
   amigos: {modo: 'crear', google: false, pestana: 'feed', feed: null, marcas: null, cargando: false, error: '', ejercicio: null, busca: '', salir: false, abiertos: new Set(),
-    seg: [], gente: null, solo: false, yoPosts: null, desafios: [], desafiosOk: false, parejas: [], parejasOk: false, ligas: [], ligasOk: false, subida: null, subiendo: false, comunidad: 'gente', clubes: null, miembros: [], rutinas: null, club: null, clubPosts: null, borrarClub: false, guardaRutina: null, perfil: null, perfilPosts: null, avisos: [], verAvisos: false, buscaGente: ''},
+    seg: [], gente: null, solo: false, yoPosts: null, desafios: [], desafiosOk: false, parejas: [], parejasOk: false, ligas: [], ligasOk: false, perfilOk: false, ahora: [], bloqueos: [], editando: null, bloquear: false, subida: null, subiendo: false, comunidad: 'gente', clubes: null, miembros: [], rutinas: null, club: null, clubPosts: null, borrarClub: false, guardaRutina: null, perfil: null, perfilPosts: null, avisos: [], verAvisos: false, buscaGente: ''},
 };
 const conSets = s => s.ejercicios.some(e => e.sets.length);
 const grupoDe = e => e.grupo || IDEA_GRUPO[e.clave] || null;
@@ -1910,7 +1922,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 29;
+const VERSION = 30;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -1965,6 +1977,15 @@ async function subirMarcas() {
   await pedir(`perfiles?id=eq.${cuenta.uid}`, {method: 'PATCH', body: {resumen: {racha: rachaSemanas(), nivel: progresoNivel().n, cartas: coleccion().size, objetivo: objetivoSemana(), metas: metasFuerza(), semanas: misSemanas().slice(-14), ...semanaActual()}}, prefer: 'return=minimal'});
 }
 const COLS_POST = 'select=*,perfiles(nombre),fuerzas(usuario),medios(id,usuario,ruta,tipo,ejercicio,serie,etiqueta),comentarios(id,usuario,texto,creado,perfiles(nombre))&comentarios.order=creado.asc';
+const oculto = uid => state.amigos.bloqueos.some(b => b.bloqueador === uid || b.bloqueado === uid);
+function ocultarBloqueados() {
+  const a = state.amigos, ver = u => !oculto(u);
+  a.feed = (a.feed || []).filter(p => ver(p.usuario)).map(p => ({...p, comentarios: (p.comentarios || []).filter(c => ver(c.usuario))}));
+  a.marcas = (a.marcas || []).filter(m => ver(m.usuario));
+  a.gente = (a.gente || []).filter(g => ver(g.id));
+  a.ahora = a.ahora.filter(x => ver(x.usuario) && x.usuario !== cuenta.uid);
+  a.desafios = a.desafios.filter(d => ver(d.retador) && ver(d.rival));
+}
 const sigoA = () => state.amigos.seg.filter(x => x.seguidor === cuenta.uid).map(x => x.seguido);
 const consultaFeed = () => `publicaciones?${COLS_POST}&order=creado.desc&limit=30${state.amigos.solo ? `&usuario=in.(${[cuenta.uid, ...sigoA()].join(',')})` : ''}`;
 async function cargarAmigos() {
@@ -1976,7 +1997,8 @@ async function cargarAmigos() {
     [a.seg, a.marcas, a.gente] = await Promise.all([
       pedir('seguimientos?select=seguidor,seguido&limit=5000'),
       pedir('marcas?select=*,perfiles(nombre)&order=rm.desc&limit=2000'),
-      pedir('perfiles?select=id,nombre,resumen&order=nombre&limit=500'),
+      pedir('perfiles?select=id,nombre,resumen,avatar,bio,gimnasio,objetivo,arroba&order=nombre&limit=500').then(r => { a.perfilOk = true; return r; })
+        .catch(() => { a.perfilOk = false; return pedir('perfiles?select=id,nombre,resumen&order=nombre&limit=500'); }),
     ]);
     try {
       [a.clubes, a.miembros, a.rutinas] = await Promise.all([
@@ -1993,6 +2015,10 @@ async function cargarAmigos() {
       a.desafiosOk = true;
     } catch { a.desafiosOk = false; }
     a.feed = await pedir(consultaFeed());
+    if (a.perfilOk) {
+      [a.bloqueos, a.ahora] = await Promise.all([pedir('bloqueos?select=*'), pedir(`entrenando?select=*&visto=gt.${new Date(Date.now() - 2 * 36e5).toISOString()}&order=inicio.desc`)]);
+      ocultarBloqueados();
+    }
     await cargarAvisos();
   } catch { a.error = 'No he podido conectar. Revisa tu conexión.'; }
   a.cargando = false; render();
@@ -2121,7 +2147,7 @@ async function borrarCuenta() {
     cuenta = null; ls.set('fr_cuenta', null); ls.set('fr_borradas', {});
     state.sesiones.forEach(x => delete x.publicada); delete state.actual?.publicada;
     ls.set('lh3_sesiones', state.sesiones);
-    a.feed = a.marcas = a.ejercicio = a.gente = a.perfil = a.perfilPosts = a.clubes = a.rutinas = a.club = a.clubPosts = null; a.seg = []; a.avisos = []; a.miembros = [];
+    a.feed = a.marcas = a.ejercicio = a.gente = a.perfil = a.perfilPosts = a.clubes = a.rutinas = a.club = a.clubPosts = null; a.seg = []; a.avisos = []; a.miembros = []; a.ahora = []; a.bloqueos = []; a.editando = null;
   } catch { a.error = 'No he podido conectar. Revisa tu conexión.'; }
   a.salir = false; render(true);
 }
@@ -2200,7 +2226,7 @@ async function cerrarCuenta() {
   cuenta = null; ls.set('fr_cuenta', null); ls.set('fr_borradas', {});
   state.sesiones = []; state.actual = null; state.activo = null; state.nube = '';
   ls.set('lh3_sesiones', []);
-  a.feed = a.marcas = a.ejercicio = a.gente = a.perfil = a.perfilPosts = a.clubes = a.rutinas = a.club = a.clubPosts = null; a.seg = []; a.avisos = []; a.miembros = []; a.error = '';
+  a.feed = a.marcas = a.ejercicio = a.gente = a.perfil = a.perfilPosts = a.clubes = a.rutinas = a.club = a.clubPosts = null; a.seg = []; a.avisos = []; a.miembros = []; a.ahora = []; a.bloqueos = []; a.editando = null; a.error = '';
   render(true);
 }
 
@@ -2432,6 +2458,86 @@ function rachaPareja(p) {
   while (hecho(l)) { n++; l = sumarDias(l, -7); }
   return {n, yo: yo.has(ahora), el: el.has(ahora)};
 }
+/* quien tiene una sesión abierta aparece arriba del feed; se apaga solo a las 2 horas sin actividad */
+let avisoGym = 0;
+function marcarEntrenando(ses) {
+  const a = state.amigos;
+  if (!a.perfilOk || !cuenta?.nombre || ls.get('fr_oculto', 0) || Date.now() - avisoGym < 3e5) return;
+  avisoGym = Date.now();
+  pedir('entrenando?on_conflict=usuario', {method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: {usuario: cuenta.uid, titulo: ses.titulo.slice(0, 120), visto: new Date().toISOString()}}).catch(() => {});
+}
+function dejarEntrenando() {
+  avisoGym = 0;
+  if (state.amigos.perfilOk && cuenta?.nombre) pedir(`entrenando?usuario=eq.${cuenta.uid}`, {method: 'DELETE'}).catch(() => {});
+}
+function tarjetaAhora() {
+  const a = state.amigos, sigo = new Set(sigoA());
+  if (!a.ahora.length) return '';
+  const lista = [...a.ahora].sort((x, y) => sigo.has(y.usuario) - sigo.has(x.usuario)).slice(0, 4);
+  return `<section class="card ahora"><h2 style="margin-bottom:6px">En el gym ahora</h2>${lista.map(x => { const n = nombreDe(x.usuario), m = Math.max(1, Math.round((Date.now() - Date.parse(x.inicio)) / 6e4));
+    return `<button class="ahora-f" data-accion="perfil" data-u="${esc(x.usuario)}">${avatar(n, x.usuario)}<span><b>${esc(n)}</b><small>${esc(x.titulo)}</small></span><span class="v num">${m} min</span></button>`; }).join('')}</section>`;
+}
+function vistaEditarPerfil() {
+  const e = state.amigos.editando;
+  return `<div class="det"><button class="back" data-accion="cancelar-perfil">‹ Perfil</button><h1>Tu perfil</h1></div>
+    <section class="card" style="margin-top:14px"><div class="foto-e">${avatar(cuenta.nombre, cuenta.uid)}<label class="mini" style="display:inline-flex;align-items:center;cursor:pointer">Cambiar foto<input id="in-foto" class="fileinp" type="file" accept="image/*"></label></div>
+    <form class="campos" data-form="perfil">
+      <input class="campo" name="arroba" maxlength="20" autocapitalize="none" autocorrect="off" placeholder="@usuario" value="${esc(e.arroba || '')}" aria-label="Nombre de usuario">
+      <textarea class="nota-ej" style="margin:0" name="bio" maxlength="160" rows="2" placeholder="Bio" aria-label="Bio">${esc(e.bio || '')}</textarea>
+      <input class="campo" name="gimnasio" maxlength="60" placeholder="Tu gimnasio" value="${esc(e.gimnasio || '')}" aria-label="Gimnasio">
+      <input class="campo" name="objetivo" maxlength="60" placeholder="Tu objetivo" value="${esc(e.objetivo || '')}" aria-label="Objetivo">
+      <label class="fila" style="cursor:pointer"><span class="fila-a"><b>Mostrar cuando entreno</b><small>Apareces en "En el gym ahora"</small></span><input type="checkbox" name="visible" ${ls.get('fr_oculto', 0) ? '' : 'checked'}></label>
+      <button class="apuntar" type="submit">Guardar</button></form></section>`;
+}
+async function guardarPerfil(f) {
+  const a = state.amigos, arroba = f.arroba.value.trim().replace(/^@/, '').toLowerCase();
+  if (arroba && !/^[a-z0-9_]{3,20}$/.test(arroba)) { toast('@usuario no válido', 'Letras, números y _ (3 a 20)'); return; }
+  const cambios = {arroba: arroba || null, bio: f.bio.value.trim() || null, gimnasio: f.gimnasio.value.trim() || null, objetivo: f.objetivo.value.trim() || null};
+  document.activeElement?.blur();
+  ls.set('fr_oculto', f.visible.checked ? 0 : 1);
+  if (!f.visible.checked) dejarEntrenando();
+  try {
+    await pedir(`perfiles?id=eq.${cuenta.uid}`, {method: 'PATCH', prefer: 'return=minimal', body: cambios});
+    a.gente = a.gente.map(g => g.id === cuenta.uid ? {...g, ...cambios} : g);
+    a.editando = null; render(true); toast('Perfil guardado', cuenta.nombre);
+  } catch (e) { toast(e.code === '23505' ? 'Ese @usuario ya existe' : 'Sin conexión', e.code === '23505' ? 'Prueba con otro' : 'No se ha guardado'); }
+}
+async function subirFoto(file) {
+  const a = state.amigos;
+  if (!file) return;
+  toast('Subiendo', 'Preparando tu foto…');
+  try {
+    const b = await prepararFoto(file), ruta = `${cuenta.uid}/${Date.now().toString(36)}avatar.jpg`, vieja = a.gente.find(g => g.id === cuenta.uid)?.avatar;
+    const r = await fetch(`${NUBE.url}/storage/v1/object/media/${ruta}`, {method: 'POST', headers: {apikey: NUBE.key, Authorization: 'Bearer ' + await token(), 'Content-Type': 'image/jpeg'}, body: b});
+    if (!r.ok) throw new Error('foto');
+    await pedir(`perfiles?id=eq.${cuenta.uid}`, {method: 'PATCH', prefer: 'return=minimal', body: {avatar: ruta}});
+    if (vieja) borrarArchivos([vieja]).catch(() => {});
+    a.gente = a.gente.map(g => g.id === cuenta.uid ? {...g, avatar: ruta} : g);
+    render(true); toast('Foto guardada', cuenta.nombre);
+  } catch { toast('No se ha subido', 'Revisa tu conexión'); }
+}
+async function bloquear(uid) {
+  const a = state.amigos;
+  try {
+    await pedir('bloqueos', {method: 'POST', prefer: 'return=minimal', body: {bloqueador: cuenta.uid, bloqueado: uid}});
+    a.bloqueos = [...a.bloqueos, {bloqueador: cuenta.uid, bloqueado: uid}];
+    a.seg = a.seg.filter(x => !(x.seguidor === uid || x.seguido === uid) || (x.seguidor !== cuenta.uid && x.seguido !== cuenta.uid));
+    a.parejas = a.parejas.filter(p => otroDe(p) !== uid);
+    a.perfil = a.perfilPosts = null; a.bloquear = false;
+    ocultarBloqueados(); render(true); toast('Usuario bloqueado', 'Ya no os veréis');
+  } catch { toast('Sin conexión', 'Inténtalo otra vez'); }
+}
+async function desbloquear(uid) {
+  try {
+    await pedir(`bloqueos?bloqueador=eq.${cuenta.uid}&bloqueado=eq.${uid}`, {method: 'DELETE'});
+    state.amigos.bloqueos = state.amigos.bloqueos.filter(b => b.bloqueado !== uid);
+    await cargarAmigos(); render(true);
+  } catch { toast('Sin conexión', 'Inténtalo otra vez'); }
+}
+async function denunciarUsuario(uid) {
+  await pedir('denuncias_usuario', {method: 'POST', prefer: 'return=minimal', body: {denunciado: uid, usuario: cuenta.uid}}).catch(() => {});
+  toast('Denuncia enviada', 'Gracias por avisar');
+}
 function tarjetasPareja() {
   const a = state.amigos;
   if (!a.parejasOk) return '';
@@ -2580,7 +2686,10 @@ function vistaDuelos() {
 }
 const ICON_FUERZA = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 7v10M3 9.5v5M18 7v10M21 9.5v5M6 12h12"/></svg>';
 const ICON_COMENTAR = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.8 7L4 20l1-5.1A8 8 0 1 1 21 12z"/></svg>';
-const avatar = n => `<span class="ava">${esc(String(n || '?')[0].toUpperCase())}</span>`;
+const avatar = (n, uid) => {
+  const u = urlMedio(state.amigos.gente?.find(g => g.id === uid)?.avatar || '');
+  return u ? `<span class="ava" style="background-image:url(${u})"></span>` : `<span class="ava">${esc(String(n || '?')[0].toUpperCase())}</span>`;
+};
 function botonSeguir(uid) {
   if (uid === cuenta.uid) return '';
   const ya = sigoA().includes(uid);
@@ -2599,7 +2708,7 @@ function tarjetaPublicacion(p) {
   };
   return `<article class="post${abierta ? ' open' : ''}">
     <div class="post-h" style="grid-template-columns:1fr auto">
-      <button class="quien" data-accion="perfil" data-u="${esc(p.usuario)}">${avatar(nombre)}
+      <button class="quien" data-accion="perfil" data-u="${esc(p.usuario)}">${avatar(nombre, p.usuario)}
         <span class="mid"><b>${esc(nombre)}<span class="nv num">Nv ${nivelDe(p.usuario)}</span></b><small class="num">${fechaCorta(String(p.fecha))}${mins ? ` · ${fmt(mins)} min` : ''}</small></span></button>
       ${recs ? `<span class="tag">${fmt(recs)} ${recs === 1 ? 'récord' : 'récords'}</span>` : ''}</div>
     <button class="post-top" data-accion="post" data-id="${esc(p.id)}" aria-expanded="${abierta}">
@@ -2640,7 +2749,10 @@ function vistaPerfil(uid, propio) {
   const seguidores = a.seg.filter(x => x.seguido === uid).length, siguiendo = a.seg.filter(x => x.seguidor === uid).length;
   const marcasDe = (a.marcas || []).filter(r => r.usuario === uid);
   let h = `<div class="det">${propio ? '' : '<button class="back" data-accion="volver-perfil">‹ Volver</button>'}
-    <div class="pf">${avatar(nombre)}<h1>${esc(nombre)}</h1>${botonSeguir(uid)}</div>
+    <div class="pf">${avatar(nombre, uid)}<h1>${esc(nombre)}</h1>${botonSeguir(uid)}</div>
+    ${(g => g?.arroba || g?.bio || g?.gimnasio || g?.objetivo ? `<div class="pf-d">${g.arroba ? `<b>@${esc(g.arroba)}</b>` : ''}${esc(g.bio || '')}${g.gimnasio || g.objetivo ? `<br>${[g.gimnasio, g.objetivo].filter(Boolean).map(esc).join(' · ')}` : ''}</div>` : '')(a.gente?.find(x => x.id === uid))}
+    ${a.perfilOk ? (propio ? `<div class="pf-a"><button class="mini" data-accion="editar-perfil">Editar perfil</button></div>`
+      : `<div class="pf-a"><button class="mini" data-accion="bloquear" data-u="${esc(uid)}">${a.bloquear ? '¿Seguro? Toca otra vez' : 'Bloquear'}</button><button class="mini" data-accion="denunciar-usuario" data-u="${esc(uid)}">Denunciar</button></div>`) : ''}
     ${!propio && a.parejasOk ? (p => p ? (p.estado === 'activa' ? `<p class="num">Racha juntos: ${rachaPareja(p).n} semanas</p>` : `<p>Invitación de racha pendiente</p>`) : `<button class="ghost" style="width:100%;margin-bottom:12px" data-accion="invitar-pareja" data-u="${esc(uid)}">Hacer racha juntos</button>`)(a.parejas.find(x => otroDe(x) === uid)) : ''}
     ${(r => { const b = balance(uid), n = nivelDe(uid); return `<p class="num">Nivel ${n} · Liga ${ligaU(uid)} · ${fmt(+r?.cartas || 0)}/${CARTAS.length} cartas${a.desafiosOk ? ` · ${b.v}V–${b.l}D` : ''}</p>`; })(a.gente?.find(x => x.id === uid)?.resumen)}</div>
     <div class="sumrow">
@@ -2669,9 +2781,9 @@ function vistaAvisos() {
 }
 function listaGente() {
   const a = state.amigos, q = norm(a.buscaGente);
-  const lista = (a.gente || []).filter(g => g.id !== cuenta.uid && (!q || norm(g.nombre).includes(q)));
+  const lista = (a.gente || []).filter(g => g.id !== cuenta.uid && (!q || norm(`${g.nombre} ${g.arroba || ''} ${g.gimnasio || ''}`).includes(q)));
   if (!lista.length) return `<div class="empty">${q ? 'No hay nadie con ese nombre.' : 'Aún no hay nadie más. Invita a tus amigos.'}</div>`;
-  return `<div class="rows">${lista.map(g => `<div class="persona"><button class="quien" data-accion="perfil" data-u="${esc(g.id)}">${avatar(g.nombre)}
+  return `<div class="rows">${lista.map(g => `<div class="persona"><button class="quien" data-accion="perfil" data-u="${esc(g.id)}">${avatar(g.nombre, g.id)}
     <span class="mid"><b>${esc(g.nombre)}</b><small class="num">${a.seg.filter(x => x.seguido === g.id).length} seguidores</small></span></button>${botonSeguir(g.id)}</div>`).join('')}</div>`;
 }
 /* ---------- clubs y rutinas ---------- */
@@ -2790,7 +2902,7 @@ function vistaAmigos() {
     <form class="search" data-form="alta"><input id="in-nombre" name="nombre" maxlength="24" placeholder="Tu nombre" autocomplete="off" autocapitalize="words" enterkeyhint="go" aria-label="Tu nombre"><button class="go" type="submit" ${a.cargando ? 'disabled' : ''}>${a.cargando ? 'Entrando…' : 'Entrar'}</button></form></section>`;
   if (!cuenta.email) h += `<section class="next" style="margin:0 0 12px"><h2>Protege tu cuenta</h2>
     <p>Pon un email y una contraseña. Conservas tu nombre y tus entrenos quedan a salvo si cambias de móvil.</p>${camposCuenta('proteger')}</section>`;
-  if (esFeed) h += tarjetaHoy() + tarjetaRival() + tarjetasPareja() + (a.parejasOk && !ls.get('fr_push', 0) ? `<button class="empezar" data-accion="activar-push">Activa los avisos para no perderte duelos<b>→</b></button>` : '') + historias();
+  if (esFeed) h += tarjetaHoy() + tarjetaAhora() + tarjetaRival() + tarjetasPareja() + (a.parejasOk && !ls.get('fr_push', 0) ? `<button class="empezar" data-accion="activar-push">Activa los avisos para no perderte duelos<b>→</b></button>` : '') + historias();
   else h += `<div class="seg" style="--n:${a.desafiosOk ? 4 : 3}" role="group" aria-label="Sección">
     <button data-accion="pestana-amigos" data-p="liga" aria-pressed="${pest === 'liga'}">Liga</button>
     <button data-accion="pestana-amigos" data-p="ranking" aria-pressed="${pest === 'ranking'}">Marcas</button>
@@ -2820,7 +2932,7 @@ function historias() {
   const activos = new Set((a.feed || []).filter(p => p.fecha >= reciente).map(p => p.usuario));
   const ids = [cuenta.uid, ...sigoA().sort((x, y) => activos.has(y) - activos.has(x))].slice(0, 5);
   return `<div class="historias">${ids.map(u => { const n = u === cuenta.uid ? 'Tú' : a.gente?.find(g => g.id === u)?.nombre || 'Alguien';
-    return `<button class="hist${activos.has(u) ? ' activa' : ''}" data-accion="perfil" data-u="${esc(u)}">${avatar(u === cuenta.uid ? cuenta.nombre : n)}<span>${esc(n)}</span></button>`; }).join('')}
+    return `<button class="hist${activos.has(u) ? ' activa' : ''}" data-accion="perfil" data-u="${esc(u)}">${avatar(u === cuenta.uid ? cuenta.nombre : n, u)}<span>${esc(n)}</span></button>`; }).join('')}
     <button class="hist" data-accion="pestana-explorar"><span class="ava mas">+</span><span>Buscar</span></button></div>`;
 }
 async function cargarYo() {
@@ -2831,11 +2943,13 @@ async function cargarYo() {
 function vistaYo() {
   const a = state.amigos, t = state.yoTab;
   if (a.perfil || a.ejercicio) return vistaAmigos();
+  if (a.editando) return vistaEditarPerfil();
   const seg = `<div class="seg" style="--n:3;margin-top:14px" role="group" aria-label="Sección">${[['perfil', 'Perfil'], ['hist', 'Historial'], ['prog', 'Progreso']].map(([k, n]) => `<button data-accion="ir-yo" data-t="${k}" aria-pressed="${t === k}">${n}</button>`).join('')}</div>`;
   if (t === 'hist') return seg + vistaHistorial();
   if (t === 'prog') return seg + `<div class="plegable">${vistaProgreso()}</div>`;
   if (!cuenta?.nombre) return seg + vistaAmigos();
-  return seg + vistaPerfil(cuenta.uid, true) + `<div class="cuenta-txt">${cuenta.email ? `${esc(cuenta.email)} · ` : ''}Ferrum ${VERSION}</div><div class="salir">
+  const mios = a.bloqueos.filter(b => b.bloqueador === cuenta.uid);
+  return seg + vistaPerfil(cuenta.uid, true) + (mios.length ? `<div class="sec-h"><h2>Bloqueados</h2></div><div class="rows">${mios.map(b => `<div class="persona"><span>Usuario bloqueado</span><button class="mini" data-accion="desbloquear" data-u="${esc(b.bloqueado)}">Desbloquear</button></div>`).join('')}</div>` : '') + `<div class="cuenta-txt">${cuenta.email ? `${esc(cuenta.email)} · ` : ''}Ferrum ${VERSION}</div><div class="salir">
     ${cuenta.email ? `<button class="chip" data-accion="cerrar-cuenta">Cerrar sesión</button>` : ''}
     <button class="chip danger${a.salir ? ' sure' : ''}" data-accion="borrar-cuenta">${a.salir ? '¿Seguro? Se borra para siempre' : 'Borrar mi cuenta'}</button></div>`;
 }
@@ -2971,6 +3085,7 @@ function apuntar(form) {
   document.activeElement?.blur();
   guardarSesion(ses);
   render(true);
+  if (ses.fecha === hoy) marcarEntrenando(ses);
   if (s.tipo === 'c') return;
   if (m && peso > maxAntes) toast('Nuevo récord de peso', `${fmt(peso)} kg × ${fmt(reps)}`);
   else if (m && e1rm(s) > rmAntes) toast('Nuevo 1RM estimado', `${fmt(Math.round(e1rm(s) * 2) / 2)} kg`);
@@ -3053,6 +3168,7 @@ document.addEventListener('click', ev => {
       guardarSesion(ses); render(true); scrollTo(0, 0);
       const st = statsSesion(ses);
       toast('Entreno terminado', `${st.mins} min · ${st.series} series`);
+      dejarEntrenando();
       if (ses.desafio) resolverDesafio(ses);
       if (ses.publicada) publicar(ses, true);
       else if (nubeLista() && cuenta?.nombre) subirMarcas().catch(() => {});
@@ -3141,6 +3257,13 @@ document.addEventListener('click', ev => {
       if (state.capa.paso < 2) state.capa.paso++;
       else { state.capa = null; ls.set('fr_intro', 1); }
       pintarCapa(); break;
+    case 'editar-perfil': state.amigos.editando = {...state.amigos.gente?.find(g => g.id === cuenta.uid)}; render(true); scrollTo(0, 0); break;
+    case 'cancelar-perfil': state.amigos.editando = null; render(true); break;
+    case 'bloquear':
+      if (!state.amigos.bloquear) { state.amigos.bloquear = true; render(true); return; }
+      bloquear(b.dataset.u); break;
+    case 'desbloquear': desbloquear(b.dataset.u); break;
+    case 'denunciar-usuario': denunciarUsuario(b.dataset.u); break;
     case 'revancha': revancha(b.dataset.id); break;
     case 'invitar-pareja': invitarPareja(b.dataset.u); break;
     case 'aceptar-pareja': aceptarPareja(b.dataset.id); break;
@@ -3239,6 +3362,7 @@ document.addEventListener('submit', ev => {
     guardarAjustes({medidas: [...ajustes().medidas.filter(m => m.fecha !== hoy), {fecha: hoy, peso, cintura}]});
     render(true); toast('Medidas guardadas', peso ? `${fmt(peso)} kg` : `${fmt(cintura)} cm`);
   }
+  if (f.dataset.form === 'perfil') guardarPerfil(f);
   if (f.dataset.form === 'club') crearClub(f);
   if (f.dataset.form === 'rutina') guardarRutina(f);
   if (f.dataset.form === 'cambiar') cambiarEjercicio(state.cambiando, mejorCoincidencia(f.q.value));
@@ -3268,7 +3392,10 @@ document.addEventListener('input', ev => {
     if (state.hint?.err) { state.hint = null; const h = el.closest('form').querySelector('.hint'); if (h) { h.classList.remove('err'); h.textContent = 'Toca una serie para borrarla.'; } }
   }
 });
-document.addEventListener('change', ev => { if (ev.target.id === 'in-medio') subirMedio(ev.target.files?.[0]); });
+document.addEventListener('change', ev => {
+  if (ev.target.id === 'in-medio') subirMedio(ev.target.files?.[0]);
+  if (ev.target.id === 'in-foto') subirFoto(ev.target.files?.[0]);
+});
 /* la cápsula se gira con el dedo y vuelve a balancearse al soltarla */
 let arrastre = null, sueltaT = null;
 document.addEventListener('pointerdown', ev => {
