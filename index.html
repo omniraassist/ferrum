@@ -525,6 +525,13 @@ body:has(.hub)::before{background:#C9EC35}
 .gym-hero a{font-size:13.5px;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
 .gym-hero .seguir{margin-top:6px}
 .gym-pie{margin:18px 0 0;font-size:11.5px;color:var(--faint);text-align:center}
+.ed-h{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.ed-set{display:grid;grid-template-columns:18px minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:center;margin-top:8px}
+.sx:has(.ed-set){padding-bottom:16px}
+.ed-set .i{font-size:13px;color:var(--muted);text-align:center}
+.ed-set label{display:flex;align-items:center;gap:6px;min-height:48px;padding:0 12px;border-radius:14px;background:var(--surface-2);font-size:12.5px;color:var(--muted)}
+.ed-set label:focus-within{box-shadow:inset 0 0 0 1.5px var(--lime)}
+.ed-set input{flex:1;width:100%;min-width:0;border:0;background:transparent;color:var(--ink);font-size:17px;font-weight:700;outline:none}
 .marcos{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 8px;text-align:center}
 .marco{display:grid;justify-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink)}
 .marco small{display:block;font-size:11.5px;font-weight:500;color:var(--muted)}
@@ -1083,7 +1090,7 @@ function bloque(e, i, ses) {
       h += `<button class="setrow${state.hint?.nuevo === `${e.clave}:${k}` ? ' nuevo' : ''}" data-accion="set" data-k="${k}">
         <span class="i num">${tipo || k + 1}</span>
         <span class="w num">${fmt(s.peso)}<small>kg ×</small>${fmt(s.reps)}${s.rpe ? `<small> RPE ${s.rpe}</small>` : ''}</span>
-        <span class="x">${sel ? `<span class="del" data-accion="borrar-set" data-k="${k}">Borrar</span>` : `${tag}<span class="num">1RM ${fmt(Math.round(e1rm(s)))}</span>`}</span>
+        <span class="x">${sel ? `<span class="del" style="color:var(--lime);background:var(--lime-soft);margin-right:6px" data-accion="editar-series" data-id="${esc(ses.id)}">Editar</span><span class="del" data-accion="borrar-set" data-k="${k}">Borrar</span>` : `${tag}<span class="num">1RM ${fmt(Math.round(e1rm(s)))}</span>`}</span>
       </button>`;
     });
     h += `</div>`;
@@ -1445,7 +1452,8 @@ function resumenFin(ses) {
       <div><span class="label">Volumen</span><b class="num">${fmt(Math.round(st.vol))}<small>kg</small></b></div>
       <div><span class="label">Récords</span><b class="num">${pr}</b></div>
     </div></section>
-    <div class="row2 fin-acts"><button class="ghost" data-accion="reabrir">Reabrir</button><button class="apuntar" data-accion="nueva-sesion">Nueva sesión</button></div>`;
+    <div class="row2 fin-acts"><button class="ghost" data-accion="reabrir">Reabrir</button><button class="apuntar" data-accion="nueva-sesion">Nueva sesión</button></div>
+    <button class="ghost" style="width:100%;margin-top:10px" data-accion="editar-series" data-id="${esc(ses.id)}">Editar pesos y repeticiones</button>`;
   if (nubeLista()) h += `<button class="gym-fila" data-accion="elegir-gym" data-para="sesion">${interiorGym(gymSesion(ses), 'Entrenado en')}</button>`;
   if (nubeLista()) h += ses.publicada
     ? `<button class="finbtn" data-accion="despublicar">Publicada · toca para quitarla</button>`
@@ -1690,6 +1698,7 @@ async function compartirSesion(id) {
 function vistaSesion(id) {
   const s = state.sesiones.find(x => x.id === id);
   if (!s) { state.histSel = null; return vistaHistorial(); }
+  if (state.edita?.id === id) return vistaEdicion(s);
   const st = statsSesion(s);
   let h = `<div class="det">
     <button class="back" data-accion="volver-hist">‹ Historial</button>
@@ -1716,10 +1725,47 @@ function vistaSesion(id) {
     ${nubeLista() && state.amigos.clubsOk ? (state.amigos.guardaRutina === s.id
       ? `<form class="crear" data-form="rutina" data-id="${esc(s.id)}" style="margin:0"><input name="nombre" maxlength="60" value="${esc(s.titulo)}" autocomplete="off" aria-label="Nombre de la rutina"><button type="submit">Guardar</button></form>`
       : `<button class="ghost" data-accion="guardar-rutina" data-id="${esc(s.id)}">Guardar como rutina</button>`) : ''}
-    <button class="ghost" data-accion="editar-sesion" data-id="${esc(s.id)}">Editar este entreno</button>
+    <button class="ghost" data-accion="editar-series" data-id="${esc(s.id)}">Editar pesos y repeticiones</button>
+    <button class="ghost" data-accion="editar-sesion" data-id="${esc(s.id)}">Añadir ejercicios o series</button>
     <button class="chip danger${state.borrarSes ? ' sure' : ''}" data-accion="borrar-sesion" data-id="${esc(s.id)}" style="align-self:center">${state.borrarSes ? '¿Seguro? Se borra entero' : 'Borrar entreno'}</button>
   </div></div>`;
   return h;
+}
+
+function vistaEdicion(s) {
+  const v = state.edita.v;
+  const campo = (i, k, c, x, t) => `<label><input class="num" inputmode="decimal" autocomplete="off" data-ed="${i}:${k}" data-c="${c}" value="${esc(v[`${i}:${k}`]?.[c] ?? String(x[c]).replace('.', ','))}" aria-label="${t}">${c === 'peso' ? 'kg' : 'reps'}</label>`;
+  let h = `<div class="det"><div class="ed-h"><button class="back" data-accion="cancelar-edicion">‹ Cancelar</button><button class="datepill nueva" data-accion="guardar-edicion">Guardar</button></div>
+    <div class="label" style="margin-top:6px">${esc(fechaLarga(s.fecha))}</div><h1>${esc(s.titulo)}</h1>`;
+  s.ejercicios.forEach((e, i) => {
+    if (!e.sets.length) return;
+    h += `<div class="sx"><h3>${esc(e.nombre)}</h3>${e.sets.map((x, k) => `<div class="ed-set"><span class="i num">${k + 1}</span>${campo(i, k, 'peso', x, `Peso de la serie ${k + 1}`)}${campo(i, k, 'reps', x, `Repeticiones de la serie ${k + 1}`)}</div>`).join('')}</div>`;
+  });
+  return h + `<div class="foot-actions"><button class="apuntar" data-accion="guardar-edicion">Guardar cambios</button></div></div>`;
+}
+function salirEdicion() {
+  const vuelta = state.edita?.vuelta;
+  state.edita = null;
+  if (vuelta) { state.vista = 'entreno'; state.histSel = null; }
+  render(true); scrollTo(0, 0);
+}
+function guardarEdicion() {
+  const d = state.edita, s = clone(state.sesiones.find(x => x.id === d.id));
+  document.activeElement?.blur();
+  let cambios = 0;
+  for (const [clave, c] of Object.entries(d.v)) {
+    const [i, k] = clave.split(':'), x = s.ejercicios[i].sets[k], peso = num(c.peso ?? x.peso), reps = num(c.reps ?? x.reps);
+    if (peso == null || peso < 0 || reps == null || reps <= 0) { toast('Revisa los datos', `${s.ejercicios[i].nombre}, serie ${+k + 1}`); return; }
+    if (peso !== x.peso || reps !== x.reps) { x.peso = peso; x.reps = reps; cambios++; }
+  }
+  if (!cambios) { salirEdicion(); return; }
+  if (s.publicada) s.editada = true;
+  guardarSesion(s);
+  if (state.actual?.id === s.id) state.actual = clone(s);
+  salirEdicion();
+  toast('Sesión actualizada', s.titulo);
+  if (s.publicada) publicar(s, true);
+  else if (nubeLista()) subirMarcas().catch(() => {});
 }
 
 function copiaSeguridad() {
@@ -1987,7 +2033,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 37;
+const VERSION = 38;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -2173,7 +2219,7 @@ async function entrar(nombre) {
 }
 function datosPublicacion(ses) {
   const st = statsSesion(ses);
-  return {gym: gymSesion(ses) || undefined, mins: st.mins, series: st.series, vol: Math.round(st.vol), records: nRecords(ses), grupos: ses.grupos, esfuerzo: esfuerzo(ses), musculos: musculos(ses),
+  return {gym: gymSesion(ses) || undefined, editada: ses.editada || undefined, mins: st.mins, series: st.series, vol: Math.round(st.vol), records: nRecords(ses), grupos: ses.grupos, esfuerzo: esfuerzo(ses), musculos: musculos(ses),
     ejercicios: ses.ejercicios.filter(e => e.sets.length).map(e => ({nombre: e.nombre, grupo: grupoDe(e), record: etiquetas(e, ses).includes('pr'), sets: e.sets.map(x => [x.peso, x.reps])}))};
 }
 async function publicar(ses, callado) {
@@ -2871,7 +2917,7 @@ function tarjetaPublicacion(p) {
   return `<article class="post${abierta ? ' open' : ''}">
     <div class="post-h" style="grid-template-columns:1fr auto">
       <button class="quien" data-accion="perfil" data-u="${esc(p.usuario)}">${avatar(nombre, p.usuario)}
-        <span class="mid"><b>${esc(nombre)}<span class="nv num">Nv ${nivelDe(p.usuario)}</span></b><small class="num">${fechaCorta(String(p.fecha))}${mins ? ` · ${fmt(mins)} min` : ''}</small></span></button>
+        <span class="mid"><b>${esc(nombre)}<span class="nv num">Nv ${nivelDe(p.usuario)}</span></b><small class="num">${fechaCorta(String(p.fecha))}${mins ? ` · ${fmt(mins)} min` : ''}${d.editada ? ' · Editada' : ''}</small></span></button>
       ${recs ? `<span class="tag">${fmt(recs)} ${recs === 1 ? 'récord' : 'récords'}</span>` : ''}</div>
     ${chipGym(d.gym)}
     <button class="post-top" data-accion="post" data-id="${esc(p.id)}" aria-expanded="${abierta}">
@@ -3314,7 +3360,7 @@ document.addEventListener('click', ev => {
   const b = ev.target.closest('[data-accion], [data-vista]');
   if (!b) return;
   if (b.dataset.vista) {
-    state.vista = b.dataset.vista; state.detalle = null; state.histSel = null; state.borrarSes = false;
+    state.vista = b.dataset.vista; state.detalle = null; state.histSel = null; state.borrarSes = false; state.edita = null;
     Object.assign(state.amigos, {ejercicio: null, perfil: null, perfilPosts: null, verAvisos: false, club: null, clubPosts: null, gym: null, gymPosts: null, guardaRutina: null});
     render(true); scrollTo(0, 0);
     if (state.vista !== 'entreno' && state.vista !== 'records' && nubeLista()) cargarAmigos();
@@ -3533,6 +3579,14 @@ document.addEventListener('click', ev => {
     case 'ver-progreso': state.vista = 'yo'; state.yoTab = 'prog'; state.detalle = clave; state.menu = null; render(true); scrollTo(0, 0); break;
     case 'ver-sesion': state.histSel = b.dataset.id; state.borrarSes = false; render(true); scrollTo(0, 0); break;
     case 'volver-hist': state.histSel = null; state.borrarSes = false; render(true); break;
+    case 'editar-series': {
+      const vuelta = state.vista === 'entreno';
+      state.edita = {id: b.dataset.id, v: {}, vuelta};
+      state.vista = 'yo'; state.yoTab = 'hist'; state.histSel = b.dataset.id; state.setSel = null;
+      render(true); scrollTo(0, 0); break;
+    }
+    case 'guardar-edicion': guardarEdicion(); break;
+    case 'cancelar-edicion': salirEdicion(); break;
     case 'editar-sesion': {
       const s = state.sesiones.find(x => x.id === b.dataset.id);
       if (!s) return;
@@ -3610,6 +3664,7 @@ document.addEventListener('input', ev => {
     $('#rc-video').currentTime = c.ini;
     return;
   }
+  if (el.dataset.ed) { el.value = el.value.replace(/[^\d.,]/g, ''); (state.edita.v[el.dataset.ed] ||= {})[el.dataset.c] = el.value; return; }
   if (el.id === 'in-busca-gym') { const q = norm(el.value); for (const o of $('#gym-ops').children) o.hidden = !!q && !o.dataset.b.includes(q); return; }
   if (el.id === 'in-busca-gyms') { state.amigos.buscaGym = el.value; $('#gyms-list').innerHTML = listaGyms(); return; }
   if (el.id === 'in-busca-gente') { state.amigos.buscaGente = el.value; $('#gente-list').innerHTML = listaGente(); return; }
