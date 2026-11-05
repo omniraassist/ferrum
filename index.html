@@ -15,7 +15,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Outfit:wght@400;500;600;700;800&display=swap">
 <style>
 /* Layout: una columna de app nativa con pestañas flotantes (Entreno · Historial · Progreso · Récords).
    Dirección: oliva casi negro con resplandor suave, tarjetas tipo cristal muy redondeadas, panel lima de cabecera,
@@ -360,39 +360,64 @@ button.set-chip.vacia{box-shadow:inset 0 0 0 1px var(--line-2)}
 .dias{display:flex;gap:6px;margin-top:6px}
 .dias button{flex:1;min-height:40px;border-radius:14px;background:var(--surface-2);font-weight:800;color:var(--muted)}
 .dias button[aria-pressed="true"]{background:var(--lime);color:var(--on-lime)}
-/* cartas: marco metálico según la rareza, ilustración y lámina holográfica encima */
-.cartas{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.carta{--c:#C9CBD1;--c2:#7D8088;--mx:50%;--my:30%;position:relative;display:block;width:100%;aspect-ratio:5/7;border-radius:7%/5%;padding:3.5%;background:linear-gradient(145deg,var(--c),var(--c2) 45%,var(--c));box-shadow:0 8px 20px -10px #000;text-align:left;overflow:hidden;container-type:inline-size}
-.carta.rara{--c:#7CC6FF;--c2:#1F5C98;box-shadow:0 0 16px -3px rgba(70,160,255,.75),0 8px 20px -10px #000;animation:latido 2.6s ease-in-out infinite}
-.carta.epica{--c:#E2C2FF;--c2:#7A2FE0;padding:4%;box-shadow:0 0 24px -2px rgba(170,90,255,.85),0 8px 20px -10px #000}
-.carta.legendaria{--c:#FFE9A8;--c2:#E8A93A;padding:4.5%;box-shadow:0 0 34px 1px rgba(255,200,70,.85),0 0 70px -8px rgba(255,120,40,.6)}
-.carta.epica::before,.carta.legendaria::before{content:"";position:absolute;inset:-60%;background:conic-gradient(from 0deg,#7A2FE0,#F05BFF,#2B1460,#B56CFF,#7A2FE0);animation:gira 4s linear infinite}
-.carta.legendaria::before{background:conic-gradient(from 0deg,#FFD24A,#FF6A2B,#FFF6C9,#FF2F87,#5CF2FF,#FFD24A);animation-duration:2.6s}
-.carta.bloqueada::before{content:none}
-.carta.legendaria .carta-t{background:linear-gradient(90deg,#3A2500,#7A4E05,#3A2500);color:#FFE9A8;text-shadow:0 0 8px rgba(255,200,70,.8)}
-.carta.epica .carta-t{background:linear-gradient(90deg,#1E0D3F,#46207F,#1E0D3F)}
-.carta.rara .carta-t{background:linear-gradient(90deg,#08223D,#114478,#08223D)}
-@keyframes latido{50%{box-shadow:0 0 26px 0 rgba(70,160,255,.95),0 8px 20px -10px #000}}
-.carta-in{position:relative;display:flex;flex-direction:column;height:100%;border-radius:5%/3.6%;background:#0C0C0E;overflow:hidden}
-.carta-t{display:flex;justify-content:space-between;align-items:center;gap:2cqw;padding:3.5cqw 4cqw;font-size:7cqw;font-weight:800;letter-spacing:-.02em;color:#fff;line-height:1.1}
-.carta-t i{font-style:normal;color:var(--c);font-size:5.5cqw;letter-spacing:.04em;flex:none}
-.carta-a{flex:1;min-height:0;background-size:cover;background-position:center}
-.carta-p{padding:3cqw 4cqw 3.5cqw;font-size:5.4cqw;line-height:1.25;color:#CFCFD6;font-weight:600}
-.carta-p small{display:flex;justify-content:space-between;margin-top:1.5cqw;font-size:4.4cqw;color:var(--c);font-weight:800;text-transform:uppercase;letter-spacing:.05em}
-.carta.epica::after,.carta.legendaria::after,.carta.dorada::after{content:"";position:absolute;inset:0;pointer-events:none;mix-blend-mode:color-dodge;opacity:.34;background:linear-gradient(115deg,transparent 30%,rgba(255,80,160,.5) 40%,rgba(255,235,120,.65) 48%,rgba(90,255,200,.5) 56%,rgba(90,140,255,.5) 64%,transparent 74%);background-size:260% 260%;background-position:var(--mx) var(--my);animation:holo 5s ease-in-out infinite alternate}
-@keyframes holo{from{background-position:0% 0%}to{background-position:100% 100%}}
-.carta.dorada{--c:#FFE9A8;--c2:#C98A1E}
-.carta.bloqueada{background:var(--surface-2);box-shadow:none;animation:none;padding:3.5%}
-.carta.bloqueada::after{content:none}
-.carta.bloqueada .carta-a{filter:grayscale(1) brightness(.38) contrast(1.25) blur(1.5px)}
-.carta.bloqueada .carta-t{color:var(--faint)}
-.carta.bloqueada .carta-p{color:var(--muted)}
-.carta.bloqueada .carta-t i,.carta.bloqueada .carta-p small{color:var(--faint)}
-.copias{position:absolute;right:6%;top:4%;z-index:2;background:rgba(0,0,0,.72);color:#fff;border-radius:999px;padding:1px 7px;font-size:11px;font-weight:800}
+.cartas{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+/* carta graduada: cápsula de metacrilato con etiqueta, y la carta holográfica dentro */
+.carta{--c:#D8D8D2;--e1:#EDEDE7;--e2:#CFCFC8;--et:#101010;--foil:0;display:block;position:relative;width:100%;aspect-ratio:5/8;text-align:left;container-type:inline-size;font-family:var(--f-body)}
+.carta.rara{--c:#6FC2FF;--e1:#0E2C4E;--e2:#16487C;--et:#E8F4FF;--foil:.18}
+.carta.epica{--c:#D39BFF;--e1:#22104A;--e2:#4B1F93;--et:#F4E9FF;--foil:.32}
+.carta.legendaria{--c:#FFD76A;--e1:#FFE9A8;--e2:#E2A42C;--et:#1C1200;--foil:.42}
+.carta.dorada{--e1:#FFE9A8;--e2:#E2A42C;--et:#1C1200;--c:#FFD76A;--foil:.4}
+.slab{position:absolute;inset:0;display:block;transform-style:preserve-3d;transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg))}
+.cara{position:absolute;inset:0;display:flex;flex-direction:column;gap:2.4cqw;padding:3cqw;border-radius:4.5cqw;background:linear-gradient(135deg,#34343A,#121214 34%,#26262B 62%,#0E0E10);box-shadow:inset 0 0 0 .7cqw rgba(255,255,255,.34),inset 0 0 6cqw rgba(255,255,255,.1);backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden}
+.frente{transform:translateZ(2.6cqw)}
+.dorso{transform:rotateY(180deg) translateZ(2.6cqw);align-items:center;justify-content:center;gap:4cqw;color:var(--c);text-align:center;font-size:4.4cqw;font-weight:700;letter-spacing:.14em}
+.dorso img{width:34%;border-radius:22%}
+.dorso small{font-size:3.4cqw;color:var(--muted);letter-spacing:.06em;font-weight:500}
+.canto{position:absolute;background:linear-gradient(90deg,#55555C,#C8C8CF 45%,#3B3B42)}
+.canto.i,.canto.d{top:2cqw;bottom:2cqw;width:5.2cqw;left:50%;margin-left:-2.6cqw}
+.canto.i{transform:translateX(-50cqw) rotateY(-90deg)}
+.canto.d{transform:translateX(50cqw) rotateY(90deg)}
+.canto.s,.canto.f{left:2cqw;right:2cqw;height:5.2cqw;top:50%;margin-top:-2.6cqw;background:linear-gradient(0deg,#55555C,#C8C8CF 45%,#3B3B42)}
+.canto.s{transform:translateY(-80cqw) rotateX(90deg)}
+.canto.f{transform:translateY(80cqw) rotateX(-90deg)}
+.etq{display:grid;grid-template-columns:1fr auto;gap:2cqw;align-items:center;padding:2.4cqw 3cqw;border-radius:1.8cqw;background:linear-gradient(100deg,var(--e1),var(--e2));color:var(--et);box-shadow:0 0 0 .5cqw rgba(0,0,0,.5)}
+.etq span{display:block;min-width:0}
+.etq-i{font-size:3.5cqw;line-height:1.28;font-weight:600;letter-spacing:.02em;text-transform:uppercase}
+.etq-i b{display:block;font-size:4.7cqw;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nota{text-align:right;line-height:1}
+.nota b{display:block;font-family:"Anton",Impact,sans-serif;font-weight:400;font-size:10.5cqw}
+.nota small{font-size:2.8cqw;font-weight:800;letter-spacing:.04em}
+.ventana{position:relative;flex:1;min-height:0;display:block;padding:2.6cqw;border-radius:1.6cqw;background:#D9D9D2}
+.rara .ventana,.epica .ventana,.legendaria .ventana,.dorada .ventana{background:linear-gradient(115deg,#FF5FB2,#FFE36B,#5CF2C8,#6FA0FF,#FF5FB2);background-size:300% 300%;background-position:var(--mx,30%) var(--my,30%)}
+.ventana::after{content:"";position:absolute;inset:0;border-radius:inherit;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='48'%3E%3Cpath d='M0 48L28 0l28 48z' fill='none' stroke='white' stroke-opacity='.55'/%3E%3Cpath d='M28 48L14 24h28z' fill='white' fill-opacity='.14'/%3E%3C/svg%3E");background-size:24cqw 20cqw;mix-blend-mode:overlay;pointer-events:none}
+.carta-in{position:relative;display:block;height:100%;overflow:hidden;background:#0A0A0C;isolation:isolate;z-index:1}
+.carta-a{position:absolute;inset:0;display:block;background-size:cover;background-position:center}
+.titulo{position:absolute;left:-2%;right:-2%;top:2.5cqw;text-align:center;font-family:"Anton",Impact,sans-serif;font-weight:400;line-height:1;text-transform:uppercase;white-space:nowrap;background:linear-gradient(100deg,#fff 10%,var(--c) 45%,#fff 60%,var(--c));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 .6cqw 1.2cqw rgba(0,0,0,.7))}
+.franja{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:center;gap:2cqw;padding:2cqw 3cqw;background:linear-gradient(90deg,rgba(0,0,0,.88),rgba(0,0,0,.55));color:#fff;font-size:3.7cqw;line-height:1.2;font-weight:600}
+.franja b{flex:none;font-family:"Anton",Impact,sans-serif;font-weight:400;font-size:7cqw;color:var(--c)}
+.foil{position:absolute;inset:0;opacity:var(--foil);mix-blend-mode:color-dodge;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='48'%3E%3Cpath d='M0 48L28 0l28 48z' fill='none' stroke='white' stroke-opacity='.55'/%3E%3Cpath d='M28 48L14 24h28z' fill='white' fill-opacity='.14'/%3E%3C/svg%3E"),linear-gradient(115deg,transparent 18%,#FF4FA8 32%,#FFE96B 44%,#4CFFC4 56%,#5C8CFF 68%,transparent 82%);background-size:24cqw 20cqw,280% 280%;background-position:0 0,var(--mx,30%) var(--my,30%)}
+.reflejo{position:absolute;inset:0;pointer-events:none;background:linear-gradient(112deg,transparent 40%,rgba(255,255,255,.2) 48%,rgba(255,255,255,.04) 54%,transparent 60%);background-size:260% 100%;background-position:var(--mx,70%) 0}
+.carta.legendaria .cara{box-shadow:inset 0 0 0 .7cqw rgba(255,226,140,.75),0 0 7cqw 1cqw rgba(255,190,60,.5)}
+.carta.epica .cara{box-shadow:inset 0 0 0 .7cqw rgba(214,160,255,.6),0 0 6cqw .5cqw rgba(170,90,255,.45)}
+.carta.rara .cara{box-shadow:inset 0 0 0 .7cqw rgba(120,195,255,.5),0 0 5cqw 0 rgba(70,160,255,.35)}
+.carta.bloqueada{--foil:0;--e1:#2A2F20;--e2:#1F2318;--et:#8D947D}
+.carta.bloqueada .cara{box-shadow:inset 0 0 0 .7cqw rgba(255,255,255,.1)}
+.carta.bloqueada .ventana{background:#2A2F20}
+.carta.bloqueada .carta-a{filter:grayscale(1) brightness(.34) contrast(1.2) blur(1.2px)}
+.carta.bloqueada .titulo{opacity:.2}
+.copias{position:absolute;right:3%;top:-2%;z-index:3;background:var(--lime);color:var(--on-lime);border-radius:999px;padding:1px 8px;font-size:11.5px;font-weight:800}
+.carta.tres{touch-action:none;cursor:grab}
+.tres .slab{animation:balanceo 7s ease-in-out infinite}
+.tres .foil,.tres .ventana,.tres .reflejo{animation:corre 7s ease-in-out infinite alternate}
+.tres.manual .slab,.tres.manual .foil,.tres.manual .ventana,.tres.manual .reflejo{animation:none}
+.tres.nueva:not(.manual) .slab{animation:giro3d 1.5s cubic-bezier(.16,.8,.24,1) both,balanceo 7s 1.5s ease-in-out infinite}
+@keyframes balanceo{0%,100%{transform:rotateY(-20deg) rotateX(4deg)}50%{transform:rotateY(20deg) rotateX(-3deg)}}
+@keyframes giro3d{from{transform:translateZ(-340px) rotateY(-780deg) rotateX(14deg)}to{transform:rotateY(-20deg) rotateX(4deg)}}
+@keyframes corre{from{--mx:0%;--my:10%;background-position:0% 10%}to{--mx:100%;--my:90%;background-position:100% 90%}}
 #capa{position:fixed;inset:0;z-index:40;display:none;place-items:center;padding:24px;background:rgba(6,6,8,.93);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 #capa.on{display:grid}
 .capa-in{width:min(300px,78vw);display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center}
-.capa-in .carta{perspective:800px;transition:transform .12s}
+.capa-in{perspective:1100px}
 .capa-txt b{display:block;font-size:22px;font-weight:800;letter-spacing:-.03em}
 .capa-txt span{font-size:13.5px;color:var(--muted)}
 .capa-in .apuntar{width:100%}
@@ -402,15 +427,11 @@ button.set-chip.vacia{box-shadow:inset 0 0 0 1px var(--line-2)}
 .sobre-logo{position:absolute;left:0;right:0;bottom:8%;display:grid;place-items:center;gap:4px;color:#fff;font-weight:800;letter-spacing:.28em;font-size:24px;text-shadow:0 2px 14px #000}
 .sobre-logo small{font-size:10.5px;letter-spacing:.24em;color:var(--lime)}
 @keyframes flota{50%{transform:translateY(-8px) rotate(-1deg)}}
-@keyframes revela{from{transform:rotateY(90deg) scale(.7);opacity:0}to{transform:none;opacity:1}}
-.capa-in .carta.nueva{animation:revela .7s cubic-bezier(.2,.9,.25,1.1) both}
 .rayos{position:absolute;inset:-40%;pointer-events:none;background:repeating-conic-gradient(from 0deg,var(--ry,rgba(245,196,81,.24)) 0 10deg,transparent 10deg 24deg);animation:gira 14s linear infinite}
 .rayos.epica{--ry:rgba(170,90,255,.2)}
 .fogonazo{position:fixed;inset:0;pointer-events:none;background:#fff;animation:fogonazo .9s ease-out both}
 .fogonazo.epica{background:#C79BFF;animation-duration:.6s}
 @keyframes fogonazo{from{opacity:.95}to{opacity:0}}
-.capa-in .carta.nueva.legendaria{animation:revela .7s cubic-bezier(.2,.9,.25,1.1) both,sacude .5s .1s}
-@keyframes sacude{20%{translate:-7px 3px}40%{translate:7px -3px}60%{translate:-4px 2px}80%{translate:4px -1px}}
 @keyframes gira{to{transform:rotate(360deg)}}
 .recorte video{display:block;width:100%;max-height:40vh;border-radius:16px;background:#000}
 .rc{display:block;width:100%;text-align:left;font-size:13px;font-weight:700;color:var(--muted)}
@@ -879,23 +900,23 @@ function retosMes() {
 }
 /* ---------- progreso: XP, objetivos, misiones y cartas ---------- */
 const CARTAS = [
-  {id: 'dios', n: 'Dios del Hierro', r: 'legendaria', lema: 'Levanta lo que nadie más puede.', c: '100 sesiones', ok: e => e.ses >= 100},
-  {id: 'barra', n: 'Barra Eterna', r: 'legendaria', lema: 'Nunca deja de arder.', c: '12 semanas seguidas', ok: e => e.racha >= 12},
-  {id: 'trono', n: 'Trono del Millón', r: 'legendaria', lema: 'Mil toneladas para sentarse aquí.', c: '1.000 toneladas levantadas', ok: e => e.vol >= 1e6},
-  {id: 'peso-muerto', n: 'Peso Muerto Supremo', r: 'epica', lema: 'El suelo suelta lo que tú agarras.', c: '50 sesiones', ok: e => e.ses >= 50},
-  {id: 'press', n: 'Press de la Tormenta', r: 'epica', lema: 'Rompe el techo.', c: '25 récords', ok: e => e.recs >= 25},
-  {id: 'sentadilla', n: 'Sentadilla Imposible', r: 'epica', lema: 'Cuando bajas, tiembla todo.', c: '100 toneladas levantadas', ok: e => e.vol >= 1e5},
-  {id: 'disco', n: 'Disco Voltaico', r: 'rara', lema: 'No frena, no duda.', c: '4 semanas seguidas', ok: e => e.racha >= 4},
-  {id: 'rack', n: 'Rack de Acero', r: 'rara', lema: 'La fuerza se construye despacio.', c: '10 sesiones', ok: e => e.ses >= 10},
-  {id: 'cinturon', n: 'Cinturón de Fuego', r: 'rara', lema: 'Aprieta y a por la marca.', c: '5 récords', ok: e => e.recs >= 5},
-  {id: 'mancuerna', n: 'Primera Mancuerna', r: 'comun', lema: 'Todo empieza con la primera.', c: 'Primera sesión', ok: e => e.ses >= 1},
-  {id: 'shaker', n: 'Shaker del Alba', r: 'comun', lema: 'El día es de quien madruga.', c: 'Entrena antes de las 9', ok: e => e.temprano},
-  {id: 'kettlebell', n: 'Kettlebell Nocturna', r: 'comun', lema: 'La noche también cuenta.', c: 'Entrena después de las 21', ok: e => e.noche},
+  {id: 'dios', t: 'Dios', n: 'Dios del Hierro', r: 'legendaria', lema: 'Levanta lo que nadie más puede.', c: '100 sesiones', ok: e => e.ses >= 100},
+  {id: 'barra', t: 'Barra', n: 'Barra Eterna', r: 'legendaria', lema: 'Nunca deja de arder.', c: '12 semanas seguidas', ok: e => e.racha >= 12},
+  {id: 'trono', t: 'Trono', n: 'Trono del Millón', r: 'legendaria', lema: 'Mil toneladas para sentarse aquí.', c: '1.000 toneladas levantadas', ok: e => e.vol >= 1e6},
+  {id: 'peso-muerto', t: 'Muerto', n: 'Peso Muerto Supremo', r: 'epica', lema: 'El suelo suelta lo que tú agarras.', c: '50 sesiones', ok: e => e.ses >= 50},
+  {id: 'press', t: 'Tormenta', n: 'Press de la Tormenta', r: 'epica', lema: 'Rompe el techo.', c: '25 récords', ok: e => e.recs >= 25},
+  {id: 'sentadilla', t: 'Imposible', n: 'Sentadilla Imposible', r: 'epica', lema: 'Cuando bajas, tiembla todo.', c: '100 toneladas levantadas', ok: e => e.vol >= 1e5},
+  {id: 'disco', t: 'Voltaico', n: 'Disco Voltaico', r: 'rara', lema: 'No frena, no duda.', c: '4 semanas seguidas', ok: e => e.racha >= 4},
+  {id: 'rack', t: 'Acero', n: 'Rack de Acero', r: 'rara', lema: 'La fuerza se construye despacio.', c: '10 sesiones', ok: e => e.ses >= 10},
+  {id: 'cinturon', t: 'Fuego', n: 'Cinturón de Fuego', r: 'rara', lema: 'Aprieta y a por la marca.', c: '5 récords', ok: e => e.recs >= 5},
+  {id: 'mancuerna', t: 'Inicio', n: 'Primera Mancuerna', r: 'comun', lema: 'Todo empieza con la primera.', c: 'Primera sesión', ok: e => e.ses >= 1},
+  {id: 'shaker', t: 'Alba', n: 'Shaker del Alba', r: 'comun', lema: 'El día es de quien madruga.', c: 'Entrena antes de las 9', ok: e => e.temprano},
+  {id: 'kettlebell', t: 'Noche', n: 'Kettlebell Nocturna', r: 'comun', lema: 'La noche también cuenta.', c: 'Entrena después de las 21', ok: e => e.noche},
 ];
 /* cartas aún sin ilustración: se ven como próximamente y no salen en los sobres */
 const SIN_ARTE = new Set();
 const RAREZA = {comun: 'Común', rara: 'Rara', epica: 'Épica', legendaria: 'Legendaria'};
-const GEMAS = {comun: '◆', rara: '◆◆', epica: '◆◆◆', legendaria: '◆◆◆◆'};
+const NOTA = {comun: ['7', 'NM'], rara: ['8.5', 'NM-MT'], epica: ['9.5', 'MINT'], legendaria: ['10', 'GEM MT']};
 const RANGOS = [[30, 'Titán'], [20, 'Élite'], [15, 'Guerrero'], [10, 'Atleta'], [5, 'Aprendiz'], [1, 'Novato']];
 const hash = t => { let h = 2166136261; for (const c of String(t)) { h ^= c.codePointAt(0); h = Math.imul(h, 16777619); } h ^= h >>> 15; h = Math.imul(h, 2246822519); h ^= h >>> 13; return (h >>> 0) / 2 ** 32; };
 /* el sobre sale del id, así da la misma carta en todos los móviles */
@@ -987,14 +1008,22 @@ function hub(titulo) {
       <button class="accion" data-vista="explorar">${icono('amigos')}Explorar</button>
     </div></section>`;
 }
-function htmlCarta(c, {copias = 0, bloqueada = false, nueva = false, accion = ''} = {}) {
-  const num = String(CARTAS.indexOf(c) + 1).padStart(3, '0');
-  const clases = `carta ${c.r}${bloqueada ? ' bloqueada' : ''}${copias >= 3 ? ' dorada' : ''}${nueva ? ' nueva' : ''}`;
+function htmlCarta(c, {copias = 0, bloqueada = false, nueva = false, accion = '', tres = false} = {}) {
+  const num = String(CARTAS.indexOf(c) + 1).padStart(3, '0'), [nota, grado] = NOTA[c.r];
+  const clases = `carta ${c.r}${bloqueada ? ' bloqueada' : ''}${copias >= 3 ? ' dorada' : ''}${nueva ? ' nueva' : ''}${tres ? ' tres' : ''}`;
   const tag = accion ? `button data-accion="${accion}" data-c="${c.id}"` : 'div';
+  const arte = SIN_ARTE.has(c.id) ? '' : ` style="background-image:url(cartas/${c.id}.jpg)"`;
   return `<${tag} class="${clases}" aria-label="${esc(bloqueada ? `Carta bloqueada: ${c.c}` : c.n)}">${copias > 1 ? `<span class="copias num">×${copias}</span>` : ''}
-    <span class="carta-in"><span class="carta-t"><span>${bloqueada ? '???' : esc(c.n)}</span><i>${GEMAS[c.r]}</i></span>
-    <span class="carta-a"${SIN_ARTE.has(c.id) ? '' : ` style="background-image:url(cartas/${c.id}.jpg)"`}></span>
-    <span class="carta-p">${esc(SIN_ARTE.has(c.id) ? 'Próximamente' : bloqueada ? c.c : c.lema)}<small><span>${RAREZA[c.r]}</span><span>${num}/${String(CARTAS.length).padStart(3, '0')}</span></small></span></span></${tag.split(' ')[0]}>`;
+    <span class="slab"><span class="cara frente">
+      <span class="etq"><span class="etq-i">2026 Ferrum · Serie 1<b>${bloqueada ? '???' : esc(c.n)}</b>#${num} · ${RAREZA[c.r]}</span>
+        <span class="nota">${bloqueada ? '<b>?</b>' : `<b>${nota}</b><small>${grado}</small>`}</span></span>
+      <span class="ventana"><span class="carta-in"><span class="carta-a"${arte}></span>
+        <span class="titulo" style="font-size:${Math.min(24, 118 / c.t.length).toFixed(1)}cqw">${esc(c.t)}</span>
+        <span class="foil"></span>
+        <span class="franja"><span>${esc(SIN_ARTE.has(c.id) ? 'Próximamente' : bloqueada ? c.c : c.lema)}</span><b class="num">${num}</b></span></span></span>
+      <span class="reflejo"></span></span>
+    ${tres ? `<span class="cara dorso"><img src="ferrum-trazo-180.png" alt="">FERRUM<small>Serie 1 · ${RAREZA[c.r]} · ${num}/${String(CARTAS.length).padStart(3, '0')}</small></span>
+      <span class="canto i"></span><span class="canto d"></span><span class="canto s"></span><span class="canto f"></span>` : ''}</span></${tag.split(' ')[0]}>`;
 }
 function vistaColeccion() {
   const m = coleccion(), pend = sobresPendientes().length;
@@ -1030,13 +1059,13 @@ function pintarCapa() {
   }
   if (c.tipo === 'sobre') {
     const carta = cartaDeSobre(c.id), m = coleccion(), n = m.get(carta.id) || 1, quedan = sobresPendientes().length;
-    el.innerHTML = `${carta.r === 'legendaria' || carta.r === 'epica' ? `<div class="rayos ${carta.r}"></div><div class="fogonazo ${carta.r}"></div>` : ''}<div class="capa-in">${htmlCarta(carta, {nueva: true, copias: n})}
+    el.innerHTML = `${carta.r === 'legendaria' || carta.r === 'epica' ? `<div class="rayos ${carta.r}"></div><div class="fogonazo ${carta.r}"></div>` : ''}<div class="capa-in">${htmlCarta(carta, {nueva: true, copias: n, tres: true})}
       <div class="capa-txt"><b>${esc(carta.n)}</b><span>${RAREZA[carta.r]}${n > 1 ? ` · ya tienes ${n}` : ' · ¡nueva!'}</span></div>
       <button class="apuntar" data-accion="${quedan ? 'abrir-sobre' : 'cerrar-capa'}">${quedan ? `Abrir otro (${quedan})` : 'Guardar'}</button></div>`;
     return;
   }
   const carta = CARTAS.find(x => x.id === c.id), m = coleccion(), tiene = m.has(carta.id);
-  el.innerHTML = `<div class="capa-in">${htmlCarta(carta, {copias: m.get(carta.id) || 0, bloqueada: !tiene})}
+  el.innerHTML = `<div class="capa-in">${htmlCarta(carta, {copias: m.get(carta.id) || 0, bloqueada: !tiene, tres: true})}
     <div class="capa-txt"><b>${tiene ? esc(carta.n) : 'Carta por descubrir'}</b><span>${RAREZA[carta.r]} · ${SIN_ARTE.has(carta.id) ? 'Próximamente' : esc(carta.c)}</span></div>
     <button class="ghost" style="width:100%" data-accion="cerrar-capa">Cerrar</button></div>`;
 }
@@ -1530,7 +1559,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 20;
+const VERSION = 21;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -2657,13 +2686,31 @@ document.addEventListener('input', ev => {
   }
 });
 document.addEventListener('change', ev => { if (ev.target.id === 'in-medio') subirMedio(ev.target.files?.[0]); });
-document.addEventListener('pointermove', ev => {
-  const c = $('#capa.on .carta');
+/* la cápsula se gira con el dedo y vuelve a balancearse al soltarla */
+let arrastre = null, sueltaT = null;
+document.addEventListener('pointerdown', ev => {
+  const c = ev.target.closest?.('#capa .carta.tres');
   if (!c) return;
-  const r = c.getBoundingClientRect(), x = Math.min(1, Math.max(0, (ev.clientX - r.left) / r.width)), y = Math.min(1, Math.max(0, (ev.clientY - r.top) / r.height));
-  c.style.setProperty('--mx', x * 100 + '%'); c.style.setProperty('--my', y * 100 + '%');
-  c.style.transform = `rotateY(${(x - .5) * 18}deg) rotateX(${(.5 - y) * 18}deg)`;
+  clearTimeout(sueltaT);
+  const m = new DOMMatrix(getComputedStyle(c.querySelector('.slab')).transform);
+  arrastre = {c, x: ev.clientX, y: ev.clientY, ry: c.classList.contains('manual') ? parseFloat(c.style.getPropertyValue('--ry')) || 0 : Math.asin(Math.max(-1, Math.min(1, -m.m13))) * 180 / Math.PI, rx: 0};
+  c.classList.add('manual');
+  c.style.setProperty('--ry', arrastre.ry + 'deg');
 });
+document.addEventListener('pointermove', ev => {
+  if (!arrastre) return;
+  const {c, x, y, ry, rx} = arrastre, giro = ry + (ev.clientX - x) * .7, incl = Math.max(-35, Math.min(35, rx - (ev.clientY - y) * .35));
+  c.style.setProperty('--ry', giro + 'deg'); c.style.setProperty('--rx', incl + 'deg');
+  const pos = ((giro % 360 + 360) % 360) / 360 * 200 % 100;
+  c.style.setProperty('--mx', pos + '%'); c.style.setProperty('--my', 50 + incl + '%');
+});
+const soltar = () => {
+  if (!arrastre) return;
+  const {c} = arrastre; arrastre = null;
+  sueltaT = setTimeout(() => { c.classList.remove('manual', 'nueva'); c.style.removeProperty('--ry'); c.style.removeProperty('--rx'); }, 2500);
+};
+document.addEventListener('pointerup', soltar);
+document.addEventListener('pointercancel', soltar);
 document.addEventListener('focusin', ev => { if (ev.target.id === 'in-peso' || ev.target.id === 'in-reps') ev.target.select?.(); });
 document.addEventListener('change', ev => {
   if (ev.target.id === 'in-fecha' && ev.target.value) {
