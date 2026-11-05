@@ -492,6 +492,47 @@ body:has(.hub)::before{background:#C9EC35}
 .stats div,.sumrow div{background:none;padding:0}
 .stats > div,.sumrow > div{border-radius:22px;padding:12px}
 .historias{display:flex;gap:10px;margin:0 0 14px}
+.bento{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.tile{display:grid;gap:8px;align-content:start;min-height:112px;padding:13px 11px;border-radius:22px;text-align:left;font-weight:700;font-size:14.5px;background:linear-gradient(160deg,#1E2415,#13170C);box-shadow:inset 0 0 0 1px rgba(255,255,255,.055)}
+.tile i{display:grid;place-items:center;width:38px;height:38px;border-radius:13px;background:var(--surface-3);color:var(--lime)}
+.tile small{display:block;font-size:11.5px;font-weight:500;color:var(--muted);line-height:1.25;margin-top:1px;overflow-wrap:anywhere}
+.tile[aria-pressed="true"]{background:var(--lime);color:var(--on-lime)}
+.tile[aria-pressed="true"] i{background:var(--on-lime)}
+.tile[aria-pressed="true"] small{color:rgba(10,13,6,.65)}
+details.mas{grid-column:1/-1}
+details.mas summary{display:flex;justify-content:center;align-items:center;gap:6px;min-height:36px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;list-style:none}
+details.mas summary::-webkit-details-marker{display:none}
+details.mas summary::after{content:"⌄";font-size:15px;line-height:1;margin-top:-5px}
+details.mas[open] summary::after{transform:rotate(180deg);margin-top:5px}
+details.mas > div{display:grid;gap:10px;padding-top:6px}
+.plegable .card:has(.card-h){overflow:hidden}
+.plegable .card-h{cursor:pointer;margin-bottom:0;align-items:center}
+.plegable .card-h::after{content:"⌄";color:var(--muted);font-size:18px;line-height:1;margin:-6px 0 0 8px;flex:none}
+.plegable .card:not(.plegada) .card-h{margin-bottom:14px}
+.plegable .card:not(.plegada) .card-h::after{transform:rotate(180deg);margin-top:6px}
+.plegable .card.plegada > :not(.card-h){display:none}
+.plegable .card-h h2{flex:1}
+.intro-i{display:grid;place-items:center;width:112px;height:112px;border-radius:34px;background:var(--lime);color:var(--on-lime)}
+.intro-i svg{width:58px;height:58px}
+.puntos{display:flex;gap:6px}
+.puntos i{width:8px;height:8px;border-radius:50%;background:var(--surface-3)}
+.puntos i.on{width:22px;border-radius:4px;background:var(--lime)}
+.nv{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;background:var(--lime-soft);color:var(--lime-ink);font-size:11px;font-weight:700;vertical-align:1px}
+.liga{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:18px;margin-bottom:12px;border-radius:26px;background:linear-gradient(150deg,#C9EC35,#DFFA6B 60%,#B6DB22);color:var(--on-lime)}
+.liga b{display:block;font-size:26px;font-weight:800;letter-spacing:-.03em}
+.liga small{font-size:13px;font-weight:600;opacity:.7}
+.liga strong{font-size:38px;font-weight:800;letter-spacing:-.04em}
+.rk.sube .p{color:var(--lime-ink)}
+.duelo{padding:16px;margin-bottom:12px;border-radius:26px;background:linear-gradient(150deg,#2A1548,#150B26);box-shadow:inset 0 0 0 1.5px rgba(190,130,255,.5)}
+.duelo-h{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;font-weight:700;color:#D9BEFF}
+.marcador{font-size:38px;font-weight:800;letter-spacing:-.03em;color:#fff;white-space:nowrap}
+.duelo-f{display:grid;grid-template-columns:1fr auto;gap:8px;padding:7px 0;border-top:1px solid rgba(255,255,255,.09);font-size:13.5px;font-weight:600;color:#fff}
+.duelo-f span:first-child{overflow-wrap:anywhere;min-width:0}
+.duelo-f.gana span:last-child{color:var(--lime)}
+.duelo-f small{color:#BBA8D6;white-space:nowrap}
+.fin-duelo{font-size:46px;font-weight:800;letter-spacing:-.04em;line-height:1}
+.fin-duelo.gana{color:var(--lime)}
+.fin-duelo.pierde{color:#FF7066}
 .fila{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;width:100%;padding:12px 0;border-bottom:1px solid var(--line);text-align:left}
 .fila:last-child{border-bottom:0}
 .fila b{display:block;font-weight:700;font-size:15px;overflow-wrap:anywhere}
@@ -635,9 +676,9 @@ const state = {
   busca: '', buscaProg: '', filtroGrupo: null, filtroRec: null, rango: 7,
   detalle: null, metrica: 'max', histSel: null, borrarSes: false, msgCopia: '',
   modo: 'cargando', cargado: false, aviso: '', hint: null,
-  nube: '', recTab: 'marcas', capa: null, yoTab: 'perfil', rutEdit: null, calMes: 0,
+  nube: '', recTab: 'marcas', capa: null, yoTab: 'perfil', rutEdit: null, calMes: 0, inicio: null, abiertas: new Set(['Objetivo semanal', 'Misiones de la semana']),
   amigos: {modo: 'crear', google: false, pestana: 'feed', feed: null, marcas: null, cargando: false, error: '', ejercicio: null, busca: '', salir: false, abiertos: new Set(),
-    seg: [], gente: null, solo: false, yoPosts: null, subida: null, subiendo: false, comunidad: 'gente', clubes: null, miembros: [], rutinas: null, club: null, clubPosts: null, borrarClub: false, guardaRutina: null, perfil: null, perfilPosts: null, avisos: [], verAvisos: false, buscaGente: ''},
+    seg: [], gente: null, solo: false, yoPosts: null, desafios: [], desafiosOk: false, subida: null, subiendo: false, comunidad: 'gente', clubes: null, miembros: [], rutinas: null, club: null, clubPosts: null, borrarClub: false, guardaRutina: null, perfil: null, perfilPosts: null, avisos: [], verAvisos: false, buscaGente: ''},
 };
 const conSets = s => s.ejercicios.some(e => e.sets.length);
 const grupoDe = e => e.grupo || IDEA_GRUPO[e.clave] || null;
@@ -728,8 +769,26 @@ function render(forzar) {
   renderPendiente = false;
   for (const v of ['amigos', 'explorar', 'entreno', 'records', 'yo']) $('#tab-' + v).setAttribute('aria-pressed', state.vista === v);
   $('#tab-amigos').classList.toggle('dot', avisosNuevos() > 0);
+  requestAnimationFrame(aplicarPliegues);
   $('#main').innerHTML = state.vista === 'entreno' ? vistaEntreno() : state.vista === 'records' ? vistaRecords() : state.vista === 'yo' ? vistaYo() : vistaAmigos();
 }
+
+function aplicarPliegues() {
+  document.querySelectorAll('#main .plegable .card').forEach(c => {
+    const t = c.querySelector('.card-h h2')?.textContent;
+    if (t) c.classList.toggle('plegada', !state.abiertas.has(t));
+  });
+}
+document.addEventListener('click', ev => {
+  const h = ev.target.closest('.plegable .card-h');
+  if (!h || ev.target.closest('button')) return;
+  const t = h.querySelector('h2')?.textContent;
+  state.abiertas.has(t) ? state.abiertas.delete(t) : state.abiertas.add(t);
+  aplicarPliegues();
+});
+document.addEventListener('toggle', ev => {
+  if (ev.target.matches?.('details.mas')) ev.target.open ? state.abiertas.add('log') : state.abiertas.delete('log');
+}, true);
 
 /* ---------- entreno ---------- */
 function vistaEntreno() {
@@ -752,9 +811,11 @@ function vistaEntreno() {
   if (state.aviso) h += `<div class="aviso">${esc(state.aviso)}</div>`;
   if (!ses && !state.cargado && state.modo === 'cargando') return h + `<div class="empty"><b>Cargando</b>Recuperando tus marcas…</div>`;
   if (state.rutEdit) return h + editorRutina();
-  if (!ses || state.editGrupos) return h + (ses ? '' : inicioRapido()) + planificador(ses);
+  if (ses) { if (state.editGrupos) return h + planificador(ses); }
+  else return h + inicioRapido() + (modoInicio() === 'libre' ? planificador(null) : '');
   if (ses.fin) return h + resumenFin(ses);
   const st = statsSesion(ses);
+  if (ses.desafio) h += cajaDuelo(ses);
   if (ses.ejercicios.length) h += `
   <div class="stats">
     <div><div class="label">Ejercicios</div><div class="v num">${ses.ejercicios.length}</div></div>
@@ -767,19 +828,27 @@ function vistaEntreno() {
 }
 
 const DIAS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+const modoInicio = () => state.inicio || (ajustes().rutinas.length ? 'rutina' : state.sesiones.some(conSets) ? 'replicar' : 'libre');
 function inicioRapido() {
-  const hoyN = (parseISO(state.fecha).getDay() + 6) % 7, rs = ajustes().rutinas;
+  const hoyN = (parseISO(state.fecha).getDay() + 6) % 7, rs = ajustes().rutinas, modo = modoInicio();
   const lista = [...rs].sort((a, b) => (b.dias?.includes(hoyN) ? 1 : 0) - (a.dias?.includes(hoyN) ? 1 : 0));
-  const ultimas = state.sesiones.filter(conSets).slice(-3).reverse();
-  let h = `<section class="card"><div class="card-h"><h2>Mis rutinas</h2><button class="mini" data-accion="nueva-rutina">+ Crear</button></div>`;
-  h += lista.length ? lista.map(r => `<div class="fila"><button class="fila-a" data-accion="empezar-rutina" data-id="${esc(r.id)}"><b>${esc(r.nombre)}${r.dias?.includes(hoyN) ? ' <span class="tag">Hoy</span>' : ''}</b>
+  const ultimas = state.sesiones.filter(conSets).slice(-3).reverse(), deHoy = lista.find(r => r.dias?.includes(hoyN));
+  const tile = (k, ic, t, sub) => `<button class="tile" data-accion="inicio" data-i="${k}" aria-pressed="${modo === k}"><i><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ic}</svg></i><span>${t}<small>${esc(sub)}</small></span></button>`;
+  let h = `<div class="bento">
+    ${tile('rutina', '<path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/>', 'Mi rutina', deHoy ? `Hoy: ${deHoy.nombre}` : rs.length ? `${rs.length} guardadas` : 'Crea la tuya')}
+    ${tile('replicar', '<path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3"/>', 'Replicar', ultimas[0] ? ultimas[0].titulo : 'Aún sin sesiones')}
+    ${tile('libre', '<path d="M12 5v14M5 12h14"/>', 'Libre', 'Elige los grupos')}</div>`;
+  if (modo === 'rutina') {
+    h += `<section class="card"><div class="card-h"><h2>Mis rutinas</h2><button class="mini" data-accion="nueva-rutina">+ Crear</button></div>`;
+    h += lista.length ? lista.map(r => `<div class="fila"><button class="fila-a" data-accion="empezar-rutina" data-id="${esc(r.id)}"><b>${esc(r.nombre)}${r.dias?.includes(hoyN) ? ' <span class="tag">Hoy</span>' : ''}</b>
       <small>${r.ejercicios.length} ${r.ejercicios.length === 1 ? 'ejercicio' : 'ejercicios'}${r.dias?.length ? ` · ${r.dias.map(d => DIAS[d]).join(' ')}` : ''}</small></button>
       <button class="mini" data-accion="editar-rutina" data-id="${esc(r.id)}">Editar</button></div>`).join('')
-    : `<p class="note" style="margin:0">Crea tu rutina una vez y empieza cada sesión con un toque.</p>`;
-  h += `</section>`;
-  if (ultimas.length) h += `<section class="card"><div class="card-h"><h2>Replicar sesión</h2></div>${ultimas.map(x => `<button class="fila" data-accion="replicar-sesion" data-id="${esc(x.id)}"><span class="fila-a"><b>${esc(x.titulo)}</b>
+      : `<p class="note" style="margin:0 0 12px">Guarda tus ejercicios una vez y empieza cada sesión con un toque.</p><button class="apuntar" style="width:100%" data-accion="nueva-rutina">Crear mi rutina</button>`;
+    h += `</section>`;
+  }
+  if (modo === 'replicar') h += ultimas.length ? `<section class="card">${ultimas.map(x => `<button class="fila" data-accion="replicar-sesion" data-id="${esc(x.id)}"><span class="fila-a"><b>${esc(x.titulo)}</b>
       <small>${fechaCorta(x.fecha)} · ${esc(x.ejercicios.filter(e => e.sets.length).map(e => e.nombre).join(' · '))}</small></span>${ICON_RIGHT}</button>`).join('')}
-    <p class="note" style="margin:8px 0 0">Durante el entreno puedes cambiar cualquier ejercicio.</p></section>`;
+    <p class="note" style="margin:8px 0 0">Durante el entreno puedes cambiar cualquier ejercicio.</p></section>` : `<div class="empty"><b>Aún sin sesiones</b>Cuando entrenes, podrás repetir tus sesiones desde aquí.</div>`;
   return h;
 }
 function editorRutina() {
@@ -847,7 +916,6 @@ function bloque(e, i, ses) {
     <button class="chip" data-accion="cancelar-cambio" style="margin-top:8px">Cancelar</button></div>`;
   if (!g && ses.grupos.length > 1) h += `<div class="askg"><span class="label">¿Qué grupo trabaja?</span><div class="gchips">${ses.grupos.map(id => `<button class="gchip sm" data-accion="set-grupo" data-g="${id}" aria-pressed="false">${GRUPO[id]?.n || id}</button>`).join('')}</div></div>`;
   if (e.plan) h += `<div class="ref"><span>Tu rutina</span><b class="num">${e.sets.filter(x => x.tipo !== 'c').length} / ${e.plan.series} series × ${e.plan.reps}</b><button class="mini" data-accion="cambiar">Cambiar</button></div>`;
-  h += `<textarea class="nota-ej" id="in-nota" rows="1" maxlength="200" placeholder="Nota para este ejercicio (asiento, agarre…)" aria-label="Nota del ejercicio">${esc(ajustes().notas[e.clave] || '')}</textarea>`;
   if (e.ref) h += `<div class="ref"><span>${esc(e.ref.de)} hizo</span><b class="num">${e.ref.sets.map(x => `${fmt(x[0])}×${fmt(x[1])}`).join(' · ')}</b></div>`;
   h += m ? panelMarcas(m) : `<div class="first"><b>Primera vez con este ejercicio</b>Lo que apuntes hoy será tu marca de referencia.</div>`;
   if (e.sets.length) {
@@ -879,10 +947,12 @@ function bloque(e, i, ses) {
         <input id="in-reps" name="reps" inputmode="numeric" autocomplete="off" value="${esc(inp.reps)}" placeholder="0" aria-label="Repeticiones">
         <button type="button" data-accion="paso" data-c="reps" data-d="1" aria-label="Más repeticiones">+</button></div>
       </div>
-      <div class="tipos"><span>Tipo</span>${[['', 'Normal'], ['c', 'Calentar'], ['f', 'Fallo'], ['d', 'Drop']].map(([k, n]) => `<button type="button" class="mini" data-accion="set-tipo" data-t="${k}" aria-pressed="${(inp.tipo || '') === k}">${n}</button>`).join('')}</div>
-      <div class="tipos"><span>RPE</span>${['', 7, 8, 9, 10].map(n => `<button type="button" class="mini" data-accion="set-rpe" data-r="${n}" aria-pressed="${String(inp.rpe || '') === String(n)}">${n || '–'}</button>`).join('')}</div>
       <div class="anterior"><span>${(a => a ? `Anterior: <b class="num">${fmt(a.peso)} × ${fmt(a.reps)}</b>` : 'Sin serie anterior')(m?.ultima.sets[e.sets.length])}</span><button type="button" class="mini" data-accion="discos">Discos</button></div>
       <button class="apuntar" type="submit">Apuntar serie ${e.sets.length + 1}</button>
+      <details class="mas"${state.abiertas.has('log') || inp.tipo || inp.rpe || ajustes().notas[e.clave] ? ' open' : ''}><summary>Más opciones</summary><div>
+      <div class="tipos"><span>Tipo</span>${[['', 'Normal'], ['c', 'Calentar'], ['f', 'Fallo'], ['d', 'Drop']].map(([k, n]) => `<button type="button" class="mini" data-accion="set-tipo" data-t="${k}" aria-pressed="${(inp.tipo || '') === k}">${n}</button>`).join('')}</div>
+      <div class="tipos"><span>RPE</span>${['', 7, 8, 9, 10].map(n => `<button type="button" class="mini" data-accion="set-rpe" data-r="${n}" aria-pressed="${String(inp.rpe || '') === String(n)}">${n || '–'}</button>`).join('')}</div>
+        <textarea class="nota-ej" style="margin:0" id="in-nota" rows="1" maxlength="200" placeholder="Nota para este ejercicio (asiento, agarre…)" aria-label="Nota del ejercicio">${esc(ajustes().notas[e.clave] || '')}</textarea></div></details>
       ${state.hint?.err ? `<div class="hint err">${esc(state.hint.err)}</div>` : `<div class="hint">Toca una serie para borrarla.</div>`}
     </form>`;
   return h + `</div></article>`;
@@ -954,7 +1024,9 @@ function mapaMuscular(m) {
 }
 function semanaActual() {
   const semana = lunesDe(hoy), st = state.sesiones.filter(s => conSets(s) && s.fecha >= semana).map(statsSesion);
-  return {semana, vol: Math.round(st.reduce((a, x) => a + x.vol, 0)), series: st.reduce((a, x) => a + x.series, 0)};
+  const ss = state.sesiones.filter(s => conSets(s) && s.fecha >= semana), series = st.reduce((a, x) => a + x.series, 0);
+  const xps = series * 10 + ss.filter(s => s.fin).length * 100 + ss.reduce((a, s) => a + nRecords(s), 0) * 150 + ss.filter(s => s.desafio?.res?.ganado).length * 300;
+  return {semana, vol: Math.round(st.reduce((a, x) => a + x.vol, 0)), series, xps};
 }
 function rachaSemanas() {
   const semanas = new Set(state.sesiones.filter(conSets).map(s => lunesDe(s.fecha)));
@@ -1003,7 +1075,7 @@ function cartaDeSobre(id) {
 function estadisticas() {
   const ss = state.sesiones.filter(conSets), horas = ss.flatMap(s => s.ejercicios.flatMap(e => e.sets.map(x => x.t))).filter(Boolean).map(t => new Date(t).getHours());
   return {ses: ss.length, vol: ss.reduce((a, s) => a + statsSesion(s).vol, 0), series: ss.reduce((a, s) => a + statsSesion(s).series, 0), recs: ss.reduce((a, s) => a + nRecords(s), 0),
-    racha: rachaSemanas(), temprano: horas.some(h => h < 9), noche: horas.some(h => h >= 21)};
+    ganados: ss.filter(s => s.desafio?.res?.ganado).length, racha: rachaSemanas(), temprano: horas.some(h => h < 9), noche: horas.some(h => h >= 21)};
 }
 const objetivoSemana = () => ls.get('fr_objetivo', 3);
 const metasFuerza = () => ls.get('fr_metas', []);
@@ -1022,6 +1094,7 @@ function misionesDe(lunes) {
 }
 function sobresGanados() {
   const ids = state.sesiones.filter(s => s.fin && statsSesion(s).series >= 3).map(s => 's:' + s.id);
+  ids.push(...state.sesiones.filter(s => s.desafio?.res?.ganado).map(s => 'd:' + s.id));
   for (const l of new Set(state.sesiones.filter(conSets).map(s => lunesDe(s.fecha)))) ids.push(...misionesDe(l).filter(m => m.hecha).map(m => m.id));
   return ids;
 }
@@ -1044,7 +1117,7 @@ function progresoNivel() {
   const e = estadisticas(), obj = objetivoSemana();
   const cumplidas = [...new Set(state.sesiones.filter(conSets).map(s => lunesDe(s.fecha)))].filter(l => datosSemana(l).dias >= obj).length;
   const metas = metasFuerza().filter(m => (marcas(m.clave)?.max.peso || 0) >= m.kg).length;
-  const xp = e.series * 10 + state.sesiones.filter(s => s.fin && conSets(s)).length * 100 + e.recs * 150 + cumplidas * 300 + metas * 500 + coleccion().size * 50;
+  const xp = e.series * 10 + state.sesiones.filter(s => s.fin && conSets(s)).length * 100 + e.recs * 150 + cumplidas * 300 + metas * 500 + coleccion().size * 50 + e.ganados * 300;
   let n = 1; while (100 * n * (n + 1) <= xp) n++;
   const base = 100 * (n - 1) * n, sig = 100 * n * (n + 1);
   return {xp, n, rango: RANGOS.find(r => n >= r[0])[1], falta: sig - xp, pct: (xp - base) / (sig - base) * 100};
@@ -1113,6 +1186,31 @@ function pintarCapa() {
   const el = $('#capa'), c = state.capa;
   el.classList.toggle('on', !!c);
   if (!c) { el.innerHTML = ''; return; }
+  if (c.tipo === 'intro') {
+    const P = [['<path d="M6 7v10M3 9.5v5M18 7v10M21 9.5v5M6 12h12"/>', 'Entrena', 'Apunta tus series, crea tu rutina y bate tus marcas sesión a sesión.'],
+      ['<circle cx="9" cy="8" r="3.5"/><path d="M3 20a6 6 0 0 1 12 0M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.5a6 6 0 0 1 3 5.5"/>', 'Compite', 'Publica tus sesiones, desafía las de tus amigos y sube de liga.'],
+      ['<rect x="8" y="3" width="12" height="16" rx="2.5"/><path d="M5 6.5A2.5 2.5 0 0 0 4 8.5V19a2.5 2.5 0 0 0 2.5 2.5H14"/>', 'Colecciona', 'Cada sesión te da un sobre. Consigue las 12 cartas legendarias.']][c.paso];
+    el.innerHTML = `<div class="capa-in"><div class="intro-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[0]}</svg></div>
+      <div class="capa-txt"><b style="font-size:30px">${P[1]}</b><span style="font-size:15px">${P[2]}</span></div>
+      <div class="puntos">${[0, 1, 2].map(i => `<i${i === c.paso ? ' class="on"' : ''}></i>`).join('')}</div>
+      <button class="apuntar" data-accion="intro">${c.paso < 2 ? 'Siguiente' : 'Empezar'}</button></div>`;
+    return;
+  }
+  if (c.tipo === 'desafio') {
+    const p = postsDe(c.id)[0], ejs = (p?.datos?.ejercicios || []).filter(Boolean);
+    el.innerHTML = `<div class="capa-in"><div class="capa-txt"><b>Desafiar a ${esc(p?.perfiles?.nombre || 'alguien')}</b><span>${esc(p?.titulo)} · ${ejs.length} ${ejs.length === 1 ? 'ejercicio' : 'ejercicios'}</span></div>
+      <p class="note" style="margin:0">Se carga su sesión. Cada ejercicio es un punto si superas su mejor serie. Si ganas: +300 XP y un sobre.</p>
+      <button class="apuntar" data-accion="aceptar-desafio" data-id="${esc(c.id)}">Aceptar desafío</button>
+      <button class="ghost" style="width:100%" data-accion="cerrar-capa">Ahora no</button></div>`;
+    return;
+  }
+  if (c.tipo === 'duelo') {
+    el.innerHTML = `<div class="capa-in"><div class="fin-duelo ${c.ganado ? 'gana' : 'pierde'}">${c.ganado ? '¡Victoria!' : 'Derrota'}</div>
+      <div class="marcador num">${c.yo} – ${c.rival}</div>
+      <div class="capa-txt"><span>${c.ganado ? `Has superado a ${esc(c.nombre)}. +300 XP y un sobre.` : `${esc(c.nombre)} sigue por delante. Vuelve a intentarlo.`}</span></div>
+      <button class="apuntar" data-accion="cerrar-capa">Seguir</button></div>`;
+    return;
+  }
   if (c.tipo === 'discos') {
     const kg = c.kg, porLado = Math.max(0, (kg - 20) / 2), discos = []; let resto = porLado;
     for (const d of [25, 20, 15, 10, 5, 2.5, 1.25]) while (resto >= d - .001) { discos.push(d); resto -= d; }
@@ -1706,7 +1804,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 22;
+const VERSION = 23;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -1782,6 +1880,10 @@ async function cargarAmigos() {
       ]);
       a.clubsOk = true;
     } catch { a.clubsOk = false; }
+    try {
+      a.desafios = await pedir('desafios?select=*,retador_p:perfiles!desafios_retador_fkey(nombre),rival_p:perfiles!desafios_rival_fkey(nombre)&order=creado.desc&limit=100');
+      a.desafiosOk = true;
+    } catch { a.desafiosOk = false; }
     a.feed = await pedir(consultaFeed());
     await cargarAvisos();
   } catch { a.error = 'No he podido conectar. Revisa tu conexión.'; }
@@ -1800,6 +1902,10 @@ async function cargarAvisos() {
     ...cm.map(x => ({t: Date.parse(x.creado), uid: x.usuario, nombre: x.perfiles?.nombre, texto: `ha comentado: ${x.texto}`})),
     ...sg.map(x => ({t: Date.parse(x.creado), uid: x.seguidor, nombre: x.perfiles?.nombre, texto: 'ha empezado a seguirte'})),
   ].sort((x, y) => y.t - x.t).slice(0, 40);
+  const ds = await pedir(`desafios?select=creado,resuelto,estado,titulo,retador,puntos_retador,puntos_rival,retador_p:perfiles!desafios_retador_fkey(nombre)&rival=eq.${u}&order=creado.desc&limit=30`).catch(() => []);
+  a.avisos = [...a.avisos, ...ds.map(x => ({t: Date.parse(x.resuelto || x.creado), uid: x.retador, nombre: x.retador_p?.nombre,
+    texto: x.estado === 'activo' ? `ha desafiado tu sesión ${x.titulo}` : x.estado === 'ganado' ? `ha superado tu sesión ${x.titulo} (${x.puntos_retador}–${x.puntos_rival})` : `no ha podido con tu sesión ${x.titulo} (${x.puntos_retador}–${x.puntos_rival})`}))]
+    .sort((x, y) => y.t - x.t).slice(0, 40);
 }
 const avisosNuevos = () => { const v = ls.get('fr_avisos_visto', 0); return state.amigos.avisos.filter(x => x.t > v).length; };
 const postsDe = id => [...(state.amigos.feed || []), ...(state.amigos.perfilPosts || []), ...(state.amigos.clubPosts || []), ...(state.amigos.yoPosts || [])].filter(x => String(x.id) === id);
@@ -2207,6 +2313,76 @@ function bloqueMedio(m, p) {
       ? `<button data-accion="borrar-medio" data-id="${esc(p.id)}" data-m="${esc(m.id)}">Borrar</button>`
       : `<button data-accion="denunciar" data-m="${esc(m.id)}">Denunciar</button>`}</div></div>`;
 }
+const ICON_DUELO = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4l6 0 0 6-9 9-3-3zM4 4l5 5M4 4v4M4 4h4M15 15l5 5M5 19l3-3"/></svg>';
+const LIGAS = [[30, 'Titán'], [20, 'Diamante'], [15, 'Platino'], [10, 'Oro'], [5, 'Plata'], [1, 'Bronce']];
+const ligaDe = n => LIGAS.find(l => n >= l[0])[1];
+const nivelDe = uid => uid === cuenta?.uid ? progresoNivel().n : +state.amigos.gente?.find(g => g.id === uid)?.resumen?.nivel || 1;
+/* cada ejercicio del rival es un punto: gana quien tenga mejor 1RM estimado (repeticiones si no hay peso) */
+const valorSerie = (peso, reps) => peso ? peso * (1 + reps / 30) : reps;
+function marcadorDuelo(ses) {
+  const d = ses.desafio, filas = d.objetivos.map(o => {
+    const e = ses.ejercicios.find(x => claveRanking(x.nombre) === o.clave);
+    const mio = Math.max(0, ...(e?.sets || []).filter(x => x.tipo !== 'c').map(x => valorSerie(x.peso, x.reps)));
+    return {nombre: o.nombre, mio, suyo: o.v, gana: mio > o.v};
+  });
+  const yo = filas.filter(f => f.gana).length;
+  return {yo, rival: filas.length - yo, filas};
+}
+function cajaDuelo(ses) {
+  const d = ses.desafio, m = marcadorDuelo(ses);
+  return `<section class="duelo"><div class="duelo-h"><span>Desafío contra ${esc(d.nombre)}</span><span class="marcador num">${m.yo} – ${m.rival}</span></div>
+    ${m.filas.map(f => `<div class="duelo-f${f.gana ? ' gana' : ''}"><span>${esc(f.nombre)}</span><span class="num">${f.mio ? fmt(Math.round(f.mio)) : '–'} <small>/ ${fmt(Math.round(f.suyo))}</small></span></div>`).join('')}</section>`;
+}
+async function aceptarDesafio(id) {
+  const a = state.amigos, p = postsDe(id)[0];
+  if (!p) return;
+  const ejs = (p.datos?.ejercicios || []).filter(Boolean).filter(e => Array.isArray(e.sets) && e.sets.length).slice(0, 20);
+  const objetivos = ejs.map(e => ({clave: claveRanking(String(e.nombre)), nombre: String(e.nombre).slice(0, 80), v: Math.max(...e.sets.filter(Array.isArray).map(x => valorSerie(+x[0] || 0, +x[1] || 0)))}));
+  try {
+    const [r] = await pedir('desafios?select=*', {method: 'POST', prefer: 'return=representation', body: {retador: cuenta.uid, rival: p.usuario, publicacion: p.id, titulo: String(p.titulo).slice(0, 120)}});
+    a.desafios = [{...r, retador_p: {nombre: cuenta.nombre}, rival_p: {nombre: p.perfiles?.nombre}}, ...a.desafios];
+    state.capa = null; pintarCapa(); a.perfil = a.club = null;
+    replicarPublicacion(p);
+    state.actual.desafio = {id: r.id, rival: p.usuario, nombre: String(p.perfiles?.nombre || 'Alguien'), objetivos};
+    guardarSesion(state.actual); render(true);
+  } catch (e) {
+    state.capa = null; pintarCapa();
+    toast(e.code === '23505' ? 'Ya tienes este desafío' : 'Sin conexión', e.code === '23505' ? 'Termínalo antes' : 'No se ha creado');
+  }
+}
+async function resolverDesafio(ses) {
+  const m = marcadorDuelo(ses), ganado = m.yo > m.rival;
+  ses.desafio.res = {ganado, yo: m.yo, rival: m.rival};
+  guardarSesion(ses);
+  state.capa = {tipo: 'duelo', ganado, yo: m.yo, rival: m.rival, nombre: ses.desafio.nombre}; pintarCapa();
+  await pedir(`desafios?id=eq.${ses.desafio.id}`, {method: 'PATCH', prefer: 'return=minimal', body: {estado: ganado ? 'ganado' : 'perdido', puntos_retador: m.yo, puntos_rival: m.rival, resuelto: new Date().toISOString()}}).catch(() => {});
+}
+function balance(uid) {
+  const ds = state.amigos.desafios;
+  const v = ds.filter(d => (d.retador === uid && d.estado === 'ganado') || (d.rival === uid && d.estado === 'perdido')).length;
+  const l = ds.filter(d => (d.retador === uid && d.estado === 'perdido') || (d.rival === uid && d.estado === 'ganado')).length;
+  return {v, l};
+}
+function vistaLiga() {
+  const a = state.amigos, semana = lunesDe(hoy), p = progresoNivel();
+  const filas = (a.gente || []).map(g => ({...g, nivel: nivelDe(g.id), xps: g.id === cuenta.uid ? semanaActual().xps : g.resumen?.semana === semana ? +g.resumen.xps || 0 : 0})).sort((x, y) => y.xps - x.xps || y.nivel - x.nivel);
+  const yo = filas.findIndex(f => f.id === cuenta.uid) + 1;
+  return `<section class="liga"><span><b>Liga ${ligaDe(p.n)}</b><small class="num">Nivel ${p.n} · ${fmt(semanaActual().xps)} XP esta semana</small></span><strong class="num">${yo ? yo + '.º' : '–'}</strong></section>
+    <div class="rows">${filas.map((f, i) => `<button class="rk${f.id === cuenta.uid ? ' yo' : ''}${i < 3 ? ' sube' : ''}" data-accion="perfil" data-u="${esc(f.id)}"><span class="p num">${i + 1}</span>
+      <span class="mid"><b>${esc(f.nombre)}</b><small class="num">Nivel ${f.nivel} · ${ligaDe(f.nivel)}</small></span><span class="v num">${fmt(f.xps)}<small>XP</small></span></button>`).join('')}</div>
+    <p class="note">La clasificación se reinicia cada lunes. Las series, sesiones, récords y desafíos ganados suman XP.</p>`;
+}
+function vistaDuelos() {
+  const a = state.amigos;
+  const mios = a.desafios.filter(d => d.estado === 'activo' && d.retador === cuenta.uid);
+  let h = `<p class="note" style="margin:0 0 12px">Abre una sesión de otro en Inicio y toca <b>Desafiar</b>. Tienes que batirle en más ejercicios de los que pierdas.</p>`;
+  if (mios.length) h += `<div class="sec-h" style="margin-top:0"><h2>Tus desafíos activos</h2></div><div class="rows">${mios.map(d => `<div class="frow"><span class="mid"><span class="tt">${esc(d.titulo)}</span><span class="meta">contra ${esc(d.rival_p?.nombre)}</span></span></div>`).join('')}</div>`;
+  const hechos = a.desafios.filter(d => d.estado !== 'activo').slice(0, 30);
+  h += `<div class="sec-h"><h2>Últimos duelos</h2></div>`;
+  h += hechos.length ? `<div class="rows">${hechos.map(d => `<button class="frow" data-accion="perfil" data-u="${esc(d.retador)}"><span class="mid"><span class="tt">${esc(d.retador_p?.nombre)} contra ${esc(d.rival_p?.nombre)}</span><span class="meta">${esc(d.titulo)}</span></span>
+    <span class="rt">${d.estado === 'ganado' ? '<span class="tag">Victoria</span>' : '<span class="tag soft">Derrota</span>'}<b class="num">${+d.puntos_retador} – ${+d.puntos_rival}</b></span></button>`).join('')}</div>` : `<div class="empty"><b>Sin duelos todavía</b>Sé el primero en desafiar una sesión.</div>`;
+  return h;
+}
 const ICON_FUERZA = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 7v10M3 9.5v5M18 7v10M21 9.5v5M6 12h12"/></svg>';
 const ICON_COMENTAR = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.8 7L4 20l1-5.1A8 8 0 1 1 21 12z"/></svg>';
 const avatar = n => `<span class="ava">${esc(String(n || '?')[0].toUpperCase())}</span>`;
@@ -2229,7 +2405,7 @@ function tarjetaPublicacion(p) {
   return `<article class="post${abierta ? ' open' : ''}">
     <div class="post-h" style="grid-template-columns:1fr auto">
       <button class="quien" data-accion="perfil" data-u="${esc(p.usuario)}">${avatar(nombre)}
-        <span class="mid"><b>${esc(nombre)}</b><small class="num">${fechaCorta(String(p.fecha))}${mins ? ` · ${fmt(mins)} min` : ''}</small></span></button>
+        <span class="mid"><b>${esc(nombre)}<span class="nv num">Nv ${nivelDe(p.usuario)}</span></b><small class="num">${fechaCorta(String(p.fecha))}${mins ? ` · ${fmt(mins)} min` : ''}</small></span></button>
       ${recs ? `<span class="tag">${fmt(recs)} ${recs === 1 ? 'récord' : 'récords'}</span>` : ''}</div>
     <button class="post-top" data-accion="post" data-id="${esc(p.id)}" aria-expanded="${abierta}">
       <span class="post-t">${esc(p.titulo)}</span>
@@ -2239,6 +2415,7 @@ function tarjetaPublicacion(p) {
     <div class="post-acts">
       <button class="post-act${mia ? ' on' : ''}" data-accion="fuerza" data-id="${esc(p.id)}" ${propia ? 'disabled' : ''} aria-pressed="${mia}">${ICON_FUERZA}Fuerza${fz.length ? ` · ${fz.length}` : ''}</button>
       <button class="post-act" data-accion="post" data-id="${esc(p.id)}">${ICON_COMENTAR}${cms.length || 'Comentar'}</button>
+      ${!propia && ejs.length && state.amigos.desafiosOk ? `<button class="post-act" data-accion="desafiar" data-id="${esc(p.id)}">${ICON_DUELO}Desafiar</button>` : ''}
     </div>
     <div class="post-body"><div class="post-in">
       ${+d.esfuerzo ? `<div class="esf" style="margin:12px 0 4px"><b class="num">${fmt(+d.esfuerzo)}</b><span>Esfuerzo ${nivelEsfuerzo(+d.esfuerzo)}</span></div>` : ''}
@@ -2269,7 +2446,7 @@ function vistaPerfil(uid, propio) {
   const marcasDe = (a.marcas || []).filter(r => r.usuario === uid);
   let h = `<div class="det">${propio ? '' : '<button class="back" data-accion="volver-perfil">‹ Volver</button>'}
     <div class="pf">${avatar(nombre)}<h1>${esc(nombre)}</h1>${botonSeguir(uid)}</div>
-    ${(r => r?.nivel ? `<p>Nivel ${fmt(+r.nivel || 1)} · ${fmt(+r.cartas || 0)}/${CARTAS.length} cartas</p>` : '')(a.gente?.find(x => x.id === uid)?.resumen)}</div>
+    ${(r => { const b = balance(uid), n = nivelDe(uid); return `<p class="num">Nivel ${n} · Liga ${ligaDe(n)} · ${fmt(+r?.cartas || 0)}/${CARTAS.length} cartas${a.desafiosOk ? ` · ${b.v}V–${b.l}D` : ''}</p>`; })(a.gente?.find(x => x.id === uid)?.resumen)}</div>
     <div class="sumrow">
       <div><div class="label">Sesiones</div><div class="v num">${posts?.length ?? '–'}</div></div>
       <div><div class="label">Seguidores</div><div class="v num">${seguidores}</div></div>
@@ -2407,7 +2584,7 @@ function vistaAmigos() {
   if (a.verAvisos && cuenta?.nombre) return vistaAvisos();
   if (a.club && cuenta?.nombre) return vistaClub(a.club);
   if (!cuenta?.email && !cuenta?.nombre && !a.googleVisto) comprobarGoogle();
-  const esFeed = state.vista === 'amigos', pest = esFeed ? 'feed' : a.pestana === 'gente' ? 'gente' : 'ranking';
+  const esFeed = state.vista === 'amigos', pest = esFeed ? 'feed' : ['ranking', 'gente', 'duelos'].includes(a.pestana) ? a.pestana : 'liga';
   let h = `<section class="hero"><div class="hero-row"><span class="label">${cuenta?.nombre ? `Hola, ${esc(cuenta.nombre)}` : 'La red social del gym'}</span>
     <div class="hero-acts">${cuenta?.nombre ? `<button class="datepill" data-accion="ver-avisos">Avisos${avisosNuevos() ? ` · ${avisosNuevos()}` : ''}</button>` : ''}<button class="datepill nueva" data-accion="compartir-app">Invitar</button></div></div><h1>${esFeed ? 'Inicio' : state.vista === 'yo' ? 'Perfil' : 'Explorar'}</h1></section>`;
   if (a.error) h += `<div class="aviso">${esc(a.error)}</div>`;
@@ -2418,9 +2595,13 @@ function vistaAmigos() {
   if (!cuenta.email) h += `<section class="next" style="margin:0 0 12px"><h2>Protege tu cuenta</h2>
     <p>Pon un email y una contraseña. Conservas tu nombre y tus entrenos quedan a salvo si cambias de móvil.</p>${camposCuenta('proteger')}</section>`;
   if (esFeed) h += historias() + `<button class="empezar" data-vista="entreno">¿Hoy toca entrenar?<b>→</b></button>`;
-  else h += `<div class="seg" style="--n:2" role="group" aria-label="Sección">
-    <button data-accion="pestana-amigos" data-p="ranking" aria-pressed="${pest === 'ranking'}">Clasificación</button>
-    <button data-accion="pestana-amigos" data-p="gente" aria-pressed="${pest === 'gente'}">Comunidad</button></div>`;
+  else h += `<div class="seg" style="--n:${a.desafiosOk ? 4 : 3}" role="group" aria-label="Sección">
+    <button data-accion="pestana-amigos" data-p="liga" aria-pressed="${pest === 'liga'}">Liga</button>
+    <button data-accion="pestana-amigos" data-p="ranking" aria-pressed="${pest === 'ranking'}">Marcas</button>
+    ${a.desafiosOk ? `<button data-accion="pestana-amigos" data-p="duelos" aria-pressed="${pest === 'duelos'}">Duelos</button>` : ''}
+    <button data-accion="pestana-amigos" data-p="gente" aria-pressed="${pest === 'gente'}">Gente</button></div>`;
+  if (pest === 'liga') return h + (a.gente ? vistaLiga() : a.cargando ? `<div class="empty"><b>Cargando</b>Trayendo la liga…</div>` : '');
+  if (pest === 'duelos') return h + vistaDuelos();
   if (pest !== 'gente') h += `<div class="filters" style="margin-top:0"><button class="gchip sm" data-accion="solo" data-v="" aria-pressed="${!a.solo}">Todos</button><button class="gchip sm" data-accion="solo" data-v="1" aria-pressed="${a.solo}">Siguiendo</button></div>`;
   if (pest === 'gente') {
     h += `<div class="filters" style="margin-top:0">${[['gente', 'Personas'], ...(a.clubsOk ? [['clubs', 'Clubs'], ['rutinas', 'Rutinas']] : [])].map(([k, n]) => `<button class="gchip sm" data-accion="comunidad" data-c="${k}" aria-pressed="${a.comunidad === k}">${n}</button>`).join('')}</div>`;
@@ -2433,7 +2614,7 @@ function vistaAmigos() {
       : a.cargando ? `<div class="empty"><b>Cargando</b>Trayendo la clasificación…</div>` : '';
   } else {
     h += a.feed?.length ? a.feed.map(tarjetaPublicacion).join('')
-      : a.feed ? `<div class="empty"><b>Aún no hay publicaciones</b>${a.solo ? 'Sigue a alguien en Personas o publica tu primera sesión.' : 'Finaliza una sesión y toca Publicar para ser el primero.'}</div>`
+      : a.feed ? `<div class="empty"><b>Aún no hay publicaciones</b>${a.solo ? 'Sigue a alguien en Explorar o publica tu primera sesión.' : 'Finaliza una sesión y toca Publicar para ser el primero.'}<button class="apuntar" style="width:100%;margin-top:14px" data-accion="compartir-app">Invitar amigos</button></div>`
       : a.cargando ? `<div class="empty"><b>Cargando</b>Trayendo las publicaciones…</div>` : '';
   }
   return h;
@@ -2456,7 +2637,7 @@ function vistaYo() {
   if (a.perfil || a.ejercicio) return vistaAmigos();
   const seg = `<div class="seg" style="--n:3;margin-top:14px" role="group" aria-label="Sección">${[['perfil', 'Perfil'], ['hist', 'Historial'], ['prog', 'Progreso']].map(([k, n]) => `<button data-accion="ir-yo" data-t="${k}" aria-pressed="${t === k}">${n}</button>`).join('')}</div>`;
   if (t === 'hist') return seg + vistaHistorial();
-  if (t === 'prog') return seg + vistaProgreso();
+  if (t === 'prog') return seg + `<div class="plegable">${vistaProgreso()}</div>`;
   if (!cuenta?.nombre) return seg + vistaAmigos();
   return seg + vistaPerfil(cuenta.uid, true) + `<div class="cuenta-txt">${cuenta.email ? `${esc(cuenta.email)} · ` : ''}Ferrum ${VERSION}</div><div class="salir">
     ${cuenta.email ? `<button class="chip" data-accion="cerrar-cuenta">Cerrar sesión</button>` : ''}
@@ -2676,6 +2857,7 @@ document.addEventListener('click', ev => {
       guardarSesion(ses); render(true); scrollTo(0, 0);
       const st = statsSesion(ses);
       toast('Entreno terminado', `${st.mins} min · ${st.series} series`);
+      if (ses.desafio) resolverDesafio(ses);
       if (ses.publicada) publicar(ses, true);
       else if (nubeLista() && cuenta?.nombre) subirMarcas().catch(() => {});
       break;
@@ -2752,6 +2934,13 @@ document.addEventListener('click', ev => {
     case 'guardar-rutina':
       if (!cuenta?.nombre) { state.vista = 'amigos'; state.histSel = null; render(true); scrollTo(0, 0); return; }
       state.amigos.guardaRutina = b.dataset.id; render(true); break;
+    case 'inicio': state.inicio = b.dataset.i; render(true); break;
+    case 'intro':
+      if (state.capa.paso < 2) state.capa.paso++;
+      else { state.capa = null; ls.set('fr_intro', 1); }
+      pintarCapa(); break;
+    case 'desafiar': state.capa = {tipo: 'desafio', id: b.dataset.id}; pintarCapa(); break;
+    case 'aceptar-desafio': aceptarDesafio(b.dataset.id); break;
     case 'fuerza': darFuerza(b.dataset.id); break;
     case 'elegir-medio':
       if (state.amigos.subiendo) { toast('Espera', 'Ya hay una subida en marcha'); return; }
@@ -2948,6 +3137,7 @@ async function iniciar() {
   corregirJalon(); abrirUltimo();
   { const s = sesion(); if (nubeLista() && !(s && !s.fin && conSets(s))) state.vista = 'amigos'; }
   render(true);
+  if (!ls.get('fr_intro', 0) && !state.sesiones.length && !cuenta) { state.capa = {tipo: 'intro', paso: 0}; pintarCapa(); }
   if (nubeLista()) { volverDeGoogle(); sincronizar(); refrescarAvisos(); if (state.vista === 'amigos') cargarAmigos(); }
   try { await navigator.storage?.persist?.(); } catch {}
   if ('serviceWorker' in navigator) {
