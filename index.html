@@ -367,25 +367,25 @@ button.set-chip.vacia{box-shadow:inset 0 0 0 1px var(--line-2)}
 .dias button[aria-pressed="true"]{background:var(--lime);color:var(--on-lime)}
 .cartas{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
 /* carta de bestia: fina, con marco según la rareza y lámina holográfica en las mejores */
-.carta{--a:#C9D6BF;--b:#8FA585;--in1:#F4F7E8;--in2:#DDE6CF;--foil:0;display:block;position:relative;width:100%;aspect-ratio:5/7;text-align:left;container-type:inline-size;font-family:var(--f-body);color:#16261A}
+.carta{--a:#C9D6BF;--b:#8FA585;--in1:#F4F7E8;--in2:#DDE6CF;--foil:0;display:block;position:relative;width:100%;aspect-ratio:100/157;text-align:left;container-type:inline-size;font-family:var(--f-body);color:#16261A}
 .carta.rara{--a:#D6F2FF;--b:#6FB7E8;--in1:#EEF8FF;--in2:#CFE4F2;--foil:.12}
 .carta.epica{--a:#E9D9FF;--b:#A17BE0;--in1:#F6F0FF;--in2:#DFD0F4;--foil:.2}
 .carta.legendaria{--a:#FFF0B5;--b:#E2A42C;--in1:#FFF8DC;--in2:#F1DDA6;--foil:.3}
 .carta.dorada{--a:#FFE9A8;--b:#D49A12;--foil:.3}
 .slab{position:absolute;inset:0;display:block;transform-style:preserve-3d;transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg))}
-.cara{position:absolute;inset:0;display:block;padding:3cqw;border-radius:5cqw;background:linear-gradient(135deg,var(--a),var(--b) 55%,var(--a));backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;box-shadow:0 3cqw 7cqw -3cqw rgba(0,0,0,.7)}
+.cara{position:absolute;inset:0;display:flex;flex-direction:column;gap:2cqw;padding:2.6cqw;border-radius:4.5cqw;background:linear-gradient(145deg,#56605B,#1E2723 38%,#2A332F 62%,#4B5550);backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;box-shadow:0 3cqw 7cqw -3cqw rgba(0,0,0,.7)}
 .frente{transform:translateZ(1cqw)}
 .dorso{transform:rotateY(180deg) translateZ(1cqw);display:grid;place-items:center;align-content:center;gap:2cqw;color:var(--ink);background:radial-gradient(70% 80% at 50% 62%,#1D3A24,#3C5A3E 55%,#B8C9AC)}
 .dorso b{font-size:13cqw;font-weight:600;letter-spacing:-.03em}.dorso b i{font-family:var(--f-serif);font-weight:400}
 .dorso small{font-size:3.2cqw;opacity:.8}
-.canto{position:absolute;background:var(--b)}
+.canto{position:absolute;background:#2F3934}
 .canto.i,.canto.d{top:4cqw;bottom:4cqw;width:2cqw;left:50%;margin-left:-1cqw}
 .canto.i{transform:translateX(-50cqw) rotateY(-90deg)}
 .canto.d{transform:translateX(50cqw) rotateY(90deg)}
 .canto.s,.canto.f{left:4cqw;right:4cqw;height:2cqw;top:50%;margin-top:-1cqw}
-.canto.s{transform:translateY(-70cqw) rotateX(90deg)}
-.canto.f{transform:translateY(70cqw) rotateX(-90deg)}
-.k-in{position:relative;display:flex;flex-direction:column;gap:1.2cqw;height:100%;padding:3cqw 3.4cqw;border-radius:3cqw;overflow:hidden;background:#0E1A11;color:#fff}
+.canto.s{transform:translateY(-78.5cqw) rotateX(90deg)}
+.canto.f{transform:translateY(78.5cqw) rotateX(-90deg)}
+.k-in{position:absolute;inset:3cqw;display:flex;flex-direction:column;gap:1.2cqw;padding:3cqw 3.4cqw;border-radius:3cqw;overflow:hidden;background:#0E1A11;color:#fff}
 .k-in::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.62) 0,transparent 20%,transparent 54%,rgba(0,0,0,.86) 80%,rgba(0,0,0,.94) 100%)}
 .k-in > :not(.carta-a){position:relative;z-index:2}
 .k-h{display:flex;align-items:center;gap:1.8cqw}
@@ -406,6 +406,17 @@ button.set-chip.vacia{box-shadow:inset 0 0 0 1px var(--line-2)}
 .carta.bloqueada .carta-a{filter:grayscale(1) brightness(.34) blur(1.5px)}
 .carta.bloqueada .k-t{background:rgba(255,255,255,.18);color:var(--ink)}
 .carta.bloqueada .k-fz{color:var(--muted)}
+.f-et{flex:none;display:grid;grid-template-columns:1fr auto;gap:2cqw;align-items:center;height:18cqw;padding:0 3.4cqw;border-radius:2.4cqw;background:linear-gradient(135deg,#F3F4EC,#DADDD2);box-shadow:inset 0 0 0 .5cqw var(--b);color:#16201A}
+.f-et span{display:block;min-width:0}
+.f-et small{display:block;font-size:2.7cqw;font-weight:600;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.f-et b{display:block;font-size:3.7cqw;font-weight:700;line-height:1.2;letter-spacing:-.01em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.f-et .nota{text-align:right}
+.f-et .nota b{font-size:8.4cqw;line-height:1;letter-spacing:-.04em}
+.f-et .nota small{font-size:2.3cqw}
+.f-w{flex:none;padding:1.2cqw;border-radius:2.6cqw;background:#090D0B;box-shadow:inset 0 0 0 .3cqw rgba(255,255,255,.1)}
+.f-v{position:relative;display:block;aspect-ratio:5/7;overflow:hidden;container-type:inline-size;border-radius:3.5cqw;background:linear-gradient(135deg,var(--a),var(--b) 55%,var(--a))}
+.frente::after{content:"";position:absolute;inset:0;z-index:4;pointer-events:none;border-radius:inherit;box-shadow:inset 0 0 0 .4cqw rgba(255,255,255,.26),inset .8cqw .8cqw 2cqw rgba(255,255,255,.1);background:linear-gradient(118deg,transparent 12%,rgba(255,255,255,.1) 16%,transparent 24%,transparent 58%,rgba(255,255,255,.07) 63%,transparent 70%)}
+.carta.bloqueada .f-et{background:#2A332F;color:var(--muted);box-shadow:inset 0 0 0 .4cqw rgba(255,255,255,.12)}
 .copias{position:absolute;right:3%;top:-2%;z-index:3;background:var(--lime);color:var(--on-lime);border-radius:999px;padding:1px 8px;font-size:11.5px;font-weight:700}
 .carta.tres{touch-action:none;cursor:grab}
 .tres .slab{animation:balanceo 7s ease-in-out infinite}
@@ -1298,16 +1309,31 @@ const CARTAS = [
   {id: 'mancuerna', tipo: 'Empuje', fz: 60, ataques: [{n: 'Curl', d: 'Primer golpe de todos.', p: 20}, {n: 'Constancia', d: 'Suma si vuelves mañana.', p: 30}], debil: 'Pereza', resiste: 'Nada', t: 'Inicio', n: 'Primera Mancuerna', r: 'comun', lema: 'Todo empieza con la primera.', c: 'Primera sesión', ok: e => e.ses >= 1},
   {id: 'shaker', tipo: 'Core', fz: 50, ataques: [{n: 'Batido', d: 'Recupera energía.', p: 20}, {n: 'Madrugón', d: 'Actúa antes que nadie.', p: 30}], debil: 'Sueño', resiste: 'Frío', t: 'Alba', n: 'Shaker del Alba', r: 'comun', lema: 'El día es de quien madruga.', c: 'Entrena antes de las 9', ok: e => e.temprano},
   {id: 'kettlebell', tipo: 'Tirón', fz: 70, ataques: [{n: 'Swing', d: 'Oscila y golpea.', p: 30}, {n: 'Turno de noche', d: 'Más fuerte tras las 21.', p: 40}], debil: 'Madrugar', resiste: 'Sombras', t: 'Noche', n: 'Kettlebell Nocturna', r: 'comun', lema: 'La noche también cuenta.', c: 'Entrena después de las 21', ok: e => e.noche},
+  {id: 'magnesio', tipo: 'Tirón', fz: 65, ataques: [{n: 'Polvo blanco', d: 'Agarre perfecto en la siguiente serie.', p: 30}, {n: 'Nube', d: 'Ciega al rival un turno.', p: 40}], debil: 'Sudor', resiste: 'Resbalones', t: 'Polvo', n: 'Magnesio Blanco', r: 'comun', lema: 'Las manos secas no sueltan.', c: '5 sesiones', ok: e => e.ses >= 5},
+  {id: 'comba', tipo: 'Pierna', fz: 55, ataques: [{n: 'Doble salto', d: 'Golpea dos veces seguidas.', p: 20}, {n: 'Calentamiento', d: 'Prepara todo el equipo.', p: 30}], debil: 'Techos bajos', resiste: 'Pereza', t: 'Rayo', n: 'Comba Relámpago', r: 'comun', lema: 'Primero se suda, luego se levanta.', c: '3 sesiones', ok: e => e.ses >= 3},
+  {id: 'banco', tipo: 'Empuje', fz: 75, ataques: [{n: 'Press plano', d: 'El clásico de cada lunes.', p: 30}, {n: 'Viejo amigo', d: 'Nunca te deja tirado.', p: 40}], debil: 'Lunes', resiste: 'Años', t: 'Garaje', n: 'Banco de Garaje', r: 'comun', lema: 'Aquí empezó todo.', c: '2 semanas seguidas', ok: e => e.racha >= 2},
+  {id: 'toalla', tipo: 'Core', fz: 45, ataques: [{n: 'Secado', d: 'Limpia un mal turno.', p: 20}, {n: 'Descanso justo', d: 'Recupera entre series.', p: 30}], debil: 'Lavadora', resiste: 'Sudor', t: 'Batalla', n: 'Toalla de Batalla', r: 'comun', lema: 'Si no está mojada, no cuenta.', c: '50 series', ok: e => e.series >= 50},
+  {id: 'straps', tipo: 'Tirón', fz: 115, ataques: [{n: 'Correas', d: 'Aguanta la barra pase lo que pase.', p: 60}, {n: 'Chispazo', d: 'Sube el peso del siguiente tirón.', p: 80}], debil: 'Muñecas', resiste: 'Fatiga', t: 'Titanio', n: 'Straps de Titanio', r: 'rara', lema: 'Si se cae, no es por el agarre.', c: '10 toneladas', ok: e => e.vol >= 1e4},
+  {id: 'polea', tipo: 'Tirón', fz: 125, ataques: [{n: 'Jalón al pecho', d: 'Atrae al rival hacia ti.', p: 60}, {n: 'Trueno', d: 'Baja toda la pila de golpe.', p: 90}], debil: 'Cables', resiste: 'Lluvia', t: 'Trueno', n: 'Polea del Trueno', r: 'rara', lema: 'Cada repetición suena a tormenta.', c: '20 sesiones', ok: e => e.ses >= 20},
+  {id: 'rodilleras', tipo: 'Pierna', fz: 105, ataques: [{n: 'Rebote', d: 'Sube más rápido de lo que baja.', p: 50}, {n: 'Llama azul', d: 'Calienta las rodillas del equipo.', p: 70}], debil: 'Humedad', resiste: 'Crujidos', t: 'Llama', n: 'Rodilleras de Fuego', r: 'rara', lema: 'Ganar un duelo también quema.', c: 'Gana un duelo', ok: e => e.ganados >= 1},
+  {id: 'barra-z', tipo: 'Empuje', fz: 110, ataques: [{n: 'Curl de cristal', d: 'Afina el bíceps del rival.', p: 50}, {n: 'Esquirlas', d: 'Golpea a todos a la vez.', p: 80}], debil: 'Caídas', resiste: 'Rutina', t: 'Cristal', n: 'Barra Z de Cristal', r: 'rara', lema: 'Fina, fría y más dura de lo que parece.', c: '10 récords', ok: e => e.recs >= 10},
+  {id: 'prensa', tipo: 'Pierna', fz: 175, ataques: [{n: 'Prensa total', d: 'Empuja lo que no cabe en la sala.', p: 110}, {n: 'Coloso', d: 'Añade otro disco a cada lado.', p: 140}], debil: 'Vértigo', resiste: 'Toneladas', t: 'Coloso', n: 'Prensa del Coloso', r: 'epica', lema: 'Hay más discos que sitio.', c: '250 toneladas', ok: e => e.vol >= 25e4},
+  {id: 'dominada', tipo: 'Tirón', fz: 165, ataques: [{n: 'Dominada', d: 'Sube por encima de las nubes.', p: 100}, {n: 'Sin fin', d: 'Repite mientras dure tu racha.', p: 130}], debil: 'Altura', resiste: 'Gravedad', t: 'Infinita', n: 'Dominada Infinita', r: 'epica', lema: 'Siempre queda una más.', c: '8 semanas seguidas', ok: e => e.racha >= 8},
+  {id: 'duelo', tipo: 'Fuerza', fz: 185, ataques: [{n: 'Cara a cara', d: 'Nadie aparta la mirada.', p: 110}, {n: 'Revancha', d: 'Vale el doble si perdiste antes.', p: 150}], debil: 'Orgullo', resiste: 'Miedo', t: 'Titanes', n: 'Duelo de Titanes', r: 'epica', lema: 'Solo uno suelta la barra.', c: 'Gana 5 duelos', ok: e => e.ganados >= 5},
+  {id: 'corona', tipo: 'Fuerza', fz: 245, ataques: [{n: 'Mandato', d: 'Todos los récords se inclinan.', p: 160}, {n: 'Corona de discos', d: 'Reina sobre tu gimnasio.', p: 225}], debil: 'Ninguna', resiste: 'Rivales', t: 'Corona', n: 'Corona de Hierro', r: 'legendaria', lema: 'Cien récords la forjaron.', c: '100 récords', ok: e => e.recs >= 100},
 ];
+/* las 12 primeras: los sobres abiertos antes de la serie 2 se resuelven solo entre ellas, para que nadie pierda sus cartas */
+const PRIMERAS = 12;
 /* cartas aún sin ilustración: se ven como próximamente y no salen en los sobres */
 const SIN_ARTE = new Set();
 const RAREZA = {comun: 'Común', rara: 'Rara', epica: 'Épica', legendaria: 'Legendaria'};
+const GRADOS = {comun: [7, 'NM'], rara: [8, 'NM-MT'], epica: [9, 'MINT'], legendaria: [10, 'GEM MT']};
 const RANGOS = [[30, 'Titán'], [20, 'Élite'], [15, 'Guerrero'], [10, 'Atleta'], [5, 'Aprendiz'], [1, 'Novato']];
 const hash = t => { let h = 2166136261; for (const c of String(t)) { h ^= c.codePointAt(0); h = Math.imul(h, 16777619); } h ^= h >>> 15; h = Math.imul(h, 2246822519); h ^= h >>> 13; return (h >>> 0) / 2 ** 32; };
 /* el sobre sale del id, así da la misma carta en todos los móviles */
 function cartaDeSobre(id) {
   const x = hash(id), r = x < .02 ? 'legendaria' : x < .1 ? 'epica' : x < .35 ? 'rara' : 'comun';
-  const hay = q => CARTAS.filter(c => c.r === q && !SIN_ARTE.has(c.id));
+  const hay = q => (sobreViejo(id) ? CARTAS.slice(0, PRIMERAS) : CARTAS).filter(c => c.r === q && !SIN_ARTE.has(c.id));
   const p = hay(r).length ? hay(r) : hay('epica');
   return p[Math.floor(hash(id + '#') * p.length)];
 }
@@ -1338,14 +1364,15 @@ function sobresGanados() {
   for (const l of new Set(state.sesiones.filter(conSets).map(s => lunesDe(s.fecha)))) ids.push(...misionesDe(l).filter(m => m.hecha).map(m => m.id));
   return ids;
 }
-const sobreAbierto = id => id.startsWith('s:') ? !!state.sesiones.find(x => x.id === id.slice(2))?.sobre : ls.get('fr_sobres', []).includes(id);
+const sobreViejo = id => id.startsWith('s:') ? state.sesiones.find(x => x.id === id.slice(2))?.sobre === true : ls.get('fr_sobres', []).includes(id);
+const sobreAbierto = id => id.startsWith('s:') ? !!state.sesiones.find(x => x.id === id.slice(2))?.sobre : sobreViejo(id) || ls.get('fr_sobres2', []).includes(id);
 const sobresPendientes = () => sobresGanados().filter(id => !sobreAbierto(id));
 function marcarSobre(id) {
-  if (!id.startsWith('s:')) { ls.set('fr_sobres', [...ls.get('fr_sobres', []), id]); return; }
+  if (!id.startsWith('s:')) { ls.set('fr_sobres2', [...ls.get('fr_sobres2', []), id]); return; }
   const s = state.sesiones.find(x => x.id === id.slice(2));
   if (!s) return;
-  const ses = clone(s); ses.sobre = true; guardarSesion(ses);
-  if (state.actual?.id === ses.id) state.actual.sobre = true;
+  const ses = clone(s); ses.sobre = 2; guardarSesion(ses);
+  if (state.actual?.id === ses.id) state.actual.sobre = 2;
 }
 function coleccion() {
   const e = estadisticas(), m = new Map();
@@ -1396,14 +1423,17 @@ function hub(titulo) {
     </div></section>`;
 }
 function htmlCarta(c, {copias = 0, bloqueada = false, nueva = false, accion = '', tres = false} = {}) {
-  const num = String(CARTAS.indexOf(c) + 1).padStart(3, '0'), total = String(CARTAS.length).padStart(3, '0');
+  const num = String(CARTAS.indexOf(c) + 1).padStart(3, '0'), total = String(CARTAS.length).padStart(3, '0'), serie = CARTAS.indexOf(c) < PRIMERAS ? 1 : 2;
+  const [nota, grado] = copias >= 3 ? GRADOS.legendaria : GRADOS[c.r];
   const clases = `carta ${c.r}${bloqueada ? ' bloqueada' : ''}${copias >= 3 ? ' dorada' : ''}${nueva ? ' nueva' : ''}${tres ? ' tres' : ''}`;
   const tag = accion ? `button data-accion="${accion}" data-c="${c.id}"` : 'div';
   const arte = SIN_ARTE.has(c.id) ? '' : ` style="background-image:url(cartas/${c.id}.jpg)"`;
   const ataques = bloqueada ? `<span class="k-a"><span><b>Por descubrir</b><small>${esc(c.c)}</small></span></span>`
     : c.ataques.map(a => `<span class="k-a"><span><b>${esc(a.n)}</b><small>${esc(a.d)}</small></span><strong class="num">${a.p}</strong></span>`).join('');
   return `<${tag} class="${clases}" aria-label="${esc(bloqueada ? `Carta bloqueada: ${c.c}` : c.n)}">${copias > 1 ? `<span class="copias num">×${copias}</span>` : ''}
-    <span class="slab"><span class="cara frente"><span class="k-in">
+    <span class="slab"><span class="cara frente">
+      <span class="f-et"><span><small>2026 Ferrum · Serie ${serie}</small><b>${bloqueada ? '???' : esc(c.n)}</b><small class="num">#${num} · ${RAREZA[c.r]}</small></span><span class="nota"><b class="num">${bloqueada ? '–' : nota}</b><small>${bloqueada ? '' : grado}</small></span></span>
+      <span class="f-w"><span class="f-v"><span class="k-in">
       <span class="k-h"><span class="k-n">${bloqueada ? '???' : esc(c.n)}</span><span class="k-fz num"><small>FZ</small>${bloqueada ? '?' : c.fz}</span><span class="k-t">${esc(c.tipo[0])}</span></span>
       <span class="carta-a"${arte}></span>
       <span class="k-s">Bestia de hierro · ${RAREZA[c.r]}</span>
@@ -1411,8 +1441,8 @@ function htmlCarta(c, {copias = 0, bloqueada = false, nueva = false, accion = ''
       <span class="k-st"><span>Debilidad<b>${bloqueada ? '?' : esc(c.debil)}</b></span><span>Resiste<b>${bloqueada ? '?' : esc(c.resiste)}</b></span><span>Tipo<b>${esc(c.tipo)}</b></span></span>
       <span class="k-f">${esc(SIN_ARTE.has(c.id) ? 'Próximamente' : bloqueada ? 'Sigue entrenando para encontrarla.' : c.lema)}</span>
       <span class="k-p"><b>Ferr<i>um</i></b><span class="num">${RAREZA[c.r]} · ${num}/${total}</span></span>
-    </span><span class="foil"></span><span class="reflejo"></span></span>
-    ${tres ? `<span class="cara dorso"><b>Ferr<i>um</i></b><small>Serie 1 · ${num}/${total}</small></span>
+    </span><span class="foil"></span></span></span><span class="reflejo"></span></span>
+    ${tres ? `<span class="cara dorso"><b>Ferr<i>um</i></b><small>Serie ${serie} · ${num}/${total}</small></span>
       <span class="canto i"></span><span class="canto d"></span><span class="canto s"></span><span class="canto f"></span>` : ''}</span></${tag.split(' ')[0]}>`;
 }
 function vistaColeccion() {
@@ -1433,7 +1463,7 @@ function pintarCapa() {
   if (c.tipo === 'intro') {
     const P = [['<path d="M6 7v10M3 9.5v5M18 7v10M21 9.5v5M6 12h12"/>', 'Entrena', 'Apunta tus series, crea tu rutina y bate tus marcas sesión a sesión.'],
       ['<circle cx="9" cy="8" r="3.5"/><path d="M3 20a6 6 0 0 1 12 0M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.5a6 6 0 0 1 3 5.5"/>', 'Compite', 'Publica tus sesiones, desafía las de tus amigos y sube de liga.'],
-      ['<rect x="8" y="3" width="12" height="16" rx="2.5"/><path d="M5 6.5A2.5 2.5 0 0 0 4 8.5V19a2.5 2.5 0 0 0 2.5 2.5H14"/>', 'Colecciona', 'Cada sesión te da un sobre. Consigue las 12 cartas legendarias.']][c.paso];
+      ['<rect x="8" y="3" width="12" height="16" rx="2.5"/><path d="M5 6.5A2.5 2.5 0 0 0 4 8.5V19a2.5 2.5 0 0 0 2.5 2.5H14"/>', 'Colecciona', 'Cada sesión te da un sobre. Consigue las 24 cartas legendarias.']][c.paso];
     el.innerHTML = `<div class="capa-in"><div class="intro-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[0]}</svg></div>
       <div class="capa-txt"><b style="font-size:30px">${P[1]}</b><span style="font-size:15px">${P[2]}</span></div>
       <div class="puntos">${[0, 1, 2].map(i => `<i${i === c.paso ? ' class="on"' : ''}></i>`).join('')}</div>
@@ -2123,7 +2153,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 41;
+const VERSION = 42;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
