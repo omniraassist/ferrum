@@ -2153,7 +2153,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 42;
+const VERSION = 43;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -2333,7 +2333,7 @@ async function entrar(nombre) {
     await cargarAmigos();
   } catch (e) {
     a.cargando = false;
-    a.error = e.code === '23505' ? 'Ese nombre ya está cogido. Prueba con otro.' : 'No he podido conectar. Revisa tu conexión.';
+    a.error = e.code === '23505' ? 'Ese nombre ya está cogido. Si es tuyo, toca Usar otra cuenta y entra con tu cuenta.' : 'No he podido conectar. Revisa tu conexión.';
     render(true);
   }
 }
@@ -3286,7 +3286,7 @@ function vistaAmigos() {
   if (!cuenta?.email && !cuenta?.nombre) return h + vistaAcceso();
   if (!cuenta?.nombre) return h + `<section class="next"><h2>Elige tu nombre</h2>
     <p>Tu nombre y tu mejor marca de cada ejercicio los verá cualquiera que use Ferrum. Tus sesiones, solo las que publiques.</p>
-    <form class="search" data-form="alta"><input id="in-nombre" name="nombre" maxlength="24" placeholder="Tu nombre" autocomplete="off" autocapitalize="words" enterkeyhint="go" aria-label="Tu nombre"><button class="go" type="submit" ${a.cargando ? 'disabled' : ''}>${a.cargando ? 'Entrando…' : 'Entrar'}</button></form></section>`;
+    <form class="search" data-form="alta"><input id="in-nombre" name="nombre" maxlength="24" placeholder="Tu nombre" autocomplete="off" autocapitalize="words" enterkeyhint="go" aria-label="Tu nombre"><button class="go" type="submit" ${a.cargando ? 'disabled' : ''}>${a.cargando ? 'Entrando…' : 'Entrar'}</button></form><button class="chip" style="margin-top:12px" data-accion="usar-otra-cuenta">Usar otra cuenta</button></section>`;
   if (!cuenta.email) h += `<section class="next" style="margin:0 0 12px"><h2>Protege tu cuenta</h2>
     <p>Pon un email y una contraseña. Conservas tu nombre y tus entrenos quedan a salvo si cambias de móvil.</p>${camposCuenta('proteger')}</section>`;
   if (esFeed) h += tarjetaHoy() + tarjetaAhora() + tarjetaRival() + tarjetasPareja() + (a.parejasOk && !ls.get('fr_push', 0) ? `<button class="empezar" data-accion="activar-push">Activa los avisos para no perderte duelos<b>→</b></button>` : '') + historias();
@@ -3697,6 +3697,7 @@ document.addEventListener('click', ev => {
     case 'google': entrarConGoogle(); break;
     case 'modo-acceso': state.amigos.modo = b.dataset.m; state.amigos.error = ''; render(true); break;
     case 'cerrar-cuenta': cerrarCuenta(); break;
+    case 'usar-otra-cuenta': cuenta = null; ls.set('fr_cuenta', null); state.amigos.error = ''; state.amigos.modo = 'entrar'; render(true); scrollTo(0, 0); break;
     case 'borrar-cuenta':
       if (!state.amigos.salir) { state.amigos.salir = true; render(true); return; }
       borrarCuenta(); break;
