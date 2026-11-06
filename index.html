@@ -1294,11 +1294,11 @@ function semanaActual() {
   const xps = series * 10 + ss.filter(s => s.fin).length * 100 + ss.reduce((a, s) => a + nRecords(s), 0) * 150 + ss.filter(s => s.desafio?.res?.ganado).length * 300;
   return {semana, vol: Math.round(st.reduce((a, x) => a + x.vol, 0)), series, xps};
 }
-function rachaSemanas() {
-  const semanas = new Set(state.sesiones.filter(conSets).map(s => lunesDe(s.fecha)));
+function rachaSemanas(desde = '') {
+  const semanas = new Set(state.sesiones.filter(conSets).map(s => lunesDe(s.fecha))), tope = desde && lunesDe(desde);
   let l = lunesDe(hoy), n = 0;
   if (!semanas.has(l)) l = sumarDias(l, -7);
-  while (semanas.has(l)) { n++; l = sumarDias(l, -7); }
+  while (semanas.has(l) && l >= tope) { n++; l = sumarDias(l, -7); }
   return n;
 }
 function retosMes() {
@@ -1347,6 +1347,11 @@ const CARTAS = [
 ];
 /* cuántas cartas había en cada serie: un sobre ya abierto se resuelve solo entre las de su serie, para que nadie pierda sus cartas */
 const CORTES = [12, 24, 32];
+/* desde cuándo cuenta lo entrenado para ganar cada serie: una carta nueva nunca aparece ya conseguida */
+const ESTRENOS = ['', '2026-11-07', '2026-11-07'];
+const serieDe = c => CORTES.findIndex(n => CARTAS.indexOf(c) < n) + 1;
+const estrenoDe = c => ESTRENOS[serieDe(c) - 1];
+const condicion = c => estrenoDe(c) ? `${c.c} desde el ${fechaCorta(estrenoDe(c))}` : c.c;
 /* cartas aún sin ilustración: se ven como próximamente y no salen en los sobres */
 const SIN_ARTE = new Set();
 const RAREZA = {comun: 'Común', rara: 'Rara', epica: 'Épica', legendaria: 'Legendaria'};
@@ -1360,10 +1365,10 @@ function cartaDeSobre(id) {
   const p = hay(r).length ? hay(r) : hay('epica');
   return p[Math.floor(hash(id + '#') * p.length)];
 }
-function estadisticas() {
-  const ss = state.sesiones.filter(conSets), horas = ss.flatMap(s => s.ejercicios.flatMap(e => e.sets.map(x => x.t))).filter(Boolean).map(t => new Date(t).getHours());
+function estadisticas(desde = '') {
+  const ss = state.sesiones.filter(s => conSets(s) && s.fecha >= desde), horas = ss.flatMap(s => s.ejercicios.flatMap(e => e.sets.map(x => x.t))).filter(Boolean).map(t => new Date(t).getHours());
   return {ses: ss.length, vol: ss.reduce((a, s) => a + statsSesion(s).vol, 0), series: ss.reduce((a, s) => a + statsSesion(s).series, 0), recs: ss.reduce((a, s) => a + nRecords(s), 0),
-    ganados: ss.filter(s => s.desafio?.res?.ganado).length, racha: rachaSemanas(), temprano: horas.some(h => h < 9), noche: horas.some(h => h >= 21)};
+    ganados: ss.filter(s => s.desafio?.res?.ganado).length, racha: rachaSemanas(desde), temprano: horas.some(h => h < 9), noche: horas.some(h => h >= 21)};
 }
 const objetivoSemana = () => ls.get('fr_objetivo', 3);
 const metasFuerza = () => ls.get('fr_metas', []);
@@ -1401,9 +1406,10 @@ function marcarSobre(id) {
   const ses = clone(s); ses.sobre = CORTES.length; guardarSesion(ses);
   if (state.actual?.id === ses.id) state.actual.sobre = ses.sobre;
 }
+const datosEstreno = () => { const m = new Map(); return f => { if (!m.has(f)) m.set(f, estadisticas(f)); return m.get(f); }; };
 function coleccion() {
-  const e = estadisticas(), m = new Map();
-  for (const c of CARTAS) if (c.ok(e) && !SIN_ARTE.has(c.id)) m.set(c.id, 1);
+  const m = new Map(), de = datosEstreno();
+  for (const c of CARTAS) if (c.ok(de(estrenoDe(c))) && !SIN_ARTE.has(c.id)) m.set(c.id, 1);
   for (const id of sobresGanados()) if (sobreAbierto(id)) { const c = cartaDeSobre(id); m.set(c.id, (m.get(c.id) || 0) + 1); }
   return m;
 }
@@ -1418,7 +1424,7 @@ function progresoNivel() {
 }
 function mensajeHoy() {
   const e = estadisticas(), obj = objetivoSemana(), d = datosSemana(lunesDe(hoy)).dias;
-  const c = CARTAS.filter(x => !x.ok(e) && /sesiones|Primera/.test(x.c)).map(x => ({x, f: (+x.c.split(' ')[0] || 1) - e.ses})).sort((a, b) => a.f - b.f)[0];
+  const de = datosEstreno(), c = CARTAS.filter(x => !x.ok(de(estrenoDe(x))) && /sesiones|Primera/.test(x.c)).map(x => ({x, f: (+x.c.split(' ')[0] || 1) - de(estrenoDe(x)).ses})).sort((a, b) => a.f - b.f)[0];
   const carta = c && c.f > 0 ? ` A ${c.f} ${c.f === 1 ? 'sesión' : 'sesiones'} de ${c.x.n}.` : '';
   if (d >= obj) return `Semana cumplida, sigue sumando XP.${carta}`;
   if (e.racha && !d) return `Tu racha de ${e.racha} ${e.racha === 1 ? 'semana' : 'semanas'} está en juego: entrena antes del domingo.`;
@@ -1450,14 +1456,14 @@ function hub(titulo) {
     </div></section>`;
 }
 function htmlCarta(c, {copias = 0, bloqueada = false, nueva = false, accion = '', tres = false} = {}) {
-  const num = String(CARTAS.indexOf(c) + 1).padStart(3, '0'), total = String(CARTAS.length).padStart(3, '0'), serie = CORTES.findIndex(n => CARTAS.indexOf(c) < n) + 1;
+  const num = String(CARTAS.indexOf(c) + 1).padStart(3, '0'), total = String(CARTAS.length).padStart(3, '0'), serie = serieDe(c);
   const [nota, grado] = copias >= 3 ? GRADOS.legendaria : GRADOS[c.r];
   const clases = `carta ${c.r}${bloqueada ? ' bloqueada' : ''}${copias >= 3 ? ' dorada' : ''}${nueva ? ' nueva' : ''}${tres ? ' tres' : ''}`;
   const tag = accion ? `button data-accion="${accion}" data-c="${c.id}"` : 'div';
   const arte = SIN_ARTE.has(c.id) ? '' : ` style="background-image:url(cartas/${c.id}.jpg)"`;
-  const ataques = bloqueada ? `<span class="k-a"><span><b>Por descubrir</b><small>${esc(c.c)}</small></span></span>`
+  const ataques = bloqueada ? `<span class="k-a"><span><b>Por descubrir</b><small>${esc(condicion(c))}</small></span></span>`
     : c.ataques.map(a => `<span class="k-a"><span><b>${esc(a.n)}</b><small>${esc(a.d)}</small></span><strong class="num">${a.p}</strong></span>`).join('');
-  return `<${tag} class="${clases}" aria-label="${esc(bloqueada ? `Carta bloqueada: ${c.c}` : c.n)}">${copias > 1 ? `<span class="copias num">×${copias}</span>` : ''}
+  return `<${tag} class="${clases}" aria-label="${esc(bloqueada ? `Carta bloqueada: ${condicion(c)}` : c.n)}">${copias > 1 ? `<span class="copias num">×${copias}</span>` : ''}
     <span class="slab"><span class="cara frente">
       <span class="f-et"><span><small>2026 Ferrum · Serie ${serie}</small><b>${bloqueada ? '???' : esc(c.n)}</b><small class="num">#${num} · ${RAREZA[c.r]}</small></span><span class="nota"><b class="num">${bloqueada ? '–' : nota}</b><small>${bloqueada ? '' : grado}</small></span></span>
       <span class="f-w"><span class="f-v"><span class="k-in">
@@ -1581,7 +1587,7 @@ function pintarCapa() {
   }
   const carta = CARTAS.find(x => x.id === c.id), m = coleccion(), tiene = m.has(carta.id);
   el.innerHTML = `<div class="capa-in">${htmlCarta(carta, {copias: m.get(carta.id) || 0, bloqueada: !tiene, tres: true})}
-    <div class="capa-txt"><b>${tiene ? esc(carta.n) : 'Carta por descubrir'}</b><span>${RAREZA[carta.r]} · ${SIN_ARTE.has(carta.id) ? 'Próximamente' : esc(carta.c)}</span></div>
+    <div class="capa-txt"><b>${tiene ? esc(carta.n) : 'Carta por descubrir'}</b><span>${RAREZA[carta.r]} · ${SIN_ARTE.has(carta.id) ? 'Próximamente' : esc(condicion(carta))}</span></div>
     <button class="ghost" style="width:100%" data-accion="cerrar-capa">Cerrar</button></div>`;
 }
 
@@ -2180,7 +2186,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 45;
+const VERSION = 46;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
