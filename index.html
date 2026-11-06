@@ -584,6 +584,28 @@ details.pr-d[open] summary::after{transform:rotate(180deg);margin-top:5px}
 .hist .emb,.marco .emb{width:23px;height:23px}
 .pf .emb{width:28px;height:28px}
 .foto-e .emb{width:30px;height:30px}
+.rueda-w{position:relative;width:100%;aspect-ratio:1}
+.rueda{display:block;width:100%;height:100%;border-radius:50%;box-shadow:0 0 0 5px var(--lime),0 18px 50px -12px rgba(0,0,0,.8);transition:transform 4.6s cubic-bezier(.12,.72,.1,1);will-change:transform}
+.rueda-p{position:absolute;top:-10px;left:50%;z-index:2;margin-left:-13px;width:0;height:0;border-left:13px solid transparent;border-right:13px solid transparent;border-top:24px solid var(--lime);filter:drop-shadow(0 3px 4px rgba(0,0,0,.6))}
+.premio-i{display:grid;place-items:center;width:112px;height:112px;border-radius:32px;background:var(--lime-soft);color:var(--lime);animation:pop .5s cubic-bezier(.3,1.6,.4,1)}
+.premio-i.gordo{background:linear-gradient(135deg,#FFF0B5,#D49A12);color:#2A1C02;box-shadow:0 0 44px rgba(255,200,70,.6)}
+.premios{display:grid;gap:14px}
+.premios .fila-p > span{display:block;margin-bottom:6px;font-size:12.5px;color:var(--muted)}
+.premios .fila-p > div{display:flex;flex-wrap:wrap;gap:6px}
+.odds{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:12.5px;color:var(--muted)}
+.titulo-p{display:block;margin-top:2px;font-size:13px;font-weight:600;letter-spacing:0;color:var(--lime)}
+.ava.mx-fuego::after{background:conic-gradient(#FFD24A,#FF5A1F,#C81E1E,#FF8A1F,#FFD24A);padding:4px;filter:drop-shadow(0 0 6px rgba(255,110,40,.8));animation:gira 3s linear infinite}
+.ava.mx-hielo::after{background:conic-gradient(#FFFFFF,#8FE3FF,#2F9BE8,#BDF1FF,#FFFFFF);padding:4px;filter:drop-shadow(0 0 6px rgba(120,220,255,.8));animation:gira 6s linear infinite}
+.ava.mx-neon::after{background:conic-gradient(#39FF9C,#00E5FF,#FF2FD0,#FFF03A,#39FF9C);padding:4px;filter:drop-shadow(0 0 7px rgba(0,255,200,.8));animation:gira 4s linear infinite}
+.post-act.fz-fuego{background:linear-gradient(135deg,#FFB02E,#E5391B);color:#1E0A02}
+.post-act.fz-oro{background:linear-gradient(135deg,#FFF0B5,#D49A12);color:#2A1C02}
+.carta.fu-oro .frente{background:linear-gradient(145deg,#FFF0B5,#B9770F 38%,#E8BE4D 62%,#8F5C0A)}
+.carta.fu-negra .frente{background:linear-gradient(145deg,#3A3A3C,#050506 40%,#17171A 62%,#2E2E31)}
+.carta.fu-holo .frente{background:conic-gradient(from 30deg,#FF8AC8,#FFE96B,#7DFFC4,#7FA8FF,#D9A0FF,#FF8AC8)}
+:root[data-tema="hielo"]{--lime:#BFE8FF;--lime-ink:#BFE8FF;--lime-soft:rgba(191,232,255,.13);--on-lime:#08202E;--bg:#0D171D;--b1:rgba(62,106,134,.95);--b2:rgba(34,66,88,.95);--b3:rgba(90,140,170,.32)}
+:root[data-tema="ambar"]{--lime:#FFD79A;--lime-ink:#FFD79A;--lime-soft:rgba(255,215,154,.13);--on-lime:#2A1A06;--bg:#1A130C;--b1:rgba(128,88,44,.95);--b2:rgba(84,54,26,.95);--b3:rgba(160,110,60,.32)}
+:root[data-tema="rosa"]{--lime:#FFC2D6;--lime-ink:#FFC2D6;--lime-soft:rgba(255,194,214,.13);--on-lime:#2C0F1A;--bg:#1A0F14;--b1:rgba(128,60,88,.95);--b2:rgba(84,36,56,.95);--b3:rgba(160,84,116,.32)}
+:root[data-tema="lila"]{--lime:#DCCBFF;--lime-ink:#DCCBFF;--lime-soft:rgba(220,203,255,.13);--on-lime:#1B1230;--bg:#120F1C;--b1:rgba(88,68,140,.95);--b2:rgba(54,40,96,.95);--b3:rgba(118,96,170,.32)}
 .marcos{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 8px;text-align:center}
 .marco{display:grid;justify-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink)}
 .marco small{display:block;font-size:11.5px;font-weight:500;color:var(--muted)}
@@ -638,6 +660,7 @@ details.mas summary::-webkit-details-marker{display:none}
 details.mas summary::after{content:"⌄";font-size:15px;line-height:1;margin-top:-5px}
 details.mas[open] summary::after{transform:rotate(180deg);margin-top:5px}
 details.mas > div{display:grid;gap:10px;padding-top:6px}
+details.mas > .odds{gap:4px 12px;grid-template-columns:1fr auto}
 .plegable .card:has(.card-h){overflow:hidden}
 .plegable .card-h{cursor:pointer;margin-bottom:0;align-items:center}
 .plegable .card-h::after{content:"⌄";color:var(--muted);font-size:18px;line-height:1;margin:-6px 0 0 8px;flex:none}
@@ -794,9 +817,9 @@ h2,.card-h h2,.next h2,.sec-h h2{font-family:var(--f-serif);font-style:italic;fo
 #tab-ind{position:absolute;top:6px;left:0;width:var(--w,0);height:calc(100% - 12px);border-radius:16px;background:rgba(236,246,207,.1);transform:translate3d(var(--x,0),0,0);transition:transform .44s cubic-bezier(.3,1.35,.4,1)}
 #bruma{position:fixed;inset:0 0 auto;height:100vh;height:100lvh;z-index:-1;overflow:hidden;pointer-events:none;background:var(--bg)}
 #bruma i{position:absolute;display:block;border-radius:50%;will-change:transform}
-#bruma i:nth-child(1){top:-24%;left:4%;width:125%;aspect-ratio:1;background:radial-gradient(closest-side,rgba(78,107,69,.95),transparent);animation:deriva1 24s ease-in-out infinite alternate}
-#bruma i:nth-child(2){bottom:-26%;left:-48%;width:150%;aspect-ratio:1;background:radial-gradient(closest-side,rgba(43,74,47,.95),transparent);animation:deriva2 31s ease-in-out infinite alternate}
-#bruma i:nth-child(3){top:32%;right:-52%;width:115%;aspect-ratio:1;background:radial-gradient(closest-side,rgba(92,128,78,.32),transparent);animation:deriva3 38s ease-in-out infinite alternate}
+#bruma i:nth-child(1){top:-24%;left:4%;width:125%;aspect-ratio:1;background:radial-gradient(closest-side,var(--b1,rgba(78,107,69,.95)),transparent);animation:deriva1 24s ease-in-out infinite alternate}
+#bruma i:nth-child(2){bottom:-26%;left:-48%;width:150%;aspect-ratio:1;background:radial-gradient(closest-side,var(--b2,rgba(43,74,47,.95)),transparent);animation:deriva2 31s ease-in-out infinite alternate}
+#bruma i:nth-child(3){top:32%;right:-52%;width:115%;aspect-ratio:1;background:radial-gradient(closest-side,var(--b3,rgba(92,128,78,.32)),transparent);animation:deriva3 38s ease-in-out infinite alternate}
 @keyframes deriva1{to{transform:translate3d(-24%,7%,0) scale(1.16)}}
 @keyframes deriva2{to{transform:translate3d(26%,-12%,0) scale(.9)}}
 @keyframes deriva3{to{transform:translate3d(-38%,20%,0) scale(1.22)}}
@@ -1024,6 +1047,7 @@ function render(forzar) {
   $('#main').innerHTML = state.vista === 'entreno' ? vistaEntreno() : state.vista === 'records' ? vistaRecords() : state.vista === 'yo' ? vistaYo() : vistaAmigos();
   if (lado && $('.historias')) $('.historias').scrollLeft = lado;
   moverIndicador(); transicion();
+  document.documentElement.dataset.tema = premiosAj().tema ? equipado('tema') : '';
 }
 
 function aplicarPliegues() {
@@ -1360,7 +1384,7 @@ const RANGOS = [[30, 'Titán'], [20, 'Élite'], [15, 'Guerrero'], [10, 'Atleta']
 const hash = t => { let h = 2166136261; for (const c of String(t)) { h ^= c.codePointAt(0); h = Math.imul(h, 16777619); } h ^= h >>> 15; h = Math.imul(h, 2246822519); h ^= h >>> 13; return (h >>> 0) / 2 ** 32; };
 /* el sobre sale del id, así da la misma carta en todos los móviles */
 function cartaDeSobre(id) {
-  const x = hash(id), r = x < .02 ? 'legendaria' : x < .1 ? 'epica' : x < .35 ? 'rara' : 'comun';
+  const x = id.startsWith('j:') ? 0 : hash(id), r = x < .02 ? 'legendaria' : x < .1 ? 'epica' : x < .35 ? 'rara' : 'comun';
   const hay = q => CARTAS.slice(0, CORTES[serieSobre(id) - 1]).filter(c => c.r === q && !SIN_ARTE.has(c.id));
   const p = hay(r).length ? hay(r) : hay('epica');
   return p[Math.floor(hash(id + '#') * p.length)];
@@ -1385,11 +1409,89 @@ function misionesDe(lunes) {
   const d = datosSemana(lunes), orden = [...MISIONES].sort((a, b) => hash(lunes + a.n) - hash(lunes + b.n)).slice(0, 3);
   return orden.map((m, i) => ({...m, id: `m:${lunes}:${i}`, v: d[m.k], hecha: d[m.k] >= m.meta}));
 }
+/* ---------- ruleta: solo premios para coleccionar y lucir; nunca toca nivel, liga, récords, racha ni duelos ---------- */
+const ESTRENO_RULETA = '2026-11-06';
+const PREMIOS = [['sobre', 'Sobre extra', 40], ['reaccion', 'Reacción especial', 25], ['funda', 'Funda especial', 15], ['tema', 'Tema de la app', 10], ['titulo', 'Título de perfil', 7], ['marco', 'Marco exclusivo', 2.5], ['gordo', 'Premio gordo', .5]];
+const OBJETOS = {
+  reaccion: [['fuego', 'Fuerza de fuego'], ['oro', 'Fuerza dorada']],
+  funda: [['holo', 'Funda holográfica'], ['negra', 'Funda negra'], ['oro', 'Funda de oro']],
+  tema: [['hielo', 'Tema Hielo'], ['ambar', 'Tema Ámbar'], ['rosa', 'Tema Rosa'], ['lila', 'Tema Lila']],
+  titulo: ['Bestia del banco', 'Alma de hierro', 'Sin excusas', 'Manos de magnesio', 'Modo bestia', 'Turno de noche', 'Primera fila', 'Puro hierro'].map(t => [t, t]),
+  marco: [['fuego', 'Marco de fuego'], ['hielo', 'Marco de hielo'], ['neon', 'Marco de neón']],
+};
+const CASILLAS = ['sobre', 'reaccion', 'funda', 'tema', 'sobre', 'titulo', 'marco', 'gordo'];
+const NOMBRE_CASILLA = {sobre: 'Sobre', reaccion: 'Fuerza', funda: 'Funda', tema: 'Tema', titulo: 'Título', marco: 'Marco', gordo: 'Gordo'};
+const ICONO_PREMIO = {sobre: '<path d="M5 3h14v18H5zM5 8h14M9 13h6"/>', reaccion: '<path d="M6 7v10M3 9.5v5M18 7v10M21 9.5v5M6 12h12"/>', funda: '<rect x="6" y="3" width="12" height="18" rx="2"/><path d="M6 8h12"/>', tema: '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/>', titulo: '<path d="M4 7h16v10H4zM8 12h8"/>', marco: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="5"/>', gordo: '<path d="M12 2.5l2.9 6.3 6.9.8-5.1 4.6 1.4 6.8-6.1-3.5L5.9 21l1.4-6.8L2.2 9.6l6.9-.8z"/>'};
+function giros() {
+  const dias = new Map();
+  for (const s of state.sesiones) if (s.fin && s.fecha >= ESTRENO_RULETA && !dias.has(s.fecha) && statsSesion(s).series >= 3) dias.set(s.fecha, s);
+  return [...dias.values()].flatMap(s => [[1, true], [2, state.sesiones.some(x => x.fecha === s.fecha && x.publicada)]].filter(x => x[1])
+    .map(([n]) => ({id: `g${n}:${s.id}`, ses: s.id, hecho: (s.giros || 0) >= n})));
+}
+function resolverGiro(id, r) {
+  let x = hash(id + 'r') * 100, tipo = 'sobre';
+  for (const [k, , p] of PREMIOS) { if (x < p) { tipo = k; break; } x -= p; }
+  if (r.sinRaro >= 9 && !['funda', 'titulo', 'marco', 'gordo'].includes(tipo)) tipo = ['funda', 'titulo', 'marco'][Math.floor(hash(id + 'g') * 3)];
+  const libres = (OBJETOS[tipo] || []).filter(o => !r.tengo[tipo].has(o[0]));
+  if (OBJETOS[tipo] && !libres.length) tipo = 'sobre';
+  return {id, tipo, obj: OBJETOS[tipo] ? libres[Math.floor(hash(id + 'o') * libres.length)] : null};
+}
+let ruletaMemo = {};
+function ruleta() {
+  if (ruletaMemo.de === state.sesiones) return ruletaMemo.r;
+  const r = {hechos: [], sinRaro: 0, tengo: {reaccion: new Set(), funda: new Set(), tema: new Set(), titulo: new Set(), marco: new Set()}}, gs = giros();
+  for (const g of gs.filter(x => x.hecho)) {
+    const p = resolverGiro(g.id, r);
+    r.hechos.push(p); if (p.obj) r.tengo[p.tipo].add(p.obj[0]);
+    r.sinRaro = ['funda', 'titulo', 'marco', 'gordo'].includes(p.tipo) ? 0 : r.sinRaro + 1;
+  }
+  r.pendiente = gs.find(x => !x.hecho);
+  ruletaMemo = {de: state.sesiones, r};
+  return r;
+}
+const premiosAj = () => ({fundas: {}, ...ajustes().premios});
+const equipado = k => { const v = premiosAj()[k]; return v && ruleta().tengo[k].has(v) ? v : ''; };
+const adornos = uid => {
+  if (uid === cuenta?.uid) return {titulo: equipado('titulo'), marco: equipado('marco'), fuerza: equipado('reaccion')};
+  const r = state.amigos.gente?.find(g => g.id === uid)?.resumen, vale = (k, v) => OBJETOS[k].some(o => o[0] === v) ? v : '';
+  return {titulo: vale('titulo', r?.titulo), marco: vale('marco', r?.marco), fuerza: vale('reaccion', r?.fuerza)};
+};
+function girarRuleta() {
+  const c = state.capa, r = ruleta(), g = r.pendiente;
+  if (!g || c.girando) return;
+  const p = resolverGiro(g.id, r), s = clone(state.sesiones.find(x => x.id === g.ses)), casillas = CASILLAS.flatMap((k, i) => k === p.tipo ? [i] : []);
+  s.giros = (s.giros || 0) + 1; guardarSesion(s);
+  if (state.actual?.id === s.id) state.actual.giros = s.giros;
+  const fin = () => { state.capa = {tipo: 'premio', p}; pintarCapa(); render(true); };
+  if (quieto.matches) { fin(); return; }
+  c.girando = true;
+  const i = casillas[Math.floor(hash(g.id + 'c') * casillas.length)];
+  $('#rueda').style.transform = `rotate(${360 * 6 - (i * 45 + 22.5) + (hash(g.id + 'j') - .5) * 26}deg)`;
+  $('[data-accion="girar-ruleta"]').disabled = true;
+  setTimeout(fin, 4800);
+}
+function htmlRueda() {
+  const pt = a => `${(Math.sin(a * Math.PI / 180) * 100).toFixed(2)} ${(-Math.cos(a * Math.PI / 180) * 100).toFixed(2)}`;
+  return `<div class="rueda-w"><span class="rueda-p"></span><svg class="rueda" id="rueda" viewBox="-100 -100 200 200" aria-hidden="true">${CASILLAS.map((k, i) => `<path d="M0 0L${pt(i * 45)}A100 100 0 0 1 ${pt(i * 45 + 45)}Z" fill="${k === 'gordo' ? '#D9A62C' : i % 2 ? '#1E3324' : '#2C4A34'}" stroke="#0E1A11" stroke-width="1"/>
+    <text transform="rotate(${i * 45 + 22.5}) translate(0 -66)" text-anchor="middle" font-size="12.5" font-weight="700" fill="${k === 'gordo' ? '#2A1C02' : '#ECF6CF'}">${NOMBRE_CASILLA[k]}</text>`).join('')}<circle r="15" fill="#0E1A11" stroke="#DDF3A2" stroke-width="2"/></svg></div>`;
+}
+function seccionPremios() {
+  const r = ruleta(), aj = premiosAj(), corto = t => { const c = t.replace(/^(Marco de|Fuerza de|Fuerza|Tema) /, ''); return c[0].toUpperCase() + c.slice(1); };
+  const fila = (k, t) => r.tengo[k].size ? `<div class="fila-p"><span>${t}</span><div>${OBJETOS[k].filter(o => r.tengo[k].has(o[0])).map(o => `<button class="mini" data-accion="equipar" data-k="${k}" data-v="${esc(o[0])}" aria-pressed="${aj[k] === o[0]}">${esc(corto(o[1]))}</button>`).join('')}</div></div>` : '';
+  const hay = [...Object.values(r.tengo)].some(x => x.size);
+  return `<div class="sec-h"><h2>Premios</h2></div><section class="card"><div class="premios">
+    ${r.pendiente ? `<button class="apuntar" data-accion="ver-ruleta">Girar la ruleta</button>` : ''}
+    ${hay ? fila('titulo', 'Título') + fila('marco', 'Marco') + fila('reaccion', 'Reacción') + fila('tema', 'Tema') : `<p class="note" style="margin:0">Termina un entreno de 3 series o más para girar la ruleta. Un giro al día y otro si publicas la sesión.</p>`}
+    ${r.tengo.funda.size ? `<p class="note" style="margin:0">Tienes ${r.tengo.funda.size} ${r.tengo.funda.size === 1 ? 'funda especial' : 'fundas especiales'}: abre una carta de tu colección para ponérsela.</p>` : ''}
+    <details class="mas fin"><summary>Probabilidades</summary><div class="odds">${PREMIOS.map(([, n, p]) => `<span>${n}</span><span class="num">${fmt(p)} %</span>`).join('')}</div></details>
+    <p class="note" style="margin:0">Son solo para lucir: la ruleta no da XP ni cambia tu nivel, tu liga o tus récords.</p></div></section>`;
+}
 function sobresGanados() {
   const ids = state.sesiones.filter(s => s.fin && statsSesion(s).series >= 3).map(s => 's:' + s.id);
   ids.push(...state.sesiones.filter(s => s.desafio?.res?.ganado).map(s => 'd:' + s.id));
   for (let i = 0; i < (filaLiga(cuenta?.uid)?.ganados || 0); i++) ids.push('r:' + i);
   for (const l of new Set(state.sesiones.filter(conSets).map(s => lunesDe(s.fecha)))) ids.push(...misionesDe(l).filter(m => m.hecha).map(m => m.id));
+  for (const p of ruleta().hechos) if (p.tipo === 'sobre' || p.tipo === 'gordo') ids.push((p.tipo === 'gordo' ? 'j:' : 'g:') + p.id);
   return ids;
 }
 const serieAbierta = id => {
@@ -1406,6 +1508,7 @@ function marcarSobre(id) {
   const ses = clone(s); ses.sobre = CORTES.length; guardarSesion(ses);
   if (state.actual?.id === ses.id) state.actual.sobre = ses.sobre;
 }
+const cartasPorMerito = () => { const de = datosEstreno(); return CARTAS.filter(c => c.ok(de(estrenoDe(c))) && !SIN_ARTE.has(c.id)).length; };
 const datosEstreno = () => { const m = new Map(); return f => { if (!m.has(f)) m.set(f, estadisticas(f)); return m.get(f); }; };
 function coleccion() {
   const m = new Map(), de = datosEstreno();
@@ -1417,7 +1520,7 @@ function progresoNivel() {
   const e = estadisticas(), obj = objetivoSemana();
   const cumplidas = [...new Set(state.sesiones.filter(conSets).map(s => lunesDe(s.fecha)))].filter(l => datosSemana(l).dias >= obj).length;
   const metas = metasFuerza().filter(m => (marcas(m.clave)?.max.peso || 0) >= m.kg).length;
-  const xp = e.series * 10 + state.sesiones.filter(s => s.fin && conSets(s)).length * 100 + e.recs * 150 + cumplidas * 300 + metas * 500 + coleccion().size * 50 + e.ganados * 300 + (filaLiga(cuenta?.uid)?.ganados || 0) * 200;
+  const xp = e.series * 10 + state.sesiones.filter(s => s.fin && conSets(s)).length * 100 + e.recs * 150 + cumplidas * 300 + metas * 500 + cartasPorMerito() * 50 + e.ganados * 300 + (filaLiga(cuenta?.uid)?.ganados || 0) * 200;
   let n = 1; while (100 * n * (n + 1) <= xp) n++;
   const base = 100 * (n - 1) * n, sig = 100 * n * (n + 1);
   return {xp, n, rango: RANGOS.find(r => n >= r[0])[1], falta: sig - xp, pct: (xp - base) / (sig - base) * 100};
@@ -1458,7 +1561,8 @@ function hub(titulo) {
 function htmlCarta(c, {copias = 0, bloqueada = false, nueva = false, accion = '', tres = false} = {}) {
   const num = String(CARTAS.indexOf(c) + 1).padStart(3, '0'), total = String(CARTAS.length).padStart(3, '0'), serie = serieDe(c);
   const [nota, grado] = copias >= 3 ? GRADOS.legendaria : GRADOS[c.r];
-  const clases = `carta ${c.r}${bloqueada ? ' bloqueada' : ''}${copias >= 3 ? ' dorada' : ''}${nueva ? ' nueva' : ''}${tres ? ' tres' : ''}`;
+  const fu = bloqueada ? '' : Object.entries(premiosAj().fundas).find(([t, id]) => id === c.id && ruleta().tengo.funda.has(t))?.[0];
+  const clases = `carta ${c.r}${fu ? ` fu-${fu}` : ''}${bloqueada ? ' bloqueada' : ''}${copias >= 3 ? ' dorada' : ''}${nueva ? ' nueva' : ''}${tres ? ' tres' : ''}`;
   const tag = accion ? `button data-accion="${accion}" data-c="${c.id}"` : 'div';
   const arte = SIN_ARTE.has(c.id) ? '' : ` style="background-image:url(cartas/${c.id}.jpg)"`;
   const ataques = bloqueada ? `<span class="k-a"><span><b>Por descubrir</b><small>${esc(condicion(c))}</small></span></span>`
@@ -1509,6 +1613,18 @@ function pintarCapa() {
       <div class="rows" id="gym-ops">${GYMS.map(g => `<button class="gym-op" data-accion="gym-sel" data-g="${g.id}" data-b="${esc(norm(`${g.n} ${g.d} ${g.c}`))}">${logoGym(g)}<span><b>${esc(g.n)}</b><small>${esc(lugarGym(g))}</small></span></button>`).join('')}
         <button class="gym-op" data-accion="gym-sel" data-g="" data-b=""><span class="gl m">–</span><span><b>Sin gimnasio</b></span></button></div>
       <form class="crear" data-form="gym-otro"><input name="nombre" maxlength="60" placeholder="¿No está? Escribe su nombre" autocomplete="off" aria-label="Otro gimnasio"><button type="submit">Usar</button></form></div>`;
+    return;
+  }
+  if (c.tipo === 'ruleta') {
+    el.innerHTML = `<div class="capa-in"><div class="capa-txt"><b>Gira la ruleta</b><span>Premios para coleccionar y lucir.</span></div>${htmlRueda()}
+      <button class="apuntar" data-accion="girar-ruleta">Girar</button><button class="ghost" style="width:100%" data-accion="cerrar-capa">Ahora no</button></div>`;
+    return;
+  }
+  if (c.tipo === 'premio') {
+    const {tipo, obj} = c.p, gordo = tipo === 'gordo', sobre = tipo === 'sobre' || gordo;
+    el.innerHTML = `${gordo ? '<div class="rayos legendaria"></div><div class="fogonazo legendaria"></div>' : ''}<div class="capa-in"><div class="premio-i${gordo ? ' gordo' : ''}"><svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONO_PREMIO[tipo]}</svg></div>
+      <div class="capa-txt"><b>${esc(gordo ? '¡Premio gordo!' : obj ? obj[1] : 'Sobre extra')}</b><span>${gordo ? 'Sobre legendario: trae una carta legendaria segura.' : sobre ? 'Una carta más para tu colección.' : 'Lo encontrarás en Perfil, en Premios.'}</span></div>
+      ${sobre ? `<button class="apuntar" data-accion="abrir-sobre">Abrir sobre</button>` : ''}<button class="${sobre ? 'ghost' : 'apuntar'}" style="width:100%" data-accion="cerrar-capa">Seguir</button></div>`;
     return;
   }
   if (c.tipo === 'borrar-ses') {
@@ -1588,6 +1704,7 @@ function pintarCapa() {
   const carta = CARTAS.find(x => x.id === c.id), m = coleccion(), tiene = m.has(carta.id);
   el.innerHTML = `<div class="capa-in">${htmlCarta(carta, {copias: m.get(carta.id) || 0, bloqueada: !tiene, tres: true})}
     <div class="capa-txt"><b>${tiene ? esc(carta.n) : 'Carta por descubrir'}</b><span>${RAREZA[carta.r]} · ${SIN_ARTE.has(carta.id) ? 'Próximamente' : esc(condicion(carta))}</span></div>
+    ${tiene && ruleta().tengo.funda.size ? `<div class="fila-p" style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px">${OBJETOS.funda.filter(o => ruleta().tengo.funda.has(o[0])).map(o => `<button class="mini" data-accion="poner-funda" data-t="${o[0]}" data-c="${carta.id}" aria-pressed="${premiosAj().fundas[o[0]] === carta.id}">${esc(o[1])}</button>`).join('')}</div>` : ''}
     <button class="ghost" style="width:100%" data-accion="cerrar-capa">Cerrar</button></div>`;
 }
 
@@ -1605,6 +1722,8 @@ function resumenFin(ses) {
   if (nubeLista()) h += ses.publicada
     ? `<button class="finbtn" data-accion="despublicar">Publicada · toca para quitarla</button>`
     : `<button class="apuntar" style="width:100%;margin-top:12px" data-accion="publicar">Publicar en el feed</button>`;
+  if (ruleta().pendiente) h += `<button class="ghost" style="width:100%;margin-top:10px" data-accion="ver-ruleta">Girar la ruleta</button>`;
+  else if (nubeLista() && !ses.publicada && giros().some(g => g.ses === ses.id)) h += `<p class="note" style="text-align:center;margin:8px 0 0">Publica la sesión y ganas otro giro.</p>`;
   const pend = sobresPendientes().length;
   if (pend) h += `<button class="ghost" style="width:100%;margin-top:10px" data-accion="abrir-sobre">Abrir ${pend === 1 ? 'tu sobre' : `tus ${pend} sobres`}</button>`;
   h += `<details class="mas fin" style="margin-top:8px"${nubeLista() ? '' : ' open'}><summary>Más opciones</summary><div>
@@ -2186,7 +2305,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 46;
+const VERSION = 47;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -2238,7 +2357,7 @@ async function subirMarcas() {
   const lista = misMarcas();
   if (lista.length) await pedir('marcas?on_conflict=usuario,clave', {method: 'POST', body: lista, prefer: 'resolution=merge-duplicates,return=minimal'});
   await pedir(`marcas?usuario=eq.${cuenta.uid}${lista.length ? `&clave=not.in.(${lista.map(m => m.clave).join(',')})` : ''}`, {method: 'DELETE'});
-  await pedir(`perfiles?id=eq.${cuenta.uid}`, {method: 'PATCH', body: {resumen: {racha: rachaSemanas(), nivel: progresoNivel().n, cartas: coleccion().size, objetivo: objetivoSemana(), metas: metasFuerza(), semanas: misSemanas().slice(-14), ...semanaActual()}}, prefer: 'return=minimal'});
+  await pedir(`perfiles?id=eq.${cuenta.uid}`, {method: 'PATCH', body: {resumen: {titulo: equipado('titulo'), marco: equipado('marco'), fuerza: equipado('reaccion'), racha: rachaSemanas(), nivel: progresoNivel().n, cartas: coleccion().size, objetivo: objetivoSemana(), metas: metasFuerza(), semanas: misSemanas().slice(-14), ...semanaActual()}}, prefer: 'return=minimal'});
 }
 const COLS_POST = 'select=*,perfiles(nombre),fuerzas(usuario),medios(id,usuario,ruta,tipo,ejercicio,serie,etiqueta),comentarios(id,usuario,texto,creado,perfiles(nombre))&comentarios.order=creado.asc';
 const oculto = uid => state.amigos.bloqueos.some(b => b.bloqueador === uid || b.bloqueado === uid);
@@ -2383,7 +2502,7 @@ async function publicar(ses, callado) {
     await subirMarcas();
     state.amigos.feed = null;
     if (!ses.publicada) { ses.publicada = true; guardarSesion(ses); render(true); }
-    if (!callado) toast('Publicada', ses.titulo);
+    if (!callado) toast(ruleta().pendiente ? 'Publicada · giro extra' : 'Publicada', ses.titulo);
   } catch { toast('Sin conexión', 'No se ha publicado'); }
 }
 async function borrarArchivos(rutas) {
@@ -3055,7 +3174,7 @@ const EMBLEMAS = [
 const emblema = n => { const i = marcoDe(n), [forma, marca] = EMBLEMAS[i - 1]; return `<svg class="emb" viewBox="0 0 24 24" fill="url(#eg${i})" stroke="#0E1A11" stroke-width="1.1" aria-hidden="true">${forma}<g fill="none" stroke="#0E1A11" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${marca}</g></svg>`; };
 const rangoDe = n => MARCOS.find(m => n >= m[0])[1];
 const avatar = (n, uid) => {
-  const u = urlMedio(state.amigos.gente?.find(g => g.id === uid)?.avatar || ''), c = uid ? ` mc${marcoDe(nivelDe(uid))}` : '', e = uid ? emblema(nivelDe(uid)) : '';
+  const u = urlMedio(state.amigos.gente?.find(g => g.id === uid)?.avatar || ''), x = uid && adornos(uid).marco, c = uid ? ` ${x ? `mc0 mx-${x}` : `mc${marcoDe(nivelDe(uid))}`}` : '', e = uid ? emblema(nivelDe(uid)) : '';
   return u ? `<span class="ava${c}" style="background:url(${u}) center/cover no-repeat">${e}</span>` : `<span class="ava${c}">${esc(String(n || '?')[0].toUpperCase())}${e}</span>`;
 };
 function seccionMarcos() {
@@ -3084,7 +3203,7 @@ function tarjetaPublicacion(p) {
   return `<article class="post${abierta ? ' open' : ''}">
     <div class="post-h" style="grid-template-columns:1fr auto">
       <button class="quien" data-accion="perfil" data-u="${esc(p.usuario)}">${avatar(nombre, p.usuario)}
-        <span class="mid"><b>${esc(nombre)}<span class="nv num">Nv ${nivelDe(p.usuario)}</span></b><small class="num">${fechaCorta(String(p.fecha))}${d.editada ? ' · Editada' : ''}</small></span></button></div>
+        <span class="mid"><b>${esc(nombre)}<span class="nv num">Nv ${nivelDe(p.usuario)}</span></b><small class="num">${adornos(p.usuario).titulo ? `${esc(adornos(p.usuario).titulo)} · ` : ''}${fechaCorta(String(p.fecha))}${d.editada ? ' · Editada' : ''}</small></span></button></div>
     ${chipGym(d.gym)}
     <button class="post-top" data-accion="post" data-id="${esc(p.id)}" aria-expanded="${abierta}">
       <span class="post-t">${esc(p.titulo)}</span>
@@ -3093,7 +3212,7 @@ function tarjetaPublicacion(p) {
     </button>
     ${medios[0] ? bloqueMedio(medios[0], p) : ''}
     <div class="post-acts">
-      <button class="post-act${mia ? ' on' : ''}" data-accion="fuerza" data-id="${esc(p.id)}" ${propia ? 'disabled' : ''} aria-pressed="${mia}">${ICON_FUERZA}Fuerza${fz.length ? ` · ${fz.length}` : ''}</button>
+      <button class="post-act${mia ? ' on' : ''}${(f => f ? ` fz-${f}` : '')(fz.map(x => adornos(x.usuario).fuerza).find(Boolean))}" data-accion="fuerza" data-id="${esc(p.id)}" ${propia ? 'disabled' : ''} aria-pressed="${mia}">${ICON_FUERZA}Fuerza${fz.length ? ` · ${fz.length}` : ''}</button>
       <button class="post-act" data-accion="post" data-id="${esc(p.id)}">${ICON_COMENTAR}${cms.length || 'Comentar'}</button>
       ${!propia && ejs.length && state.amigos.desafiosOk ? `<button class="post-act" data-accion="desafiar" data-id="${esc(p.id)}">${ICON_DUELO}Desafiar</button>` : ''}
     </div>
@@ -3125,7 +3244,7 @@ function vistaPerfil(uid, propio) {
   const seguidores = a.seg.filter(x => x.seguido === uid).length, siguiendo = a.seg.filter(x => x.seguidor === uid).length;
   const marcasDe = (a.marcas || []).filter(r => r.usuario === uid);
   let h = `<div class="det">${propio ? '' : '<button class="back" data-accion="volver-perfil">‹ Volver</button>'}
-    <div class="pf">${avatar(nombre, uid)}<h1>${esc(nombre)}</h1>${botonSeguir(uid)}</div>
+    <div class="pf">${avatar(nombre, uid)}<h1>${esc(nombre)}${adornos(uid).titulo ? `<span class="titulo-p">${esc(adornos(uid).titulo)}</span>` : ''}</h1>${botonSeguir(uid)}</div>
     ${(g => g?.arroba || g?.bio || g?.gimnasio || g?.objetivo ? `<div class="pf-d">${g.arroba ? `<b>@${esc(g.arroba)}</b>` : ''}${esc(g.bio || '')}${g.objetivo ? `<br>${esc(g.objetivo)}` : ''}${chipGym(g.gimnasio)}</div>` : '')(a.gente?.find(x => x.id === uid))}
     ${a.perfilOk ? (propio ? `<div class="pf-a"><button class="mini" data-accion="editar-perfil">Editar perfil</button></div>`
       : `<div class="pf-a"><button class="mini" data-accion="bloquear" data-u="${esc(uid)}">${a.bloquear ? '¿Seguro? Toca otra vez' : 'Bloquear'}</button><button class="mini" data-accion="denunciar-usuario" data-u="${esc(uid)}">Denunciar</button></div>`) : ''}
@@ -3382,7 +3501,7 @@ function vistaYo() {
   if (t === 'prog') return seg + `<div class="plegable">${vistaProgreso()}</div>`;
   if (!cuenta?.nombre) return seg + vistaAmigos();
   const mios = a.bloqueos.filter(b => b.bloqueador === cuenta.uid);
-  return seg + vistaPerfil(cuenta.uid, true) + seccionMarcos() + (mios.length ? `<div class="sec-h"><h2>Bloqueados</h2></div><div class="rows">${mios.map(b => `<div class="persona"><span>Usuario bloqueado</span><button class="mini" data-accion="desbloquear" data-u="${esc(b.bloqueado)}">Desbloquear</button></div>`).join('')}</div>` : '') + `<div class="cuenta-txt">${cuenta.email ? `${esc(cuenta.email)} · ` : ''}Ferrum ${VERSION}</div><div class="salir">
+  return seg + vistaPerfil(cuenta.uid, true) + seccionMarcos() + seccionPremios() + (mios.length ? `<div class="sec-h"><h2>Bloqueados</h2></div><div class="rows">${mios.map(b => `<div class="persona"><span>Usuario bloqueado</span><button class="mini" data-accion="desbloquear" data-u="${esc(b.bloqueado)}">Desbloquear</button></div>`).join('')}</div>` : '') + `<div class="cuenta-txt">${cuenta.email ? `${esc(cuenta.email)} · ` : ''}Ferrum ${VERSION}</div><div class="salir">
     ${cuenta.email ? `<button class="chip" data-accion="cerrar-cuenta">Cerrar sesión</button>` : ''}
     <button class="chip danger${a.salir ? ' sure' : ''}" data-accion="borrar-cuenta">${a.salir ? '¿Seguro? Se borra para siempre' : 'Borrar mi cuenta'}</button></div>`;
 }
@@ -3611,6 +3730,7 @@ document.addEventListener('click', ev => {
       if (ses.desafio) resolverDesafio(ses);
       if (ses.publicada) publicar(ses, true);
       else if (nubeLista() && cuenta?.nombre) subirMarcas().catch(() => {});
+      if (!ses.desafio && ruleta().pendiente) { state.capa = {tipo: 'ruleta'}; pintarCapa(); }
       break;
     }
     case 'post': {
@@ -3677,6 +3797,10 @@ document.addEventListener('click', ev => {
     case 'quitar-meta': ls.set('fr_metas', metasFuerza().filter((_, i) => i !== +b.dataset.i)); render(true); break;
     case 'comunidad': state.amigos.comunidad = b.dataset.c; render(true); break;
     case 'ver-club': abrirClub(b.dataset.id); break;
+    case 'ver-ruleta': state.capa = {tipo: 'ruleta'}; pintarCapa(); break;
+    case 'girar-ruleta': girarRuleta(); break;
+    case 'equipar': { const k = b.dataset.k, v = b.dataset.v, aj = premiosAj(); guardarAjustes({premios: {...aj, [k]: aj[k] === v ? '' : v}}); render(true); if (nubeLista()) subirMarcas().catch(() => {}); break; }
+    case 'poner-funda': { const aj = premiosAj(), t = b.dataset.t, c = b.dataset.c; guardarAjustes({premios: {...aj, fundas: {...aj.fundas, [t]: aj.fundas[t] === c ? '' : c}}}); pintarCapa(); render(true); break; }
     case 'ver-gym': abrirGym(b.dataset.g); break;
     case 'volver-gym': { const a = state.amigos, d = a.gymDesde; a.gym = a.gymPosts = null; state.vista = d.vista; a.perfil = d.perfil; render(true); scrollTo(0, 0); break; }
     case 'mi-gym': ponerMiGym(b.dataset.g); break;
