@@ -579,6 +579,10 @@ details.pr-d[open] summary::after{transform:rotate(180deg);margin-top:5px}
 .srow-del{position:absolute;top:50%;right:4px;display:grid;place-items:center;width:44px;height:44px;margin-top:-22px;color:var(--faint);transition:color .2s,transform .17s cubic-bezier(.3,1.4,.4,1)}
 .srow-del:active{color:var(--danger);transform:scale(.88)}
 .apuntar.peligro{background:var(--danger);color:#160806}
+.emb{position:absolute;left:-6px;bottom:-6px;z-index:2;width:21px;height:21px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))}
+.hist .emb,.marco .emb{width:23px;height:23px}
+.pf .emb{width:28px;height:28px}
+.foto-e .emb{width:30px;height:30px}
 .marcos{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 8px;text-align:center}
 .marco{display:grid;justify-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink)}
 .marco small{display:block;font-size:11.5px;font-weight:500;color:var(--muted)}
@@ -813,6 +817,14 @@ details.mas[open] > div,details.pr-d[open] > .pr{animation:baja .28s cubic-bezie
 </head>
 <body>
 <div id="bruma" aria-hidden="true"><i></i><i></i><i></i></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="eg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#C9D6BF"/><stop offset="1" stop-color="#7F9675"/></linearGradient>
+  <linearGradient id="eg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#8E9694"/></linearGradient>
+  <linearGradient id="eg3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#D6F2FF"/><stop offset="1" stop-color="#3F97DE"/></linearGradient>
+  <linearGradient id="eg4" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#EBDDFF"/><stop offset="1" stop-color="#7E43DA"/></linearGradient>
+  <linearGradient id="eg5" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF3BE"/><stop offset="1" stop-color="#C98A0E"/></linearGradient>
+  <linearGradient id="eg6" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFD24A"/><stop offset=".35" stop-color="#FF4F7B"/><stop offset=".68" stop-color="#8F6BFF"/><stop offset="1" stop-color="#5CF2FF"/></linearGradient>
+</defs></svg>
 <div class="app">
   <main id="main"></main>
 </div>
@@ -2153,7 +2165,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 43;
+const VERSION = 44;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -3010,13 +3022,24 @@ function chipGym(t) {
 }
 const MARCOS = [[30, 'Titán'], [20, 'Élite'], [15, 'Guerrero'], [10, 'Atleta'], [5, 'Aprendiz'], [1, 'Novato']];
 const marcoDe = n => 6 - MARCOS.findIndex(m => n >= m[0]);
+const ESCUDO = 'M12 1.5l9 3.2v6.6c0 5.3-3.7 9.3-9 11.2-5.3-1.9-9-5.9-9-11.2V4.7z';
+const EMBLEMAS = [
+  ['<circle cx="12" cy="12" r="10.5"/>', '<path d="M7 14.5l5-5 5 5"/>'],
+  [`<path d="${ESCUDO}"/>`, '<path d="M7.5 10.5l4.5-4 4.5 4M7.5 15.5l4.5-4 4.5 4"/>'],
+  [`<path d="${ESCUDO}"/>`, '<path d="M7.5 12h9M6.5 9v6M17.5 9v6M4.5 10.5v3M19.5 10.5v3"/>'],
+  ['<path d="M12 1l9.8 5.6v10.8L12 23l-9.8-5.6V6.6z"/>', '<path d="M13.5 5L7.5 13h4.2l-1.2 6 6-8h-4.2z" fill="#0E1A11"/>'],
+  ['<path d="M12 .8l3.3 7.2 7.9.9-5.8 5.3 1.6 7.8-7-4-7 4 1.6-7.8L.8 8.9 8.7 8z"/>', '<circle cx="12" cy="12" r="3" fill="#0E1A11"/>'],
+  [`<path d="${ESCUDO}"/>`, '<path d="M6 8l3 2.5L12 6l3 4.5L18 8l-1.4 8H7.4z" fill="#0E1A11"/>'],
+];
+const emblema = n => { const i = marcoDe(n), [forma, marca] = EMBLEMAS[i - 1]; return `<svg class="emb" viewBox="0 0 24 24" fill="url(#eg${i})" stroke="#0E1A11" stroke-width="1.1" aria-hidden="true">${forma}<g fill="none" stroke="#0E1A11" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${marca}</g></svg>`; };
+const rangoDe = n => MARCOS.find(m => n >= m[0])[1];
 const avatar = (n, uid) => {
-  const u = urlMedio(state.amigos.gente?.find(g => g.id === uid)?.avatar || ''), c = uid ? ` mc${marcoDe(nivelDe(uid))}` : '';
-  return u ? `<span class="ava${c}" style="background:url(${u}) center/cover no-repeat"></span>` : `<span class="ava${c}">${esc(String(n || '?')[0].toUpperCase())}</span>`;
+  const u = urlMedio(state.amigos.gente?.find(g => g.id === uid)?.avatar || ''), c = uid ? ` mc${marcoDe(nivelDe(uid))}` : '', e = uid ? emblema(nivelDe(uid)) : '';
+  return u ? `<span class="ava${c}" style="background:url(${u}) center/cover no-repeat">${e}</span>` : `<span class="ava${c}">${esc(String(n || '?')[0].toUpperCase())}${e}</span>`;
 };
 function seccionMarcos() {
   const n = nivelDe(cuenta.uid);
-  return `<div class="sec-h"><h2>Marcos</h2></div><section class="card"><div class="marcos">${[...MARCOS].reverse().map(([nv, t], i) => `<div class="marco${n >= nv ? '' : ' no'}"><span class="ava mc${i + 1}">${esc(cuenta.nombre[0].toUpperCase())}</span><span>${t}<small>${n >= nv ? 'Conseguido' : `Nivel ${nv}`}</small></span></div>`).join('')}</div></section>`;
+  return `<div class="sec-h"><h2>Marcos y emblemas</h2></div><section class="card"><div class="marcos">${[...MARCOS].reverse().map(([nv, t], i) => `<div class="marco${n >= nv ? '' : ' no'}"><span class="ava mc${i + 1}">${esc(cuenta.nombre[0].toUpperCase())}${emblema(nv)}</span><span>${t}<small>${n >= nv ? 'Conseguido' : `Nivel ${nv}`}</small></span></div>`).join('')}</div></section>`;
 }
 function botonSeguir(uid) {
   if (uid === cuenta.uid) return '';
@@ -3086,7 +3109,7 @@ function vistaPerfil(uid, propio) {
     ${a.perfilOk ? (propio ? `<div class="pf-a"><button class="mini" data-accion="editar-perfil">Editar perfil</button></div>`
       : `<div class="pf-a"><button class="mini" data-accion="bloquear" data-u="${esc(uid)}">${a.bloquear ? '¿Seguro? Toca otra vez' : 'Bloquear'}</button><button class="mini" data-accion="denunciar-usuario" data-u="${esc(uid)}">Denunciar</button></div>`) : ''}
     ${!propio && a.parejasOk ? (p => p ? (p.estado === 'activa' ? `<p class="num">Racha juntos: ${rachaPareja(p).n} semanas</p>` : `<p>Invitación de racha pendiente</p>`) : `<button class="ghost" style="width:100%;margin-bottom:12px" data-accion="invitar-pareja" data-u="${esc(uid)}">Hacer racha juntos</button>`)(a.parejas.find(x => otroDe(x) === uid)) : ''}
-    ${(r => { const b = balance(uid), n = nivelDe(uid); return `<p class="num">Nivel ${n} · Liga ${ligaU(uid)} · ${fmt(+r?.cartas || 0)}/${CARTAS.length} cartas${a.desafiosOk ? ` · ${b.v}V–${b.l}D` : ''}</p>`; })(a.gente?.find(x => x.id === uid)?.resumen)}</div>
+    ${(r => { const b = balance(uid), n = nivelDe(uid); return `<p class="num">Nivel ${n} · ${rangoDe(n)} · Liga ${ligaU(uid)} · ${fmt(+r?.cartas || 0)}/${CARTAS.length} cartas${a.desafiosOk ? ` · ${b.v}V–${b.l}D` : ''}</p>`; })(a.gente?.find(x => x.id === uid)?.resumen)}</div>
     <div class="sumrow">
       <div><div class="label">Sesiones</div><div class="v num">${posts?.length ?? '–'}</div></div>
       <div><div class="label">Seguidores</div><div class="v num">${seguidores}</div></div>
