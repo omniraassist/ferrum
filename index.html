@@ -502,7 +502,8 @@ body:has(.hub)::before{background:#C9EC35}
 .ex.on{box-shadow:inset 0 0 0 1.5px rgba(212,245,60,.45)}
 .stats div,.sumrow div{background:none;padding:0}
 .stats > div,.sumrow > div{border-radius:22px;padding:12px}
-.historias{display:flex;gap:10px;margin:0 0 14px}
+.historias{display:flex;gap:10px;margin:0 -24px 6px;padding:8px 24px;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.historias::-webkit-scrollbar{display:none}
 /* marco de la foto según el nivel: fino y sobrio al principio, animado y holográfico al final */
 .ava{position:relative}
 .ava[class*="mc"]::after{content:"";position:absolute;inset:-5px;border-radius:50%;padding:3px;pointer-events:none;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
@@ -686,7 +687,7 @@ details.mas > div{display:grid;gap:10px;padding-top:6px}
 .discos{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
 .disco{display:grid;place-items:center;min-width:46px;height:46px;padding:0 8px;border-radius:12px;background:var(--lime);color:var(--on-lime);font-weight:800}
 textarea{touch-action:manipulation}
-.hist{flex:0 0 calc(20% - 8px);min-width:0;display:grid;justify-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--muted)}
+.hist{flex:0 0 64px;min-width:0;display:grid;justify-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--muted)}
 .hist span:last-child{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hist .ava{width:54px;height:54px;font-size:20px;box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--line-2)}
 .hist .ava[class*="mc"]{box-shadow:none}
@@ -1019,7 +1020,9 @@ function render(forzar) {
   for (const v of ['amigos', 'explorar', 'entreno', 'records', 'yo']) $('#tab-' + v).setAttribute('aria-pressed', state.vista === v);
   $('#tab-amigos').classList.toggle('dot', avisosNuevos() > 0);
   requestAnimationFrame(aplicarPliegues);
+  const lado = $('.historias')?.scrollLeft;
   $('#main').innerHTML = state.vista === 'entreno' ? vistaEntreno() : state.vista === 'records' ? vistaRecords() : state.vista === 'yo' ? vistaYo() : vistaAmigos();
+  if (lado && $('.historias')) $('.historias').scrollLeft = lado;
   moverIndicador(); transicion();
 }
 
@@ -1333,9 +1336,17 @@ const CARTAS = [
   {id: 'dominada', tipo: 'Tirón', fz: 165, ataques: [{n: 'Dominada', d: 'Sube por encima de las nubes.', p: 100}, {n: 'Sin fin', d: 'Repite mientras dure tu racha.', p: 130}], debil: 'Altura', resiste: 'Gravedad', t: 'Infinita', n: 'Dominada Infinita', r: 'epica', lema: 'Siempre queda una más.', c: '8 semanas seguidas', ok: e => e.racha >= 8},
   {id: 'duelo', tipo: 'Fuerza', fz: 185, ataques: [{n: 'Cara a cara', d: 'Nadie aparta la mirada.', p: 110}, {n: 'Revancha', d: 'Vale el doble si perdiste antes.', p: 150}], debil: 'Orgullo', resiste: 'Miedo', t: 'Titanes', n: 'Duelo de Titanes', r: 'epica', lema: 'Solo uno suelta la barra.', c: 'Gana 5 duelos', ok: e => e.ganados >= 5},
   {id: 'corona', tipo: 'Fuerza', fz: 245, ataques: [{n: 'Mandato', d: 'Todos los récords se inclinan.', p: 160}, {n: 'Corona de discos', d: 'Reina sobre tu gimnasio.', p: 225}], debil: 'Ninguna', resiste: 'Rivales', t: 'Corona', n: 'Corona de Hierro', r: 'legendaria', lema: 'Cien récords la forjaron.', c: '100 récords', ok: e => e.recs >= 100},
+  {id: 'mochila', tipo: 'Core', fz: 60, ataques: [{n: 'Equipaje', d: 'Siempre lleva lo que hace falta.', p: 25}, {n: 'Sin excusas', d: 'Ya está hecha desde anoche.', p: 35}], debil: 'Cremalleras', resiste: 'Lunes', t: 'Guerra', n: 'Mochila de Guerra', r: 'comun', lema: 'Preparada antes que tú.', c: '15 sesiones', ok: e => e.ses >= 15},
+  {id: 'cascos', tipo: 'Fuerza', fz: 70, ataques: [{n: 'Volumen a tope', d: 'Nadie te habla en toda la serie.', p: 30}, {n: 'Modo bestia', d: 'Suma fuerza con el estribillo.', p: 40}], debil: 'Batería', resiste: 'Charlas', t: 'Bestia', n: 'Cascos Modo Bestia', r: 'comun', lema: 'Si suena, se levanta.', c: '100 series', ok: e => e.series >= 100},
+  {id: 'taquilla', tipo: 'Core', fz: 50, ataques: [{n: 'Candado', d: 'Protege lo que has ganado.', p: 20}, {n: 'Rutina', d: 'Siempre la misma, siempre a tiempo.', p: 30}], debil: 'Olvidar la llave', resiste: 'Golpes', t: 'Vieja', n: 'Taquilla Vieja', r: 'comun', lema: 'Tres semanas y ya es tuya.', c: '3 semanas seguidas', ok: e => e.racha >= 3},
+  {id: 'gemelas', tipo: 'Empuje', fz: 120, ataques: [{n: 'Doble curl', d: 'Golpea con las dos a la vez.', p: 60}, {n: 'Arco eléctrico', d: 'Salta de una a otra.', p: 85}], debil: 'Desequilibrio', resiste: 'Cansancio', t: 'Gemelas', n: 'Mancuernas Gemelas', r: 'rara', lema: 'Ninguna va sola.', c: '15 récords', ok: e => e.recs >= 15},
+  {id: 'trineo', tipo: 'Pierna', fz: 130, ataques: [{n: 'Empuje total', d: 'Arrastra lo que se ponga delante.', p: 65}, {n: 'Chispas', d: 'Quema el suelo a su paso.', p: 90}], debil: 'Cuestas', resiste: 'Fricción', t: 'Acero', n: 'Trineo de Acero', r: 'rara', lema: 'No se para hasta la línea.', c: '25 toneladas', ok: e => e.vol >= 25e3},
+  {id: 'anillas', tipo: 'Tirón', fz: 115, ataques: [{n: 'Cruz', d: 'Se sostiene en el aire.', p: 55}, {n: 'Haz de luz', d: 'Ilumina tu mejor repetición.', p: 80}], debil: 'Hombros', resiste: 'Vértigo', t: 'Luz', n: 'Anillas de Luz', r: 'rara', lema: 'Aquí no hay dónde esconderse.', c: '30 sesiones', ok: e => e.ses >= 30},
+  {id: 'cuerdas', tipo: 'Core', fz: 125, ataques: [{n: 'Oleaje', d: 'Sacude a todo el equipo.', p: 60}, {n: 'Latigazo', d: 'Devuelve el golpe doblado.', p: 90}], debil: 'Pulmones', resiste: 'Pereza', t: 'Batalla', n: 'Cuerdas de Batalla', r: 'rara', lema: 'Treinta segundos eternos.', c: '6 semanas seguidas', ok: e => e.racha >= 6},
+  {id: 'zancada', tipo: 'Pierna', fz: 190, ataques: [{n: 'Zancada', d: 'Cada paso abre el suelo.', p: 115}, {n: 'Onda sísmica', d: 'Derriba a toda la sala.', p: 150}], debil: 'Escaleras', resiste: 'Terremotos', t: 'Sísmica', n: 'Zancada Sísmica', r: 'epica', lema: 'Se oye antes de verse.', c: '500 toneladas', ok: e => e.vol >= 5e5},
 ];
-/* las 12 primeras: los sobres abiertos antes de la serie 2 se resuelven solo entre ellas, para que nadie pierda sus cartas */
-const PRIMERAS = 12;
+/* cuántas cartas había en cada serie: un sobre ya abierto se resuelve solo entre las de su serie, para que nadie pierda sus cartas */
+const CORTES = [12, 24, 32];
 /* cartas aún sin ilustración: se ven como próximamente y no salen en los sobres */
 const SIN_ARTE = new Set();
 const RAREZA = {comun: 'Común', rara: 'Rara', epica: 'Épica', legendaria: 'Legendaria'};
@@ -1345,7 +1356,7 @@ const hash = t => { let h = 2166136261; for (const c of String(t)) { h ^= c.code
 /* el sobre sale del id, así da la misma carta en todos los móviles */
 function cartaDeSobre(id) {
   const x = hash(id), r = x < .02 ? 'legendaria' : x < .1 ? 'epica' : x < .35 ? 'rara' : 'comun';
-  const hay = q => (sobreViejo(id) ? CARTAS.slice(0, PRIMERAS) : CARTAS).filter(c => c.r === q && !SIN_ARTE.has(c.id));
+  const hay = q => CARTAS.slice(0, CORTES[serieSobre(id) - 1]).filter(c => c.r === q && !SIN_ARTE.has(c.id));
   const p = hay(r).length ? hay(r) : hay('epica');
   return p[Math.floor(hash(id + '#') * p.length)];
 }
@@ -1376,15 +1387,19 @@ function sobresGanados() {
   for (const l of new Set(state.sesiones.filter(conSets).map(s => lunesDe(s.fecha)))) ids.push(...misionesDe(l).filter(m => m.hecha).map(m => m.id));
   return ids;
 }
-const sobreViejo = id => id.startsWith('s:') ? state.sesiones.find(x => x.id === id.slice(2))?.sobre === true : ls.get('fr_sobres', []).includes(id);
-const sobreAbierto = id => id.startsWith('s:') ? !!state.sesiones.find(x => x.id === id.slice(2))?.sobre : sobreViejo(id) || ls.get('fr_sobres2', []).includes(id);
+const serieAbierta = id => {
+  if (id.startsWith('s:')) { const v = state.sesiones.find(x => x.id === id.slice(2))?.sobre; return v === true ? 1 : v || 0; }
+  return ls.get('fr_sobres', []).includes(id) ? 1 : ls.get('fr_sobres2', []).includes(id) ? 2 : ls.get('fr_sobres_n', {})[id] || 0;
+};
+const serieSobre = id => serieAbierta(id) || CORTES.length;
+const sobreAbierto = id => !!serieAbierta(id);
 const sobresPendientes = () => sobresGanados().filter(id => !sobreAbierto(id));
 function marcarSobre(id) {
-  if (!id.startsWith('s:')) { ls.set('fr_sobres2', [...ls.get('fr_sobres2', []), id]); return; }
+  if (!id.startsWith('s:')) { ls.set('fr_sobres_n', {...ls.get('fr_sobres_n', {}), [id]: CORTES.length}); return; }
   const s = state.sesiones.find(x => x.id === id.slice(2));
   if (!s) return;
-  const ses = clone(s); ses.sobre = 2; guardarSesion(ses);
-  if (state.actual?.id === ses.id) state.actual.sobre = 2;
+  const ses = clone(s); ses.sobre = CORTES.length; guardarSesion(ses);
+  if (state.actual?.id === ses.id) state.actual.sobre = ses.sobre;
 }
 function coleccion() {
   const e = estadisticas(), m = new Map();
@@ -1435,7 +1450,7 @@ function hub(titulo) {
     </div></section>`;
 }
 function htmlCarta(c, {copias = 0, bloqueada = false, nueva = false, accion = '', tres = false} = {}) {
-  const num = String(CARTAS.indexOf(c) + 1).padStart(3, '0'), total = String(CARTAS.length).padStart(3, '0'), serie = CARTAS.indexOf(c) < PRIMERAS ? 1 : 2;
+  const num = String(CARTAS.indexOf(c) + 1).padStart(3, '0'), total = String(CARTAS.length).padStart(3, '0'), serie = CORTES.findIndex(n => CARTAS.indexOf(c) < n) + 1;
   const [nota, grado] = copias >= 3 ? GRADOS.legendaria : GRADOS[c.r];
   const clases = `carta ${c.r}${bloqueada ? ' bloqueada' : ''}${copias >= 3 ? ' dorada' : ''}${nueva ? ' nueva' : ''}${tres ? ' tres' : ''}`;
   const tag = accion ? `button data-accion="${accion}" data-c="${c.id}"` : 'div';
@@ -1475,7 +1490,7 @@ function pintarCapa() {
   if (c.tipo === 'intro') {
     const P = [['<path d="M6 7v10M3 9.5v5M18 7v10M21 9.5v5M6 12h12"/>', 'Entrena', 'Apunta tus series, crea tu rutina y bate tus marcas sesión a sesión.'],
       ['<circle cx="9" cy="8" r="3.5"/><path d="M3 20a6 6 0 0 1 12 0M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.5a6 6 0 0 1 3 5.5"/>', 'Compite', 'Publica tus sesiones, desafía las de tus amigos y sube de liga.'],
-      ['<rect x="8" y="3" width="12" height="16" rx="2.5"/><path d="M5 6.5A2.5 2.5 0 0 0 4 8.5V19a2.5 2.5 0 0 0 2.5 2.5H14"/>', 'Colecciona', 'Cada sesión te da un sobre. Consigue las 24 cartas legendarias.']][c.paso];
+      ['<rect x="8" y="3" width="12" height="16" rx="2.5"/><path d="M5 6.5A2.5 2.5 0 0 0 4 8.5V19a2.5 2.5 0 0 0 2.5 2.5H14"/>', 'Colecciona', 'Cada sesión te da un sobre. Consigue todas las cartas.']][c.paso];
     el.innerHTML = `<div class="capa-in"><div class="intro-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[0]}</svg></div>
       <div class="capa-txt"><b style="font-size:30px">${P[1]}</b><span style="font-size:15px">${P[2]}</span></div>
       <div class="puntos">${[0, 1, 2].map(i => `<i${i === c.paso ? ' class="on"' : ''}></i>`).join('')}</div>
@@ -2165,7 +2180,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 44;
+const VERSION = 45;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -3341,7 +3356,8 @@ function vistaAmigos() {
 function historias() {
   const a = state.amigos, reciente = sumarDias(hoy, -3);
   const activos = new Set((a.feed || []).filter(p => p.fecha >= reciente).map(p => p.usuario));
-  const ids = [cuenta.uid, ...sigoA().sort((x, y) => activos.has(y) - activos.has(x))].slice(0, 5);
+  const sigo = new Set(sigoA());
+  const ids = [cuenta.uid, ...(a.gente || []).map(g => g.id).filter(id => id !== cuenta.uid).sort((x, y) => sigo.has(y) - sigo.has(x) || activos.has(y) - activos.has(x))];
   return `<div class="historias">${ids.map(u => { const n = u === cuenta.uid ? 'Tú' : a.gente?.find(g => g.id === u)?.nombre || 'Alguien';
     return `<button class="hist${activos.has(u) ? ' activa' : ''}" data-accion="perfil" data-u="${esc(u)}">${avatar(u === cuenta.uid ? cuenta.nombre : n, u)}<span>${esc(n)}</span></button>`; }).join('')}
     <button class="hist" data-accion="pestana-explorar"><span class="ava mas">+</span><span>Buscar</span></button></div>`;
