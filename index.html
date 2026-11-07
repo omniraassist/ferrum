@@ -607,6 +607,12 @@ details.pr-d[open] summary::after{transform:rotate(180deg);margin-top:5px}
 :root[data-tema="ambar"]{--lime:#FFD79A;--lime-ink:#FFD79A;--lime-soft:rgba(255,215,154,.13);--on-lime:#2A1A06;--bg:#1A130C;--b1:rgba(128,88,44,.95);--b2:rgba(84,54,26,.95);--b3:rgba(160,110,60,.32)}
 :root[data-tema="rosa"]{--lime:#FFC2D6;--lime-ink:#FFC2D6;--lime-soft:rgba(255,194,214,.13);--on-lime:#2C0F1A;--bg:#1A0F14;--b1:rgba(128,60,88,.95);--b2:rgba(84,36,56,.95);--b3:rgba(160,84,116,.32)}
 :root[data-tema="lila"]{--lime:#DCCBFF;--lime-ink:#DCCBFF;--lime-soft:rgba(220,203,255,.13);--on-lime:#1B1230;--bg:#120F1C;--b1:rgba(88,68,140,.95);--b2:rgba(54,40,96,.95);--b3:rgba(118,96,170,.32)}
+.col-fila{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;width:100%;margin-top:8px;padding:12px 14px;border-radius:18px;background:var(--surface);text-align:left}
+.col-fila b{display:block;font-weight:700}
+.col-fila small{display:block;font-size:12px;color:var(--muted)}
+.col-mini{display:flex}
+.col-mini i{display:block;width:32px;height:44px;margin-left:-10px;border-radius:5px;background:var(--surface-2) center/cover;box-shadow:0 0 0 1.5px var(--bg)}
+.col-mini i:first-child{margin-left:0}
 .marcos{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 8px;text-align:center}
 .marco{display:grid;justify-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink)}
 .marco small{display:block;font-size:11.5px;font-weight:500;color:var(--muted)}
@@ -1033,8 +1039,8 @@ function moverIndicador() {
   n.style.setProperty('--x', t.offsetLeft + 'px'); n.style.setProperty('--w', t.offsetWidth + 'px');
 }
 function transicion() {
-  const a = state.amigos, prof = [a.perfil, a.gym, a.club, a.ejercicio, a.verAvisos, state.histSel, state.detalle].filter(Boolean).length;
-  const ahora = {vista: state.vista, prof, clave: [state.vista, a.perfil, a.gym, a.club, a.ejercicio, a.verAvisos, state.histSel, state.detalle, state.yoTab, state.recTab, a.pestana, a.comunidad].join('|')}, antes = pantalla;
+  const a = state.amigos, prof = [a.perfil, a.cartasDe, a.gym, a.club, a.ejercicio, a.verAvisos, state.histSel, state.detalle].filter(Boolean).length;
+  const ahora = {vista: state.vista, prof, clave: [state.vista, a.perfil, a.cartasDe, a.gym, a.club, a.ejercicio, a.verAvisos, state.histSel, state.detalle, state.yoTab, state.recTab, a.pestana, a.comunidad].join('|')}, antes = pantalla;
   pantalla = ahora;
   if (!antes || antes.clave === ahora.clave || quieto.matches) return;
   const dx = antes.vista !== ahora.vista ? Math.sign(TABS.indexOf(ahora.vista) - TABS.indexOf(antes.vista)) * 22 : Math.sign(ahora.prof - antes.prof) * 22;
@@ -1562,12 +1568,12 @@ function hub(titulo) {
       <button class="accion" data-vista="explorar">${icono('amigos')}Explorar</button>
     </div></section>`;
 }
-function htmlCarta(c, {copias = 0, bloqueada = false, nueva = false, accion = '', tres = false} = {}) {
+function htmlCarta(c, {copias = 0, bloqueada = false, nueva = false, accion = '', tres = false, de = '', fundas = null} = {}) {
   const num = String(CARTAS.indexOf(c) + 1).padStart(3, '0'), total = String(CARTAS.length).padStart(3, '0'), serie = serieDe(c);
   const [nota, grado] = copias >= 3 ? GRADOS.legendaria : GRADOS[c.r];
-  const fu = bloqueada ? '' : Object.entries(premiosAj().fundas).find(([t, id]) => id === c.id && ruleta().tengo.funda.has(t))?.[0];
+  const fu = bloqueada ? '' : Object.entries(fundas || premiosAj().fundas).find(([t, id]) => id === c.id && (fundas || ruleta().tengo.funda.has(t)))?.[0];
   const clases = `carta ${c.r}${fu ? ` fu-${fu}` : ''}${bloqueada ? ' bloqueada' : ''}${copias >= 3 ? ' dorada' : ''}${nueva ? ' nueva' : ''}${tres ? ' tres' : ''}`;
-  const tag = accion ? `button data-accion="${accion}" data-c="${c.id}"` : 'div';
+  const tag = accion ? `button data-accion="${accion}" data-c="${c.id}"${de ? ` data-u="${esc(de)}"` : ''}` : 'div';
   const arte = SIN_ARTE.has(c.id) ? '' : ` style="background-image:url(cartas/${c.id}.jpg)"`;
   const ataques = bloqueada ? `<span class="k-a"><span><b>Por descubrir</b><small>${esc(condicion(c))}</small></span></span>`
     : c.ataques.map(a => `<span class="k-a"><span><b>${esc(a.n)}</b><small>${esc(a.d)}</small></span><strong class="num">${a.p}</strong></span>`).join('');
@@ -1585,6 +1591,37 @@ function htmlCarta(c, {copias = 0, bloqueada = false, nueva = false, accion = ''
     </span><span class="foil"></span></span></span><span class="reflejo"></span></span>
     ${tres ? `<span class="cara dorso"><b>Ferr<i>um</i></b><small>Serie ${serie} · ${num}/${total}</small></span>
       <span class="canto i"></span><span class="canto d"></span><span class="canto s"></span><span class="canto f"></span>` : ''}</span></${tag.split(' ')[0]}>`;
+}
+const fundasPublicas = () => Object.fromEntries(Object.entries(premiosAj().fundas).filter(([t, id]) => id && ruleta().tengo.funda.has(t)).map(([t, id]) => [t, CARTAS.findIndex(c => c.id === id)]));
+/* null si esa persona aún no ha abierto una versión que comparte su colección */
+function coleccionDe(uid) {
+  if (uid === cuenta?.uid) return coleccion();
+  const col = state.amigos.gente?.find(g => g.id === uid)?.resumen?.col;
+  if (typeof col !== 'string') return null;
+  const m = new Map();
+  for (const x of col.split(',')) { const [i, n] = x.split('.').map(Number), c = CARTAS[i]; if (c && n > 0) m.set(c.id, Math.min(n, 999)); }
+  return m;
+}
+function fundasDe(uid) {
+  const fu = state.amigos.gente?.find(g => g.id === uid)?.resumen?.fu, r = {};
+  for (const [t] of OBJETOS.funda) if (CARTAS[fu?.[t]]) r[t] = CARTAS[fu[t]].id;
+  return r;
+}
+const ORDEN_RAREZA = {legendaria: 0, epica: 1, rara: 2, comun: 3};
+function filaColeccion(uid, propio) {
+  const m = coleccionDe(uid);
+  if (!m) return '';
+  const mejores = CARTAS.filter(c => m.has(c.id)).sort((x, y) => ORDEN_RAREZA[x.r] - ORDEN_RAREZA[y.r]).slice(0, 3);
+  return `<button class="col-fila" data-accion="${propio ? 'ir-coleccion' : 'ver-cartas'}" data-u="${esc(uid)}"><span class="col-mini">${mejores.map(c => `<i style="background-image:url(cartas/${c.id}.jpg)"></i>`).join('')}</span>
+    <span><b>Colección</b><small class="num">${m.size}/${CARTAS.length} cartas</small></span>${ICON_RIGHT}</button>`;
+}
+function vistaCartasDe(uid) {
+  const a = state.amigos, nombre = a.gente?.find(g => g.id === uid)?.nombre || 'Alguien', m = coleccionDe(uid) || new Map(), fundas = fundasDe(uid);
+  const cuenta_r = r => CARTAS.filter(c => c.r === r && m.has(c.id)).length;
+  return `<div class="det"><button class="back" data-accion="volver-cartas">‹ Volver</button><h1>Cartas de ${esc(nombre)}</h1></div><div style="height:14px"></div>
+    <div class="sumrow" style="margin-bottom:12px"><div><div class="label">Colección</div><div class="v num">${m.size}/${CARTAS.length}</div></div>
+    <div><div class="label">Épicas</div><div class="v num">${cuenta_r('epica')}</div></div><div><div class="label">Legendarias</div><div class="v num">${cuenta_r('legendaria')}</div></div></div>
+    <div class="cartas">${[...CARTAS].sort((x, y) => m.has(y.id) - m.has(x.id) || ORDEN_RAREZA[x.r] - ORDEN_RAREZA[y.r]).map(c => htmlCarta(c, {copias: m.get(c.id) || 0, bloqueada: !m.has(c.id), accion: 'ver-carta', de: uid, fundas})).join('')}</div>`;
 }
 function vistaColeccion() {
   const m = coleccion(), pend = sobresPendientes().length;
@@ -1705,10 +1742,10 @@ function pintarCapa() {
       <button class="apuntar" data-accion="${quedan ? 'abrir-sobre' : 'cerrar-capa'}">${quedan ? `Abrir otro (${quedan})` : 'Guardar'}</button></div>`;
     return;
   }
-  const carta = CARTAS.find(x => x.id === c.id), m = coleccion(), tiene = m.has(carta.id);
-  el.innerHTML = `<div class="capa-in">${htmlCarta(carta, {copias: m.get(carta.id) || 0, bloqueada: !tiene, tres: true})}
+  const carta = CARTAS.find(x => x.id === c.id), m = c.de ? coleccionDe(c.de) || new Map() : coleccion(), tiene = m.has(carta.id);
+  el.innerHTML = `<div class="capa-in">${htmlCarta(carta, {copias: m.get(carta.id) || 0, bloqueada: !tiene, tres: true, fundas: c.de ? fundasDe(c.de) : null})}
     <div class="capa-txt"><b>${tiene ? esc(carta.n) : 'Carta por descubrir'}</b><span>${RAREZA[carta.r]} · ${SIN_ARTE.has(carta.id) ? 'Próximamente' : esc(condicion(carta))}</span></div>
-    ${tiene && ruleta().tengo.funda.size ? `<div class="fila-p" style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px">${OBJETOS.funda.filter(o => ruleta().tengo.funda.has(o[0])).map(o => `<button class="mini" data-accion="poner-funda" data-t="${o[0]}" data-c="${carta.id}" aria-pressed="${premiosAj().fundas[o[0]] === carta.id}">${esc(o[1])}</button>`).join('')}</div>` : ''}
+    ${tiene && !c.de && ruleta().tengo.funda.size ? `<div class="fila-p" style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px">${OBJETOS.funda.filter(o => ruleta().tengo.funda.has(o[0])).map(o => `<button class="mini" data-accion="poner-funda" data-t="${o[0]}" data-c="${carta.id}" aria-pressed="${premiosAj().fundas[o[0]] === carta.id}">${esc(o[1])}</button>`).join('')}</div>` : ''}
     <button class="ghost" style="width:100%" data-accion="cerrar-capa">Cerrar</button></div>`;
 }
 
@@ -2310,7 +2347,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 49;
+const VERSION = 50;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -2362,7 +2399,7 @@ async function subirMarcas() {
   const lista = misMarcas();
   if (lista.length) await pedir('marcas?on_conflict=usuario,clave', {method: 'POST', body: lista, prefer: 'resolution=merge-duplicates,return=minimal'});
   await pedir(`marcas?usuario=eq.${cuenta.uid}${lista.length ? `&clave=not.in.(${lista.map(m => m.clave).join(',')})` : ''}`, {method: 'DELETE'});
-  await pedir(`perfiles?id=eq.${cuenta.uid}`, {method: 'PATCH', body: {resumen: {titulo: equipado('titulo'), marco: equipado('marco'), fuerza: equipado('reaccion'), racha: rachaSemanas(), nivel: progresoNivel().n, cartas: coleccion().size, objetivo: objetivoSemana(), metas: metasFuerza(), semanas: misSemanas().slice(-14), ...semanaActual()}}, prefer: 'return=minimal'});
+  await pedir(`perfiles?id=eq.${cuenta.uid}`, {method: 'PATCH', body: {resumen: {col: [...coleccion()].map(([id, n]) => `${CARTAS.findIndex(c => c.id === id)}.${n}`).join(), fu: fundasPublicas(), titulo: equipado('titulo'), marco: equipado('marco'), fuerza: equipado('reaccion'), racha: rachaSemanas(), nivel: progresoNivel().n, cartas: coleccion().size, objetivo: objetivoSemana(), metas: metasFuerza(), semanas: misSemanas().slice(-14), ...semanaActual()}}, prefer: 'return=minimal'});
 }
 const COLS_POST = 'select=*,perfiles(nombre),fuerzas(usuario),medios(id,usuario,ruta,tipo,ejercicio,serie,etiqueta),comentarios(id,usuario,texto,creado,perfiles(nombre))&comentarios.order=creado.asc';
 const oculto = uid => state.amigos.bloqueos.some(b => b.bloqueador === uid || b.bloqueado === uid);
@@ -3264,7 +3301,7 @@ function vistaPerfil(uid, propio) {
       <div><div class="label">Racha</div><div class="v num">${+a.gente?.find(x => x.id === uid)?.resumen?.racha || 0}<small style="font-size:12px;color:var(--muted)"> sem</small></div></div>
       <div><div class="label">Coronas</div><div class="v num">${lideres().coronas.filter(r => r.usuario === uid).length}</div></div>
       <div><div class="label">Leyendas</div><div class="v num">${lideres().leyendas.filter(r => r.usuario === uid).length}</div></div>
-    </div>`;
+    </div>${filaColeccion(uid, propio)}`;
   if (marcasDe.length) h += `<div class="sec-h"><h2>Mejores marcas</h2></div><div class="rows">${marcasDe.slice(0, 5).map(r => `<button class="prow rec" data-accion="ver-ranking" data-clave="${esc(r.clave)}">
     <span class="nm">${esc(r.nombre)}<span class="sub num">${fmt(r.peso)} kg × ${fmt(r.reps)}</span></span><span class="kg num">${kgRm(r)}<small>kg</small></span></button>`).join('')}</div>`;
   h += `<div class="sec-h"><h2>Sesiones</h2></div>`;
@@ -3441,6 +3478,7 @@ function usarRutina(id) {
 }
 function vistaAmigos() {
   const a = state.amigos;
+  if (a.cartasDe && cuenta?.nombre) return vistaCartasDe(a.cartasDe);
   if (a.perfil && cuenta?.nombre) return vistaPerfil(a.perfil);
   if (a.ejercicio && cuenta?.nombre) return vistaRanking(a.ejercicio);
   if (a.verAvisos && cuenta?.nombre) return vistaAvisos();
@@ -3499,7 +3537,7 @@ async function cargarYo() {
 }
 function vistaYo() {
   const a = state.amigos, t = state.yoTab;
-  if (a.perfil || a.ejercicio) return vistaAmigos();
+  if (a.perfil || a.ejercicio || a.cartasDe) return vistaAmigos();
   if (a.editando) return vistaEditarPerfil();
   const seg = `<div class="seg" style="--n:3;margin-top:14px" role="group" aria-label="Sección">${[['perfil', 'Perfil'], ['hist', 'Historial'], ['prog', 'Progreso']].map(([k, n]) => `<button data-accion="ir-yo" data-t="${k}" aria-pressed="${t === k}">${n}</button>`).join('')}</div>`;
   if (t === 'hist') return seg + vistaHistorial();
@@ -3658,7 +3696,7 @@ document.addEventListener('click', ev => {
     const antes = state.vista, misma = antes === b.dataset.vista;
     scrolls[antes] = scrollY;
     state.vista = b.dataset.vista; state.detalle = null; state.histSel = null; state.edita = null; state.salirSes = false;
-    Object.assign(state.amigos, {ejercicio: null, perfil: null, perfilPosts: null, verAvisos: false, club: null, clubPosts: null, gym: null, gymPosts: null, guardaRutina: null});
+    Object.assign(state.amigos, {ejercicio: null, perfil: null, perfilPosts: null, verAvisos: false, club: null, clubPosts: null, gym: null, gymPosts: null, guardaRutina: null, cartasDe: null});
     render(true);
     if (misma) scrollTo({top: 0, behavior: 'smooth'}); else scrollTo(0, scrolls[state.vista] || 0);
     if (state.vista !== 'entreno' && state.vista !== 'records' && nubeLista()) cargarAmigos();
@@ -3795,8 +3833,10 @@ document.addEventListener('click', ev => {
     case 'compartir-sesion': compartirSesion(b.dataset.id); break;
     case 'rec-tab': state.recTab = b.dataset.t; state.detalle = null; render(true); break;
     case 'abrir-sobre': { const id = sobresPendientes()[0]; if (id) { state.capa = {tipo: 'sobre', id}; pintarCapa(); } break; }
-    case 'rasgar-sobre': marcarSobre(state.capa.id); state.capa.abierto = true; pintarCapa(); break;
-    case 'ver-carta': state.capa = {tipo: 'carta', id: b.dataset.c}; pintarCapa(); break;
+    case 'rasgar-sobre': marcarSobre(state.capa.id); state.capa.abierto = true; pintarCapa(); if (nubeLista()) subirMarcas().catch(() => {}); break;
+    case 'ver-carta': state.capa = {tipo: 'carta', id: b.dataset.c, de: b.dataset.u}; pintarCapa(); break;
+    case 'ver-cartas': state.amigos.cartasDe = b.dataset.u; render(true); scrollTo(0, 0); break;
+    case 'volver-cartas': state.amigos.cartasDe = null; render(true); scrollTo(0, 0); break;
     case 'cerrar-capa': state.capa = null; pintarCapa(); render(true); break;
     case 'objetivo': ls.set('fr_objetivo', +b.dataset.n); render(true); if (nubeLista() && cuenta?.nombre) subirMarcas().catch(() => {}); break;
     case 'quitar-meta': ls.set('fr_metas', metasFuerza().filter((_, i) => i !== +b.dataset.i)); render(true); break;
