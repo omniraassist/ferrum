@@ -613,6 +613,14 @@ details.pr-d[open] summary::after{transform:rotate(180deg);margin-top:5px}
 .col-mini{display:flex}
 .col-mini i{display:block;width:32px;height:44px;margin-left:-10px;border-radius:5px;background:var(--surface-2) center/cover;box-shadow:0 0 0 1.5px var(--bg)}
 .col-mini i:first-child{margin-left:0}
+#arranque{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:radial-gradient(circle at 50% 50%,rgba(221,243,162,.13),transparent 46%),#0E1A11;pointer-events:none;animation:arranque-fin .42s ease-in 1.2s forwards}
+#arranque b{display:flex;font:italic 400 68px/1.1 var(--f-serif);color:#DDF3A2}
+#arranque i{font-style:inherit;animation:arranque-f .75s cubic-bezier(.22,1,.36,1) both}
+#arranque span{max-width:0;padding-right:.12em;overflow:hidden;opacity:0;animation:arranque-w .62s cubic-bezier(.22,1,.36,1) .42s forwards}
+@keyframes arranque-f{from{opacity:0;transform:scale(.68);filter:blur(10px)}}
+@keyframes arranque-w{to{max-width:3.4em;opacity:1}}
+@keyframes arranque-fin{to{opacity:0;visibility:hidden}}
+@media (prefers-reduced-motion: reduce){#arranque{display:none}}
 .marcos{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 8px;text-align:center}
 .marco{display:grid;justify-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink)}
 .marco small{display:block;font-size:11.5px;font-weight:500;color:var(--muted)}
@@ -847,6 +855,7 @@ details.mas[open] > div,details.pr-d[open] > .pr{animation:baja .28s cubic-bezie
 </style>
 </head>
 <body>
+<div id="arranque" aria-hidden="true"><b><i>F</i><span>errum</span></b></div>
 <div id="bruma" aria-hidden="true"><i></i><i></i><i></i></div>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <linearGradient id="eg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#C9D6BF"/><stop offset="1" stop-color="#7F9675"/></linearGradient>
@@ -1378,11 +1387,27 @@ const CARTAS = [
   {id: 'anillas', tipo: 'Tirón', fz: 115, ataques: [{n: 'Cruz', d: 'Se sostiene en el aire.', p: 55}, {n: 'Haz de luz', d: 'Ilumina tu mejor repetición.', p: 80}], debil: 'Hombros', resiste: 'Vértigo', t: 'Luz', n: 'Anillas de Luz', r: 'rara', lema: 'Aquí no hay dónde esconderse.', c: '30 sesiones', ok: e => e.ses >= 30},
   {id: 'cuerdas', tipo: 'Core', fz: 125, ataques: [{n: 'Oleaje', d: 'Sacude a todo el equipo.', p: 60}, {n: 'Latigazo', d: 'Devuelve el golpe doblado.', p: 90}], debil: 'Pulmones', resiste: 'Pereza', t: 'Batalla', n: 'Cuerdas de Batalla', r: 'rara', lema: 'Treinta segundos eternos.', c: '6 semanas seguidas', ok: e => e.racha >= 6},
   {id: 'zancada', tipo: 'Pierna', fz: 190, ataques: [{n: 'Zancada', d: 'Cada paso abre el suelo.', p: 115}, {n: 'Onda sísmica', d: 'Derriba a toda la sala.', p: 150}], debil: 'Escaleras', resiste: 'Terremotos', t: 'Sísmica', n: 'Zancada Sísmica', r: 'epica', lema: 'Se oye antes de verse.', c: '500 toneladas', ok: e => e.vol >= 5e5},
+  {id: 'botella', tipo: 'Core', fz: 50, ataques: [{n: 'Trago', d: 'Recupera entre series.', p: 20}, {n: 'Hidratación', d: 'Aguanta una serie más.', p: 30}], debil: 'Tapones', resiste: 'Calor', t: 'Eterna', n: 'Botella Eterna', r: 'comun', lema: 'Siempre medio llena.', c: '4 sesiones', ok: e => e.ses >= 4},
+  {id: 'rodillo', tipo: 'Core', fz: 55, ataques: [{n: 'Descarga', d: 'Afloja lo que ayer dolió.', p: 25}, {n: 'Punto exacto', d: 'Encuentra la contractura.', p: 35}], debil: 'Gemelos', resiste: 'Agujetas', t: 'Espuma', n: 'Rodillo de Espuma', r: 'comun', lema: 'Duele, pero mañana lo agradeces.', c: '8 sesiones', ok: e => e.ses >= 8},
+  {id: 'guantes', tipo: 'Tirón', fz: 65, ataques: [{n: 'Agarre viejo', d: 'Conoce cada barra.', p: 30}, {n: 'Callo', d: 'Ya no siente el hierro.', p: 40}], debil: 'Costuras', resiste: 'Roces', t: 'Gastados', n: 'Guantes Gastados', r: 'comun', lema: 'Cada agujero es una historia.', c: '150 series', ok: e => e.series >= 150},
+  {id: 'libreta', tipo: 'Fuerza', fz: 60, ataques: [{n: 'Apuntar', d: 'Lo que no se apunta no existe.', p: 25}, {n: 'Marca anterior', d: 'Recuerda lo que hay que batir.', p: 35}], debil: 'Lápices', resiste: 'Olvido', t: 'Marcas', n: 'Libreta de Marcas', r: 'comun', lema: 'Aquí empiezan los récords.', c: '7 récords', ok: e => e.recs >= 7},
+  {id: 'chaleco', tipo: 'Fuerza', fz: 135, ataques: [{n: 'Lastre', d: 'Suma peso a cada paso.', p: 65}, {n: 'Carga eléctrica', d: 'Sube la dificultad del rival.', p: 95}], debil: 'Calor', resiste: 'Gravedad', t: 'Lastre', n: 'Chaleco Lastrado', r: 'rara', lema: 'Quitártelo se siente como volar.', c: '40 sesiones', ok: e => e.ses >= 40},
+  {id: 'cajon', tipo: 'Pierna', fz: 120, ataques: [{n: 'Salto', d: 'Sube sin tocar el borde.', p: 60}, {n: 'Onda azul', d: 'Sacude el suelo al caer.', p: 85}], debil: 'Espinillas', resiste: 'Vértigo', t: 'Pliometría', n: 'Cajón Pliométrico', r: 'rara', lema: 'Siempre parece más alto.', c: '10 semanas seguidas', ok: e => e.racha >= 10},
+  {id: 'balon', tipo: 'Core', fz: 115, ataques: [{n: 'Lanzamiento', d: 'Golpea el suelo con todo.', p: 55}, {n: 'Grieta', d: 'Rompe la defensa del rival.', p: 85}], debil: 'Techos', resiste: 'Golpes', t: 'Impacto', n: 'Balón de Impacto', r: 'rara', lema: 'Lo que cae, retumba.', c: '50 toneladas', ok: e => e.vol >= 5e4},
+  {id: 'bandas', tipo: 'Empuje', fz: 110, ataques: [{n: 'Tensión', d: 'Cuanto más tiras, más duro.', p: 55}, {n: 'Rebote', d: 'Devuelve la fuerza recibida.', p: 80}], debil: 'Tijeras', resiste: 'Cansancio', t: 'Tensión', n: 'Bandas de Tensión', r: 'rara', lema: 'Nunca dejan de tirar.', c: '20 récords', ok: e => e.recs >= 20},
+  {id: 'banca', tipo: 'Empuje', fz: 195, ataques: [{n: 'Press al vacío', d: 'Empuja sobre la nada.', p: 120}, {n: 'Barra doblada', d: 'Aguanta lo que otros no.', p: 155}], debil: 'Hombros', resiste: 'Abismo', t: 'Abismo', n: 'Banca del Abismo', r: 'epica', lema: 'Abajo no hay nada. Arriba, tu marca.', c: '40 récords', ok: e => e.recs >= 40},
+  {id: 'curl', tipo: 'Empuje', fz: 170, ataques: [{n: 'Curl furioso', d: 'La vena lo dice todo.', p: 105}, {n: 'Bombeo', d: 'Crece en cada repetición.', p: 135}], debil: 'Espejos', resiste: 'Calma', t: 'Furia', n: 'Curl de la Furia', r: 'epica', lema: 'Nadie hace curl tan enfadado.', c: 'Gana 3 duelos', ok: e => e.ganados >= 3},
+  {id: 'remo', tipo: 'Tirón', fz: 180, ataques: [{n: 'Remo pesado', d: 'Arrastra la barra hacia ti.', p: 110}, {n: 'Espalda de titán', d: 'Se ensancha al golpear.', p: 145}], debil: 'Lumbares', resiste: 'Tirones', t: 'Titán', n: 'Remo Titánico', r: 'epica', lema: 'La espalda se construye aquí.', c: '750 toneladas', ok: e => e.vol >= 75e4},
+  {id: 'hip-thrust', tipo: 'Pierna', fz: 175, ataques: [{n: 'Empuje de cadera', d: 'Levanta la sala entera.', p: 105}, {n: 'Magma', d: 'El suelo se abre debajo.', p: 140}], debil: 'Bancos', resiste: 'Toneladas', t: 'Volcán', n: 'Hip Thrust Volcánico', r: 'epica', lema: 'Doce semanas de lava.', c: '12 semanas seguidas', ok: e => e.racha >= 12},
+  {id: 'fondos', tipo: 'Empuje', fz: 165, ataques: [{n: 'Fondo', d: 'Baja hasta donde no hay fondo.', p: 100}, {n: 'Vacío', d: 'Flota entre paralelas.', p: 130}], debil: 'Codos', resiste: 'Vacío', t: 'Vacío', n: 'Fondos del Vacío', r: 'epica', lema: 'Sin suelo, sin excusas.', c: '60 sesiones', ok: e => e.ses >= 60},
+  {id: 'martillo', tipo: 'Fuerza', fz: 235, ataques: [{n: 'Mazazo', d: 'Parte lo que nadie mueve.', p: 150}, {n: 'Rueda gigante', d: 'Aplasta a todos los rivales.', p: 215}], debil: 'Ninguna', resiste: 'Rocas', t: 'Gigante', n: 'Martillo del Gigante', r: 'legendaria', lema: 'Veinte duelos forjaron su mango.', c: 'Gana 20 duelos', ok: e => e.ganados >= 20},
+  {id: 'templo', tipo: 'Fuerza', fz: 255, ataques: [{n: 'Peregrinaje', d: 'Vuelve cada semana sin falta.', p: 170}, {n: 'Columna de discos', d: 'Sostiene toda tu racha.', p: 235}], debil: 'Ninguna', resiste: 'Tiempo', t: 'Templo', n: 'Templo del Hierro', r: 'legendaria', lema: 'Medio año sin faltar a misa.', c: '26 semanas seguidas', ok: e => e.racha >= 26},
+  {id: 'atlas', tipo: 'Fuerza', fz: 250, ataques: [{n: 'Carga al hombro', d: 'Sube la piedra a la cima.', p: 165}, {n: 'Peso del mundo', d: 'Nada pesa más.', p: 230}], debil: 'Ninguna', resiste: 'Todo', t: 'Atlas', n: 'Piedra de Atlas', r: 'legendaria', lema: 'Dos mil toneladas después.', c: '2.000 toneladas', ok: e => e.vol >= 2e6},
 ];
 /* cuántas cartas había en cada serie: un sobre ya abierto se resuelve solo entre las de su serie, para que nadie pierda sus cartas */
-const CORTES = [12, 24, 32];
+const CORTES = [12, 24, 32, 48];
 /* desde cuándo cuenta lo entrenado para ganar cada serie: una carta nueva nunca aparece ya conseguida */
-const ESTRENOS = ['', '2026-11-07', '2026-11-07'];
+const ESTRENOS = ['', '2026-11-07', '2026-11-07', '2026-11-08'];
 const serieDe = c => CORTES.findIndex(n => CARTAS.indexOf(c) < n) + 1;
 const estrenoDe = c => ESTRENOS[serieDe(c) - 1];
 const condicion = c => estrenoDe(c) ? `${c.c} desde el ${fechaCorta(estrenoDe(c))}` : c.c;
@@ -2348,7 +2373,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 52;
+const VERSION = 53;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -3688,6 +3713,9 @@ function apuntar(form) {
 }
 
 const scrolls = {};
+/* el logo solo sale al abrir la app, no en las recargas por actualización */
+try { if (sessionStorage.fr_abierta) $('#arranque').remove(); sessionStorage.fr_abierta = 1; } catch {}
+setTimeout(() => $('#arranque')?.remove(), 1800);
 addEventListener('resize', moverIndicador);
 document.addEventListener('touchstart', () => {}, {passive: true}); /* sin esto iOS no pinta :active */
 document.addEventListener('click', ev => {
