@@ -2033,7 +2033,8 @@ function vistaSesion(id) {
     h += `</div></div>`;
   }
   h += `<div class="foot-actions">
-    <button class="apuntar" data-accion="replicar-sesion" data-id="${esc(s.id)}">Replicar sesión</button>
+    ${nubeLista() ? (s.publicada ? `<button class="finbtn" style="margin:0" data-accion="despublicar-hist" data-id="${esc(s.id)}">Publicada · toca para quitarla</button>` : `<button class="apuntar" data-accion="publicar-hist" data-id="${esc(s.id)}">Publicar en el feed</button>`) : ''}
+    <button class="${nubeLista() && !s.publicada ? 'ghost' : 'apuntar'}" data-accion="replicar-sesion" data-id="${esc(s.id)}">Replicar sesión</button>
     <button class="ghost" data-accion="compartir-sesion" data-id="${esc(s.id)}">Compartir tarjeta</button>
     ${nubeLista() && state.amigos.clubsOk ? (state.amigos.guardaRutina === s.id
       ? `<form class="crear" data-form="rutina" data-id="${esc(s.id)}" style="margin:0"><input name="nombre" maxlength="60" value="${esc(s.titulo)}" autocomplete="off" aria-label="Nombre de la rutina"><button type="submit">Guardar</button></form>`
@@ -2347,7 +2348,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 50;
+const VERSION = 51;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -3795,6 +3796,11 @@ document.addEventListener('click', ev => {
       break;
     }
     case 'publicar': publicar(ses); break;
+    case 'publicar-hist': case 'despublicar-hist': {
+      const s = clone(state.sesiones.find(x => x.id === b.dataset.id));
+      (acc === 'publicar-hist' ? publicar(s) : despublicar(s)).then(() => { if (state.actual?.id === s.id) state.actual = clone(s); });
+      break;
+    }
     case 'despublicar': despublicar(ses); break;
     case 'compartir-app': compartirApp(); break;
     case 'pestana-amigos': state.amigos.pestana = b.dataset.p; render(true); if (!state.amigos.feed) cargarAmigos(); break;
