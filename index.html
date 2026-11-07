@@ -1610,7 +1610,7 @@ function fundasDe(uid) {
 const ORDEN_RAREZA = {legendaria: 0, epica: 1, rara: 2, comun: 3};
 function filaColeccion(uid, propio) {
   const m = coleccionDe(uid);
-  if (!m) return '';
+  if (!m) return `<div class="col-fila" style="grid-template-columns:1fr"><span><b>Colección</b><small>Se verá cuando abra Ferrum con la última versión.</small></span></div>`;
   const mejores = CARTAS.filter(c => m.has(c.id)).sort((x, y) => ORDEN_RAREZA[x.r] - ORDEN_RAREZA[y.r]).slice(0, 3);
   return `<button class="col-fila" data-accion="${propio ? 'ir-coleccion' : 'ver-cartas'}" data-u="${esc(uid)}"><span class="col-mini">${mejores.map(c => `<i style="background-image:url(cartas/${c.id}.jpg)"></i>`).join('')}</span>
     <span><b>Colección</b><small class="num">${m.size}/${CARTAS.length} cartas</small></span>${ICON_RIGHT}</button>`;
@@ -2348,7 +2348,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 51;
+const VERSION = 52;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
