@@ -2293,7 +2293,7 @@ function vistaRecords() {
   if (bloques.length > 1) h += `<div class="filters"><button class="gchip sm" data-accion="filtro-rec" data-g="" aria-pressed="${!state.filtroRec}">Todos</button>${bloques.filter(g => g.id).map(g => `<button class="gchip sm" data-accion="filtro-rec" data-g="${g.id}" aria-pressed="${state.filtroRec === g.id}">${g.n}</button>`).join('')}</div>`;
   for (const g of bloques) {
     if (state.filtroRec && g.id !== state.filtroRec) continue;
-    const filas = g.lista.map(c => ({c, m: marcas(c.clave)})).sort((a, b) => b.m.max.peso - a.m.max.peso);
+    const filas = g.lista.map(c => ({c, m: marcas(c.clave)})).filter(x => x.m).sort((a, b) => b.m.max.peso - a.m.max.peso);
     h += `<div class="month"><span class="label">${esc(g.n)}</span></div><div class="rows">${filas.map(({c, m}) => `<button class="prow rec" data-accion="detalle" data-clave="${esc(c.clave)}">
       <span class="nm">${esc(c.nombre)}<span class="sub num">${m.max.peso ? `1RM est. ${fmt(Math.round(m.rm.v * 2) / 2)} kg · ` : ''}${fechaCorta(m.max.fecha)}</span></span>
       <span class="kg num">${m.max.peso ? `${fmt(m.max.peso)}<small>kg × ${fmt(m.max.reps)}</small>` : `${fmt(m.max.reps)}<small>reps</small>`}</span>
@@ -2305,7 +2305,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 47;
+const VERSION = 48;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -2343,8 +2343,8 @@ const claveRanking = n => (tokens(n).join('-') || claveDe(n)).slice(0, 80);
 function misMarcas() {
   const mapa = new Map(), desde = sumarDias(hoy, -89);
   for (const c of catalogo().values()) {
-    const {rm} = marcas(c.clave);
-    if (!rm.v || rm.peso > 1000 || rm.reps > 200) continue;
+    const rm = marcas(c.clave)?.rm;
+    if (!rm?.v || rm.peso > 1000 || rm.reps > 200) continue;
     const clave = claveRanking(c.nombre), previa = mapa.get(clave);
     const series90 = (previa?.series90 || 0) + c.hist.filter(h => h.fecha >= desde).reduce((a, h) => a + h.sets.length, 0);
     if (previa?.rm >= rm.v) previa.series90 = series90;
@@ -2376,7 +2376,7 @@ async function cargarAmigos() {
   if (!cuenta?.nombre || a.cargando) return;
   a.cargando = true; a.error = ''; render();
   try {
-    await subirMarcas();
+    await subirMarcas().catch(e => console.error('marcas', e));
     [a.seg, a.marcas, a.gente] = await Promise.all([
       pedir('seguimientos?select=seguidor,seguido&limit=5000'),
       pedir('marcas?select=*,perfiles(nombre)&order=rm.desc&limit=2000'),
@@ -2403,7 +2403,7 @@ async function cargarAmigos() {
       ocultarBloqueados();
     }
     await cargarAvisos();
-  } catch { a.error = 'No he podido conectar. Revisa tu conexión.'; }
+  } catch (e) { a.error = e instanceof TypeError && /fetch|load|network/i.test(e.message) ? 'No he podido conectar. Revisa tu conexión.' : `Algo ha fallado al cargar. Mándale esto a Xavi: ${e.code || ''} ${e.message}`; }
   a.cargando = false; render();
 }
 async function cargarAvisos() {
@@ -2499,7 +2499,7 @@ async function publicar(ses, callado) {
   try {
     await pedir('publicaciones?on_conflict=usuario,sesion', {method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal',
       body: {usuario: cuenta.uid, sesion: ses.id, fecha: ses.fecha, titulo: ses.titulo, datos: datosPublicacion(ses)}});
-    await subirMarcas();
+    await subirMarcas().catch(e => console.error('marcas', e));
     state.amigos.feed = null;
     if (!ses.publicada) { ses.publicada = true; guardarSesion(ses); render(true); }
     if (!callado) toast(ruleta().pendiente ? 'Publicada · giro extra' : 'Publicada', ses.titulo);
