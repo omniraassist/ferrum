@@ -426,7 +426,7 @@ button.set-chip.vacia{box-shadow:inset 0 0 0 1px var(--line-2)}
 @keyframes balanceo{0%,100%{transform:rotateY(-16deg) rotateX(3deg)}50%{transform:rotateY(16deg) rotateX(-2deg)}}
 @keyframes giro3d{from{transform:translateZ(-340px) rotateY(-780deg) rotateX(14deg)}to{transform:rotateY(-16deg) rotateX(3deg)}}
 @keyframes corre{from{background-position:0% 10%}to{background-position:100% 90%}}
-#capa{position:fixed;inset:0;z-index:40;display:none;place-items:center;padding:24px;background:rgba(6,6,8,.93);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+#capa{position:fixed;inset:0;z-index:40;display:none;place-items:center;padding:24px;background:rgba(6,9,7,.96)}
 #capa.on{display:grid}
 .capa-in{width:min(300px,78vw);display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center}
 .capa-in{perspective:1100px}
@@ -613,14 +613,22 @@ details.pr-d[open] summary::after{transform:rotate(180deg);margin-top:5px}
 .col-mini{display:flex}
 .col-mini i{display:block;width:32px;height:44px;margin-left:-10px;border-radius:5px;background:var(--surface-2) center/cover;box-shadow:0 0 0 1.5px var(--bg)}
 .col-mini i:first-child{margin-left:0}
-#arranque{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:radial-gradient(circle at 50% 50%,rgba(221,243,162,.13),transparent 46%),#0E1A11;pointer-events:none;animation:arranque-fin .42s ease-in 1.2s forwards}
-#arranque b{display:flex;font:italic 400 68px/1.1 var(--f-serif);color:#DDF3A2}
-#arranque i{font-style:inherit;animation:arranque-f .75s cubic-bezier(.22,1,.36,1) both}
-#arranque span{max-width:0;padding-right:.12em;overflow:hidden;opacity:0;animation:arranque-w .62s cubic-bezier(.22,1,.36,1) .42s forwards}
-@keyframes arranque-f{from{opacity:0;transform:scale(.68);filter:blur(10px)}}
-@keyframes arranque-w{to{max-width:3.4em;opacity:1}}
+#arranque{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:radial-gradient(circle at 50% 50%,rgba(221,243,162,.12),transparent 46%),#0E1A11;pointer-events:none;will-change:opacity;animation:arranque-fin .5s cubic-bezier(.4,0,.2,1) 1.35s forwards}
+#arranque b{display:flex;align-items:flex-end;font-size:58px;line-height:1;will-change:transform,opacity;animation:arranque-sale .5s cubic-bezier(.4,0,.2,1) 1.35s forwards}
+#arranque svg{flex:none;overflow:visible;fill:#DDF3A2;will-change:transform,opacity;animation:arranque-l .62s cubic-bezier(.16,1,.3,1) calc(.3s + var(--i) * 55ms) both}
+#arranque svg:first-child{margin-left:-.38em!important;transform-origin:50% 60%;animation:arranque-f .85s cubic-bezier(.16,1,.3,1) .04s both}
+@keyframes arranque-f{from{opacity:0;transform:scale(.62) translate3d(0,10px,0)}}
+@keyframes arranque-l{from{opacity:0;transform:translate3d(-16px,0,0)}}
+@keyframes arranque-sale{to{opacity:0;transform:scale(1.07)}}
 @keyframes arranque-fin{to{opacity:0;visibility:hidden}}
 @media (prefers-reduced-motion: reduce){#arranque{display:none}}
+.post .ava::after,.rows .ava::after,.hist .ava::after{filter:none}
+.post{content-visibility:auto;contain-intrinsic-size:auto 320px}
+.srow-w{content-visibility:auto;contain-intrinsic-size:auto 92px}
+.cartas .carta{content-visibility:auto;contain-intrinsic-size:auto 270px;overflow-clip-margin:12px}
+.cartas .copias{top:1%}
+.esq{height:176px;animation:esq 1s ease-in-out infinite alternate}
+@keyframes esq{from{opacity:.45}to{opacity:.9}}
 .marcos{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 8px;text-align:center}
 .marco{display:grid;justify-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink)}
 .marco small{display:block;font-size:11.5px;font-weight:500;color:var(--muted)}
@@ -783,7 +791,7 @@ h2,.card-h h2,.next h2,.sec-h h2{font-family:var(--f-serif);font-style:italic;fo
 .hub-h .label{color:var(--muted)}
 .hub .datepill{background:var(--surface);color:var(--ink)}
 .hub h1{margin:14px 0 14px;font-weight:600}
-.hub-in{background:var(--surface);border-radius:20px;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.hub-in{background:var(--surface);border-radius:20px}
 .hub-n small,.hub .hub-msg{color:var(--muted)}
 .hub .barra{background:var(--line)}.hub .barra i{background:var(--lime)}
 .hub .ring circle:first-child{stroke:var(--line)}.hub .ring circle:last-child{stroke:var(--lime)}
@@ -821,7 +829,7 @@ h2,.card-h h2,.next h2,.sec-h h2{font-family:var(--f-serif);font-style:italic;fo
 .logger .step{background:var(--surface);border-radius:18px}
 .step-row button{background:var(--surface-2)}
 /* barra inferior discreta */
-.tabbar{border-radius:22px;background:rgba(14,26,17,.72);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);box-shadow:inset 0 0 0 1px var(--line)}
+.tabbar{border-radius:22px;background:rgba(15,27,18,.95);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:inset 0 0 0 1px var(--line)}
 .tab{position:relative;z-index:1;flex:1;flex-direction:column;gap:3px;min-height:52px;border-radius:16px;background:none!important;color:rgba(236,246,207,.55);font-size:10.5px;font-weight:600;transition:color .25s,transform .18s cubic-bezier(.3,1.4,.4,1)}
 .tab:active{transform:scale(.9)}
 .tab[aria-pressed="true"]{flex:1;padding:0;font-size:10.5px;font-weight:600;color:var(--ink)}
@@ -855,7 +863,7 @@ details.mas[open] > div,details.pr-d[open] > .pr{animation:baja .28s cubic-bezie
 </style>
 </head>
 <body>
-<div id="arranque" aria-hidden="true"><b><i>F</i><span>errum</span></b></div>
+<div id="arranque" aria-hidden="true"><b><svg style="--i:0;margin-right:-0.481em;margin-left:0" width="1.045em" height="1em" viewBox="-156 -720 762 729"><path d="M-22 0Q-36 0 -36 -10Q-36 -21 -16 -24L4 -27Q26 -30 34 -38Q43 -45 47 -66L183 -654Q188 -675 183 -682Q178 -689 158 -693L138 -697Q125 -700 125 -708Q125 -720 143 -720H465Q490 -720 485 -697L455 -531Q452 -514 439 -514Q425 -514 427 -527L429 -562Q434 -631 407 -663Q380 -695 338 -695Q295 -695 275 -681Q255 -667 248 -638L194 -402Q191 -388 205 -388H242Q285 -388 306 -435L329 -484Q332 -490 335 -494Q338 -497 344 -497Q349 -497 353 -492Q357 -488 355 -480L303 -257Q298 -240 287 -240Q275 -240 275 -253V-301Q275 -336 266 -347Q257 -358 234 -358H198Q183 -358 180 -344L116 -71Q111 -50 116 -42Q121 -33 141 -30L194 -23Q206 -22 206 -12Q206 0 189 0Z"/></svg><svg style="--i:1;margin-right:-0.342em;margin-left:0" width="0.819em" height="1em" viewBox="-120 -720 597 729"><path d="M129 9Q76 9 44 -32Q12 -74 12 -150Q12 -216 36 -281Q59 -346 97 -399Q135 -452 180 -484Q226 -516 269 -516Q316 -516 336 -494Q357 -471 357 -433Q357 -388 326 -344Q294 -299 238 -264Q181 -229 105 -212Q83 -207 82 -187Q81 -180 81 -172Q81 -165 81 -158Q81 -101 100 -72Q120 -43 154 -43Q192 -43 228 -78Q263 -113 287 -177Q290 -186 299 -186Q305 -186 306 -181Q308 -176 306 -169Q274 -81 228 -36Q183 9 129 9ZM92 -250Q90 -243 94 -238Q99 -234 106 -236Q168 -253 210 -288Q252 -322 274 -365Q295 -408 295 -449Q295 -491 262 -491Q233 -491 199 -457Q165 -423 136 -368Q107 -313 92 -250Z"/></svg><svg style="--i:2;margin-right:-0.379em;margin-left:0" width="0.883em" height="1em" viewBox="-120 -720 644 729"><path d="M64 0Q50 0 53 -13L148 -412Q153 -434 150 -446Q146 -459 131 -459Q113 -459 92 -432Q70 -406 43 -332Q39 -319 29 -319Q14 -319 21 -337Q43 -406 68 -445Q92 -484 117 -500Q142 -516 163 -516Q196 -516 210 -492Q224 -467 211 -411L200 -364Q199 -357 203 -356Q207 -355 210 -361Q248 -448 279 -482Q310 -516 350 -516Q377 -516 390 -502Q404 -487 404 -462Q404 -437 392 -422Q380 -407 361 -407Q345 -407 338 -415Q331 -423 328 -434Q324 -444 320 -452Q316 -460 307 -460Q292 -460 268 -422Q244 -384 216 -320Q189 -255 164 -175Q138 -95 119 -11Q116 0 105 0Z"/></svg><svg style="--i:3;margin-right:-0.379em;margin-left:0" width="0.883em" height="1em" viewBox="-120 -720 644 729"><path d="M64 0Q50 0 53 -13L148 -412Q153 -434 150 -446Q146 -459 131 -459Q113 -459 92 -432Q70 -406 43 -332Q39 -319 29 -319Q14 -319 21 -337Q43 -406 68 -445Q92 -484 117 -500Q142 -516 163 -516Q196 -516 210 -492Q224 -467 211 -411L200 -364Q199 -357 203 -356Q207 -355 210 -361Q248 -448 279 -482Q310 -516 350 -516Q377 -516 390 -502Q404 -487 404 -462Q404 -437 392 -422Q380 -407 361 -407Q345 -407 338 -415Q331 -423 328 -434Q324 -444 320 -452Q316 -460 307 -460Q292 -460 268 -422Q244 -384 216 -320Q189 -255 164 -175Q138 -95 119 -11Q116 0 105 0Z"/></svg><svg style="--i:4;margin-right:-0.329em;margin-left:0" width="1.026em" height="1em" viewBox="-120 -720 748 729"><path d="M115 9Q78 9 64 -24Q51 -58 66 -113L145 -403Q153 -432 149 -448Q145 -464 131 -464Q108 -464 84 -429Q61 -394 44 -332Q41 -321 31 -321Q17 -321 22 -341Q45 -425 82 -470Q120 -516 165 -516Q201 -516 213 -483Q225 -450 209 -393L129 -103Q110 -34 142 -34Q162 -34 188 -61Q214 -88 242 -135Q271 -182 299 -242Q327 -302 350 -368Q373 -434 388 -499Q391 -510 402 -510H442Q456 -510 453 -497L359 -95Q348 -48 376 -48Q418 -48 464 -175Q468 -188 478 -188Q484 -188 486 -183Q489 -178 486 -170Q459 -85 422 -38Q385 9 344 9Q272 9 296 -96L322 -207Q324 -214 320 -215Q315 -216 312 -210Q254 -90 205 -40Q156 9 115 9Z"/></svg><svg style="--i:5;margin-right:-0.329em;margin-left:0" width="1.351em" height="1em" viewBox="-120 -720 985 729"><path d="M591 9Q555 9 537 -21Q519 -51 535 -114L612 -404Q623 -443 616 -458Q608 -473 594 -473Q574 -473 548 -446Q522 -418 494 -371Q465 -324 438 -264Q411 -204 388 -139Q365 -74 350 -11Q347 0 336 0H297Q283 0 286 -13L378 -404Q387 -443 380 -458Q374 -473 360 -473Q341 -473 315 -446Q289 -418 261 -371Q233 -324 206 -264Q179 -204 156 -139Q133 -74 119 -11Q116 0 105 0H64Q50 0 53 -13L148 -412Q153 -434 150 -446Q146 -459 131 -459Q113 -459 92 -432Q70 -406 43 -332Q39 -319 29 -319Q14 -319 21 -337Q43 -406 68 -445Q92 -484 117 -500Q142 -516 163 -516Q196 -516 210 -492Q224 -467 211 -411L186 -303Q185 -296 189 -295Q193 -294 196 -300Q254 -420 301 -468Q348 -516 387 -516Q424 -516 440 -486Q455 -456 441 -394L420 -303Q419 -296 423 -295Q427 -294 430 -300Q468 -381 502 -428Q535 -476 565 -496Q595 -516 621 -516Q658 -516 675 -486Q692 -456 675 -394L599 -104Q592 -76 598 -62Q604 -48 620 -48Q640 -48 660 -74Q679 -101 700 -175Q703 -186 713 -186Q721 -186 722 -180Q724 -174 722 -166Q703 -98 681 -60Q659 -21 636 -6Q614 9 591 9Z"/></svg></b></div>
 <div id="bruma" aria-hidden="true"><i></i><i></i><i></i></div>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <linearGradient id="eg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#C9D6BF"/><stop offset="1" stop-color="#7F9675"/></linearGradient>
@@ -1047,9 +1055,39 @@ function moverIndicador() {
   const t = $('#tab-' + state.vista), n = $('.tabbar');
   n.style.setProperty('--x', t.offsetLeft + 'px'); n.style.setProperty('--w', t.offsetWidth + 'px');
 }
-function transicion() {
+/* pasa a `viejo` lo que cambia en `nuevo` sin rehacer el resto: las fotos no parpadean y los vídeos no se reinician */
+function morfar(viejo, nuevo) {
+  const a = [...viejo.childNodes], b = [...nuevo.childNodes];
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    const x = a[i], y = b[i];
+    if (!x) { viejo.append(y); continue; }
+    if (!y) { x.remove(); continue; }
+    if (x.nodeType !== y.nodeType || x.nodeName !== y.nodeName || x.id !== y.id || x.dataset?.id !== y.dataset?.id) { x.replaceWith(y); continue; }
+    if (x.nodeType === 3) { if (x.data !== y.data) x.data = y.data; continue; }
+    if (x.nodeType !== 1) continue;
+    for (const n of x.getAttributeNames()) if (!y.hasAttribute(n) && !(n === 'open' && x.nodeName === 'DETAILS')) x.removeAttribute(n);
+    for (const n of y.getAttributeNames()) if (x.getAttribute(n) !== y.getAttribute(n)) x.setAttribute(n, y.getAttribute(n));
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(x.nodeName)) {
+      if (x !== document.activeElement && x.type !== 'file') { if (x.value !== y.value) x.value = y.value; x.checked = y.checked; }
+      if (x.nodeName !== 'SELECT') continue;
+    }
+    morfar(x, y);
+  }
+}
+function pintarPantalla(html, misma) {
+  const main = $('#main');
+  if (!misma) { main.innerHTML = html; return; }
+  const t = document.createElement('div');
+  t.innerHTML = html;
+  morfar(main, t);
+}
+function datosPantalla() {
   const a = state.amigos, prof = [a.perfil, a.cartasDe, a.gym, a.club, a.ejercicio, a.verAvisos, state.histSel, state.detalle].filter(Boolean).length;
-  const ahora = {vista: state.vista, prof, clave: [state.vista, a.perfil, a.cartasDe, a.gym, a.club, a.ejercicio, a.verAvisos, state.histSel, state.detalle, state.yoTab, state.recTab, a.pestana, a.comunidad].join('|')}, antes = pantalla;
+  const ahora = {vista: state.vista, prof, clave: [state.vista, a.perfil, a.cartasDe, a.gym, a.club, a.ejercicio, a.verAvisos, state.histSel, state.detalle, state.yoTab, state.recTab, a.pestana, a.comunidad].join('|')};
+  return ahora;
+}
+function transicion(ahora) {
+  const antes = pantalla;
   pantalla = ahora;
   if (!antes || antes.clave === ahora.clave || quieto.matches) return;
   const dx = antes.vista !== ahora.vista ? Math.sign(TABS.indexOf(ahora.vista) - TABS.indexOf(antes.vista)) * 22 : Math.sign(ahora.prof - antes.prof) * 22;
@@ -1063,9 +1101,10 @@ function render(forzar) {
   $('#tab-amigos').classList.toggle('dot', avisosNuevos() > 0);
   requestAnimationFrame(aplicarPliegues);
   const lado = $('.historias')?.scrollLeft;
-  $('#main').innerHTML = state.vista === 'entreno' ? vistaEntreno() : state.vista === 'records' ? vistaRecords() : state.vista === 'yo' ? vistaYo() : vistaAmigos();
+  const html = state.vista === 'entreno' ? vistaEntreno() : state.vista === 'records' ? vistaRecords() : state.vista === 'yo' ? vistaYo() : vistaAmigos(), ahora = datosPantalla();
+  pintarPantalla(html, pantalla?.clave === ahora.clave);
   if (lado && $('.historias')) $('.historias').scrollLeft = lado;
-  moverIndicador(); transicion();
+  moverIndicador(); transicion(ahora);
   document.documentElement.dataset.tema = premiosAj().tema ? equipado('tema') : '';
 }
 
@@ -2373,7 +2412,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 53;
+const VERSION = 54;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -2471,6 +2510,7 @@ async function cargarAmigos() {
       ocultarBloqueados();
     }
     await cargarAvisos();
+    try { ls.set('fr_cache', {uid: cuenta.uid, gente: a.gente, seg: a.seg, feed: a.feed.slice(0, 12)}); } catch {}
   } catch (e) { a.error = e instanceof TypeError && /fetch|load|network/i.test(e.message) ? 'No he podido conectar. Revisa tu conexión.' : `Algo ha fallado al cargar. Mándale esto a Xavi: ${e.code || ''} ${e.message}`; }
   a.cargando = false; render();
 }
@@ -3543,7 +3583,7 @@ function vistaAmigos() {
   } else {
     h += a.feed?.length ? a.feed.map(tarjetaPublicacion).join('')
       : a.feed ? `<div class="empty"><b>Aún no hay publicaciones</b>${a.solo ? 'Sigue a alguien en Explorar o publica tu primera sesión.' : 'Finaliza una sesión y toca Publicar para ser el primero.'}<button class="apuntar" style="width:100%;margin-top:14px" data-accion="compartir-app">Invitar amigos</button></div>`
-      : a.cargando ? `<div class="empty"><b>Cargando</b>Trayendo las publicaciones…</div>` : '';
+      : a.cargando ? `<div class="empty esq"></div><div class="empty esq" style="margin-top:10px"></div>` : '';
   }
   return h;
 }
@@ -3715,7 +3755,7 @@ function apuntar(form) {
 const scrolls = {};
 /* el logo solo sale al abrir la app, no en las recargas por actualización */
 try { if (sessionStorage.fr_abierta) $('#arranque').remove(); sessionStorage.fr_abierta = 1; } catch {}
-setTimeout(() => $('#arranque')?.remove(), 1800);
+setTimeout(() => $('#arranque')?.remove(), 2000);
 addEventListener('resize', moverIndicador);
 document.addEventListener('touchstart', () => {}, {passive: true}); /* sin esto iOS no pinta :active */
 document.addEventListener('click', ev => {
@@ -4171,6 +4211,8 @@ function abrirUltimo() {
   if (!state.activo && ses?.ejercicios.length) state.activo = ses.ejercicios.at(-1).clave;
 }
 async function iniciar() {
+  const previo = ls.get('fr_cache', null);
+  if (previo?.uid && previo.uid === cuenta?.uid) Object.assign(state.amigos, {gente: previo.gente, seg: previo.seg, feed: previo.feed, perfilOk: true});
   state.modo = 'local'; state.cargado = true;
   corregirJalon(); abrirUltimo();
   { const s = sesion(); if (nubeLista() && !(s && !s.fin && conSets(s))) state.vista = 'amigos'; }
