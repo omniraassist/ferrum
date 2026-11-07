@@ -629,6 +629,8 @@ details.pr-d[open] summary::after{transform:rotate(180deg);margin-top:5px}
 .cartas .copias{top:1%}
 .esq{height:176px;animation:esq 1s ease-in-out infinite alternate}
 @keyframes esq{from{opacity:.45}to{opacity:.9}}
+.club-cod{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:-6px 0 14px;font-size:13px;color:var(--muted)}
+.club-cod b{color:var(--ink);font-weight:700;letter-spacing:.08em}
 .marcos{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 8px;text-align:center}
 .marco{display:grid;justify-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink)}
 .marco small{display:block;font-size:11.5px;font-weight:500;color:var(--muted)}
@@ -1029,7 +1031,7 @@ function sesion() {
 }
 function guardarSesion(ses) {
   ses.ts = Date.now();
-  ses.titulo = tituloGrupos(ses.grupos);
+  ses.titulo = ses.nombre || tituloGrupos(ses.grupos);
   const vacia = !ses.ejercicios.length && !ses.grupos.length;
   const resto = state.sesiones.filter(x => x.id !== ses.id);
   state.sesiones = vacia ? resto : ordenar([...resto, clone(ses)]);
@@ -1720,6 +1722,14 @@ function pintarCapa() {
       <form class="crear" data-form="gym-otro"><input name="nombre" maxlength="60" placeholder="¿No está? Escribe su nombre" autocomplete="off" aria-label="Otro gimnasio"><button type="submit">Usar</button></form></div>`;
     return;
   }
+  if (c.tipo === 'club-inv') {
+    const a = state.amigos, dentro = new Set(miembrosDe(c.id)), enviadas = new Set(a.invClub.filter(x => x.club === c.id).map(x => x.para));
+    const gente = a.gente.filter(g => !dentro.has(g.id) && !oculto(g.id));
+    el.innerHTML = `<div class="gym-sel"><div class="gym-sel-h"><h2>Invitar al club</h2><button class="mini" data-accion="cerrar-capa">Cerrar</button></div>
+      <form class="search" data-form="nada">${ICON_SEARCH}<input id="in-busca-gym" placeholder="Buscar persona" autocomplete="off" aria-label="Buscar persona"></form>
+      <div class="rows" id="gym-ops">${gente.map(g => `<button class="gym-op" data-accion="club-invitar" data-u="${esc(g.id)}" data-b="${esc(norm(g.nombre))}" ${enviadas.has(g.id) ? 'disabled' : ''}>${avatar(g.nombre, g.id)}<span><b>${esc(g.nombre)}</b><small>${enviadas.has(g.id) ? 'Invitación enviada' : 'Toca para invitar'}</small></span></button>`).join('') || '<div class="empty">Ya está todo el mundo dentro.</div>'}</div></div>`;
+    return;
+  }
   if (c.tipo === 'ruleta') {
     el.innerHTML = `<div class="capa-in"><div class="capa-txt"><b>Gira la ruleta</b><span>Premios para coleccionar y lucir.</span></div>${htmlRueda()}
       <button class="apuntar" data-accion="girar-ruleta">Girar</button><button class="ghost" style="width:100%" data-accion="cerrar-capa">Ahora no</button></div>`;
@@ -1823,6 +1833,7 @@ function resumenFin(ses) {
       <div><span class="label">Volumen</span><b class="num">${fmt(Math.round(st.vol))}<small>kg</small></b></div>
       <div><span class="label">Récords</span><b class="num">${pr}</b></div>
     </div></section>`;
+  h += `<input class="campo" id="in-nombre-ses" style="width:100%;margin-top:12px" maxlength="60" autocomplete="off" placeholder="Ponle nombre a la sesión (opcional)" value="${esc(ses.nombre || '')}" aria-label="Nombre de la sesión">`;
   if (nubeLista()) h += `<button class="gym-fila" data-accion="elegir-gym" data-para="sesion">${interiorGym(gymSesion(ses), 'Entrenado en')}</button>`;
   if (nubeLista()) h += ses.publicada
     ? `<button class="finbtn" data-accion="despublicar">Publicada · toca para quitarla</button>`
@@ -2114,7 +2125,8 @@ function vistaEdicion(s) {
   const v = state.edita.v;
   const campo = (i, k, c, x, t) => `<label><input class="num" inputmode="decimal" autocomplete="off" data-ed="${i}:${k}" data-c="${c}" value="${esc(v[`${i}:${k}`]?.[c] ?? String(x[c]).replace('.', ','))}" aria-label="${t}">${c === 'peso' ? 'kg' : 'reps'}</label>`;
   let h = `<div class="det"><div class="ed-h"><button class="back" data-accion="cancelar-edicion">‹ Cancelar</button><button class="datepill nueva" data-accion="guardar-edicion">Guardar</button></div>
-    <div class="label" style="margin-top:6px">${esc(fechaLarga(s.fecha))}</div><h1>${esc(s.titulo)}</h1>`;
+    <div class="label" style="margin-top:6px">${esc(fechaLarga(s.fecha))}</div><h1>${esc(s.titulo)}</h1>
+    <input class="campo" id="in-nombre-ed" style="width:100%;margin-top:10px" maxlength="60" autocomplete="off" placeholder="Nombre de la sesión (opcional)" value="${esc(state.edita.nombre ?? s.nombre ?? '')}" aria-label="Nombre de la sesión">`;
   s.ejercicios.forEach((e, i) => {
     if (!e.sets.length) return;
     h += `<div class="sx"><h3>${esc(e.nombre)}</h3>${e.sets.map((x, k) => `<div class="ed-set"><span class="i num">${k + 1}</span>${campo(i, k, 'peso', x, `Peso de la serie ${k + 1}`)}${campo(i, k, 'reps', x, `Repeticiones de la serie ${k + 1}`)}<select data-ed="${i}:${k}" data-c="tipo" aria-label="Tipo de la serie ${k + 1}">${TIPOS_SERIE.map(([t, n]) => `<option value="${t}"${(v[`${i}:${k}`]?.tipo ?? (x.tipo || '')) === t ? ' selected' : ''}>${n}</option>`).join('')}</select></div>`).join('')}</div>`;
@@ -2137,8 +2149,10 @@ function guardarEdicion() {
     const tipo = c.tipo ?? (x.tipo || '');
     if (peso !== x.peso || reps !== x.reps || tipo !== (x.tipo || '')) { x.peso = peso; x.reps = reps; if (tipo) x.tipo = tipo; else delete x.tipo; cambios++; }
   }
-  if (!cambios) { salirEdicion(); return; }
-  if (s.publicada) s.editada = true;
+  const nombre = (d.nombre ?? s.nombre ?? '').trim();
+  if (!cambios && nombre === (s.nombre || '')) { salirEdicion(); return; }
+  if (cambios && s.publicada) s.editada = true;
+  if (nombre) s.nombre = nombre; else delete s.nombre;
   guardarSesion(s);
   if (state.actual?.id === s.id) state.actual = clone(s);
   salirEdicion();
@@ -2412,7 +2426,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 54;
+const VERSION = 56;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -2492,12 +2506,13 @@ async function cargarAmigos() {
     ]);
     try {
       [a.clubes, a.miembros, a.rutinas] = await Promise.all([
-        pedir('clubes?select=id,nombre,creador&order=nombre&limit=200'),
+        pedir('clubes?select=*&order=nombre&limit=200'),
         pedir('club_miembros?select=club,usuario&limit=5000'),
         pedir('rutinas?select=*,perfiles(nombre)&order=creado.desc&limit=100'),
       ]);
       a.clubsOk = true;
     } catch { a.clubsOk = false; }
+    try { a.invClub = await pedir(`club_invitaciones?select=*&or=(de.eq.${cuenta.uid},para.eq.${cuenta.uid})`); a.invOk = true; } catch { a.invClub = []; a.invOk = false; }
     try { a.ligas = await pedir('ligas?select=*&limit=2000'); a.ligasOk = true; avisarCambioLiga(); } catch { a.ligasOk = false; }
     try { a.parejas = await pedir(`parejas?select=*&or=(a.eq.${cuenta.uid},b.eq.${cuenta.uid})`); a.parejasOk = true; } catch { a.parejasOk = false; }
     try {
@@ -2510,6 +2525,8 @@ async function cargarAmigos() {
       ocultarBloqueados();
     }
     await cargarAvisos();
+    const pendiente = ls.get('fr_club', '');
+    if (pendiente && a.clubes?.some(c => c.id === pendiente)) { ls.set('fr_club', ''); state.vista = 'explorar'; a.cargando = false; abrirClub(pendiente); }
     try { ls.set('fr_cache', {uid: cuenta.uid, gente: a.gente, seg: a.seg, feed: a.feed.slice(0, 12)}); } catch {}
   } catch (e) { a.error = e instanceof TypeError && /fetch|load|network/i.test(e.message) ? 'No he podido conectar. Revisa tu conexión.' : `Algo ha fallado al cargar. Mándale esto a Xavi: ${e.code || ''} ${e.message}`; }
   a.cargando = false; render();
@@ -3047,13 +3064,15 @@ async function guardarFoto() {
   try {
     const b = await recortarFoto();
     state.capa = {tipo: 'espera', texto: 'Guardando tu foto'}; pintarCapa();
-    const ruta = `${cuenta.uid}/${Date.now().toString(36)}avatar.jpg`, vieja = a.gente.find(g => g.id === cuenta.uid)?.avatar;
+    const club = a.clubes?.find(c => c.id === state.fotoClub);
+    const ruta = `${cuenta.uid}/${Date.now().toString(36)}${club ? 'club' : 'avatar'}.jpg`, vieja = club ? club.foto : a.gente.find(g => g.id === cuenta.uid)?.avatar;
     const r = await fetch(`${NUBE.url}/storage/v1/object/media/${ruta}`, {method: 'POST', headers: {apikey: NUBE.key, Authorization: 'Bearer ' + await token(), 'Content-Type': 'image/jpeg'}, body: b});
     if (!r.ok) throw new Error('foto');
-    await pedir(`perfiles?id=eq.${cuenta.uid}`, {method: 'PATCH', prefer: 'return=minimal', body: {avatar: ruta}});
+    await pedir(club ? `clubes?id=eq.${club.id}` : `perfiles?id=eq.${cuenta.uid}`, {method: 'PATCH', prefer: 'return=minimal', body: club ? {foto: ruta} : {avatar: ruta}});
     if (vieja) borrarArchivos([vieja]).catch(() => {});
-    a.gente = a.gente.map(g => g.id === cuenta.uid ? {...g, avatar: ruta} : g);
-    toast('Foto guardada', cuenta.nombre);
+    if (club) a.clubes = a.clubes.map(c => c.id === club.id ? {...c, foto: ruta} : c);
+    else a.gente = a.gente.map(g => g.id === cuenta.uid ? {...g, avatar: ruta} : g);
+    toast('Foto guardada', club ? club.nombre : cuenta.nombre);
   } catch { toast('No se ha subido', 'Revisa tu conexión'); }
   state.capa = null; pintarCapa(); render(true);
 }
@@ -3446,14 +3465,52 @@ async function ponerMiGym(id) {
 /* ---------- clubs y rutinas ---------- */
 const miembrosDe = id => state.amigos.miembros.filter(m => m.club === id).map(m => m.usuario);
 const soyMiembro = id => miembrosDe(id).includes(cuenta.uid);
+const codigoClub = c => c.id.slice(0, 6).toUpperCase();
+const avatarClub = c => { const u = urlMedio(c.foto || ''); return u ? `<span class="ava" style="background:url(${u}) center/cover no-repeat"></span>` : avatar(c.nombre); };
+async function compartirClub(id) {
+  const c = state.amigos.clubes.find(x => x.id === id), url = `${location.origin}${location.pathname}?club=${id}`;
+  const text = `Únete a ${c.nombre} en Ferrum. En Clubs, pon el código ${codigoClub(c)} o abre este enlace:`;
+  try { if (navigator.share) { await navigator.share({title: c.nombre, text, url}); return; } } catch (e) { if (e.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(`${text} ${url}`); toast('Invitación copiada', 'Pégala donde quieras'); } catch { toast(`Código ${codigoClub(c)}`, c.nombre); }
+}
+function unirmeConCodigo(f) {
+  const a = state.amigos, t = f.codigo.value.trim().toLowerCase(), id = t.match(/club=([0-9a-f-]{36})/)?.[1] || t;
+  const c = id.length >= 6 && a.clubes?.find(x => x.id.startsWith(id));
+  document.activeElement?.blur();
+  if (!c) { toast('Código no encontrado', 'Revísalo o pide otro'); return; }
+  f.codigo.value = '';
+  if (!soyMiembro(c.id)) unirseClub(c.id);
+  abrirClub(c.id);
+}
+async function invitarAlClub(id, uid) {
+  const a = state.amigos;
+  try {
+    const [x] = await pedir('club_invitaciones?select=*', {method: 'POST', body: {club: id, de: cuenta.uid, para: uid}, prefer: 'return=representation'});
+    a.invClub = [...a.invClub, x]; pintarCapa(); toast('Invitación enviada', nombreDe(uid));
+  } catch (e) { toast(e.code === '23505' ? 'Ya está invitado' : 'No se ha enviado', nombreDe(uid)); }
+}
+async function responderInvitacion(id, si) {
+  const a = state.amigos, x = a.invClub.find(i => i.id === id);
+  a.invClub = a.invClub.filter(i => i.id !== id); render(true);
+  try {
+    await pedir(`club_invitaciones?id=eq.${id}`, {method: 'DELETE'});
+    if (si) { if (!soyMiembro(x.club)) await unirseClub(x.club); abrirClub(x.club); }
+  } catch { toast('Sin conexión', 'Inténtalo otra vez'); }
+}
+function tarjetaInvitaciones() {
+  const a = state.amigos;
+  return (a.invClub || []).filter(x => x.para === cuenta.uid && a.clubes?.some(c => c.id === x.club)).map(x => `<section class="hoytoca"><span class="label">Invitación a un club</span><b>${esc(a.clubes.find(c => c.id === x.club).nombre)}</b><small>Te invita ${esc(nombreDe(x.de))}</small>
+    <div class="row2"><button class="ghost" data-accion="inv-no" data-id="${esc(x.id)}">Ahora no</button><button class="apuntar" data-accion="inv-si" data-id="${esc(x.id)}">Unirme</button></div></section>`).join('');
+}
 function botonClub(id) {
   const ya = soyMiembro(id);
   return `<button class="seguir${ya ? ' ya' : ''}" data-accion="club-unirse" data-id="${esc(id)}">${ya ? 'Miembro' : 'Unirme'}</button>`;
 }
 function listaClubes() {
   const a = state.amigos;
-  return `<form class="crear" data-form="club"><input name="nombre" maxlength="40" placeholder="Nombre de un club nuevo" autocomplete="off" aria-label="Nombre del club"><button type="submit">Crear</button></form>
-    ${a.clubes?.length ? `<div class="rows">${a.clubes.map(c => `<div class="persona"><button class="quien" data-accion="ver-club" data-id="${esc(c.id)}">${avatar(c.nombre)}
+  return `<form class="crear" data-form="club-codigo"><input name="codigo" maxlength="120" placeholder="Código de un club" autocomplete="off" autocapitalize="characters" aria-label="Código del club"><button type="submit">Unirme</button></form>
+    <form class="crear" data-form="club"><input name="nombre" maxlength="40" placeholder="Nombre de un club nuevo" autocomplete="off" aria-label="Nombre del club"><button type="submit">Crear</button></form>
+    ${a.clubes?.length ? `<div class="rows">${a.clubes.map(c => `<div class="persona"><button class="quien" data-accion="ver-club" data-id="${esc(c.id)}">${avatarClub(c)}
       <span class="mid"><b>${esc(c.nombre)}</b><small class="num">${miembrosDe(c.id).length} ${miembrosDe(c.id).length === 1 ? 'miembro' : 'miembros'}</small></span></button>${botonClub(c.id)}</div>`).join('')}</div>`
       : `<div class="empty"><b>Aún no hay clubs</b>Crea el de tu gimnasio y compite con los tuyos.</div>`}`;
 }
@@ -3466,7 +3523,9 @@ function vistaClub(id) {
   const mejores = new Map();
   for (const r of a.marcas || []) if (ids.has(r.usuario) && !mejores.has(r.clave)) mejores.set(r.clave, r);
   let h = `<div class="det"><button class="back" data-accion="volver-club">‹ Clubs</button>
-    <div class="pf">${avatar(c.nombre)}<h1>${esc(c.nombre)}</h1>${botonClub(id)}</div></div>
+    <div class="pf">${avatarClub(c)}<h1>${esc(c.nombre)}</h1>${botonClub(id)}</div></div>
+    <div class="pf-a">${a.invOk && soyMiembro(id) ? `<button class="mini" data-accion="club-invitar-abrir" data-id="${esc(id)}">Invitar</button>` : ''}<button class="mini" data-accion="club-compartir" data-id="${esc(id)}">Compartir</button>${c.creador === cuenta.uid && 'foto' in c ? `<label class="mini" style="display:inline-flex;align-items:center;cursor:pointer">${c.foto ? 'Cambiar foto' : 'Añadir foto'}<input id="in-foto-club" class="fileinp" type="file" accept="image/*"></label>` : ''}</div>
+    <div class="club-cod"><span>Código del club</span><b class="num">${codigoClub(c)}</b></div>
     <div class="sec-h" style="margin-top:0"><h2>Esta semana</h2></div>`;
   h += tabla.length ? `<div class="rows">${tabla.map((g, i) => `<button class="rk${g.id === cuenta.uid ? ' yo' : ''}" data-accion="perfil" data-u="${esc(g.id)}"><span class="p num">${i + 1}</span>
     <span class="mid"><b>${esc(g.nombre)}</b><small class="num">${g.resumen?.semana === semana ? `${fmt(+g.resumen.series || 0)} series` : 'Sin entrenar esta semana'}</small></span><span class="v num">${fmt(vol(g))}<small>kg</small></span></button>`).join('')}</div>`
@@ -3493,7 +3552,7 @@ async function crearClub(f) {
   if (nombre.length < 3) { toast('Nombre muy corto', 'Usa al menos 3 letras'); return; }
   document.activeElement?.blur();
   try {
-    const [c] = await pedir('clubes?select=id,nombre,creador', {method: 'POST', body: {nombre, creador: cuenta.uid}, prefer: 'return=representation'});
+    const [c] = await pedir('clubes?select=*', {method: 'POST', body: {nombre, creador: cuenta.uid}, prefer: 'return=representation'});
     await pedir('club_miembros', {method: 'POST', body: {club: c.id, usuario: cuenta.uid}, prefer: 'return=minimal'});
     a.clubes = [...a.clubes, c].sort((x, y) => x.nombre.localeCompare(y.nombre));
     a.miembros = [...a.miembros, {club: c.id, usuario: cuenta.uid}];
@@ -3512,7 +3571,9 @@ async function unirseClub(id) {
 async function borrarClub(id) {
   const a = state.amigos;
   try {
+    const foto = a.clubes.find(c => c.id === id)?.foto;
     await pedir(`clubes?id=eq.${id}`, {method: 'DELETE'});
+    if (foto) borrarArchivos([foto]).catch(() => {});
     a.clubes = a.clubes.filter(c => c.id !== id); a.miembros = a.miembros.filter(m => m.club !== id); a.club = null;
   } catch { toast('Sin conexión', 'No se ha borrado'); }
   a.borrarClub = false; render(true);
@@ -3561,7 +3622,7 @@ function vistaAmigos() {
     <form class="search" data-form="alta"><input id="in-nombre" name="nombre" maxlength="24" placeholder="Tu nombre" autocomplete="off" autocapitalize="words" enterkeyhint="go" aria-label="Tu nombre"><button class="go" type="submit" ${a.cargando ? 'disabled' : ''}>${a.cargando ? 'Entrando…' : 'Entrar'}</button></form><button class="chip" style="margin-top:12px" data-accion="usar-otra-cuenta">Usar otra cuenta</button></section>`;
   if (!cuenta.email) h += `<section class="next" style="margin:0 0 12px"><h2>Protege tu cuenta</h2>
     <p>Pon un email y una contraseña. Conservas tu nombre y tus entrenos quedan a salvo si cambias de móvil.</p>${camposCuenta('proteger')}</section>`;
-  if (esFeed) h += tarjetaHoy() + tarjetaAhora() + tarjetaRival() + tarjetasPareja() + (a.parejasOk && !ls.get('fr_push', 0) ? `<button class="empezar" data-accion="activar-push">Activa los avisos para no perderte duelos<b>→</b></button>` : '') + historias();
+  if (esFeed) h += tarjetaInvitaciones() + tarjetaHoy() + tarjetaAhora() + tarjetaRival() + tarjetasPareja() + (a.parejasOk && !ls.get('fr_push', 0) ? `<button class="empezar" data-accion="activar-push">Activa los avisos para no perderte duelos<b>→</b></button>` : '') + historias();
   else h += `<div class="seg" style="--n:${a.desafiosOk ? 4 : 3}" role="group" aria-label="Sección">
     <button data-accion="pestana-amigos" data-p="liga" aria-pressed="${pest === 'liga'}">Liga</button>
     <button data-accion="pestana-amigos" data-p="ranking" aria-pressed="${pest === 'ranking'}">Marcas</button>
@@ -3916,6 +3977,11 @@ document.addEventListener('click', ev => {
     case 'quitar-meta': ls.set('fr_metas', metasFuerza().filter((_, i) => i !== +b.dataset.i)); render(true); break;
     case 'comunidad': state.amigos.comunidad = b.dataset.c; render(true); break;
     case 'ver-club': abrirClub(b.dataset.id); break;
+    case 'club-compartir': compartirClub(b.dataset.id); break;
+    case 'club-invitar-abrir': state.capa = {tipo: 'club-inv', id: b.dataset.id}; pintarCapa(); break;
+    case 'club-invitar': invitarAlClub(state.capa.id, b.dataset.u); break;
+    case 'inv-si': responderInvitacion(b.dataset.id, true); break;
+    case 'inv-no': responderInvitacion(b.dataset.id, false); break;
     case 'ver-ruleta': state.capa = {tipo: 'ruleta'}; pintarCapa(); break;
     case 'girar-ruleta': girarRuleta(); break;
     case 'equipar': { const k = b.dataset.k, v = b.dataset.v, aj = premiosAj(); guardarAjustes({premios: {...aj, [k]: aj[k] === v ? '' : v}}); render(true); if (nubeLista()) subirMarcas().catch(() => {}); break; }
@@ -4080,6 +4146,7 @@ document.addEventListener('submit', ev => {
   }
   if (f.dataset.form === 'perfil') guardarPerfil(f);
   if (f.dataset.form === 'club') crearClub(f);
+  if (f.dataset.form === 'club-codigo') unirmeConCodigo(f);
   if (f.dataset.form === 'gym-otro' && f.nombre.value.trim()) gymElegido(f.nombre.value.trim());
   if (f.dataset.form === 'rutina') guardarRutina(f);
   if (f.dataset.form === 'cambiar') cambiarEjercicio(state.cambiando, mejorCoincidencia(f.q.value));
@@ -4099,6 +4166,7 @@ document.addEventListener('input', ev => {
     $('#rc-video').currentTime = c.ini;
     return;
   }
+  if (el.id === 'in-nombre-ed') { state.edita.nombre = el.value; return; }
   if (el.dataset.ed) { if (el.dataset.c !== 'tipo') el.value = el.value.replace(/[^\d.,]/g, ''); (state.edita.v[el.dataset.ed] ||= {})[el.dataset.c] = el.value; return; }
   if (el.id === 'in-busca-gym') { const q = norm(el.value); for (const o of $('#gym-ops').children) o.hidden = !!q && !o.dataset.b.includes(q); return; }
   if (el.id === 'in-busca-gyms') { state.amigos.buscaGym = el.value; $('#gyms-list').innerHTML = listaGyms(); return; }
@@ -4115,7 +4183,12 @@ document.addEventListener('input', ev => {
 });
 document.addEventListener('change', ev => {
   if (ev.target.id === 'in-medio') subirMedio(ev.target.files?.[0]);
-  if (ev.target.id === 'in-foto') subirFoto(ev.target.files?.[0]);
+  if (ev.target.id === 'in-nombre-ses') {
+    const ses = sesion(), n = ev.target.value.trim();
+    if (ses && n !== (ses.nombre || '')) { if (n) ses.nombre = n; else delete ses.nombre; guardarSesion(ses); render(true); if (ses.publicada) publicar(ses, true); }
+  }
+  if (ev.target.id === 'in-foto') { state.fotoClub = null; subirFoto(ev.target.files?.[0]); }
+  if (ev.target.id === 'in-foto-club') { state.fotoClub = state.amigos.club; subirFoto(ev.target.files?.[0]); }
 });
 let arrastreFoto = null;
 document.addEventListener('pointerdown', ev => { if (ev.pointerType !== 'touch' && ev.target.closest?.('#foto-v')) arrastreFoto = {px: ev.clientX, py: ev.clientY, x: state.capa.x, y: state.capa.y}; });
@@ -4211,6 +4284,8 @@ function abrirUltimo() {
   if (!state.activo && ses?.ejercicios.length) state.activo = ses.ejercicios.at(-1).clave;
 }
 async function iniciar() {
+  const clubEnlace = new URLSearchParams(location.search).get('club');
+  if (/^[0-9a-f-]{36}$/.test(clubEnlace || '')) { ls.set('fr_club', clubEnlace); history.replaceState(null, '', location.pathname); }
   const previo = ls.get('fr_cache', null);
   if (previo?.uid && previo.uid === cuenta?.uid) Object.assign(state.amigos, {gente: previo.gente, seg: previo.seg, feed: previo.feed, perfilOk: true});
   state.modo = 'local'; state.cargado = true;
