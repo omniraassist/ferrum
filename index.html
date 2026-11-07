@@ -539,8 +539,9 @@ body:has(.hub)::before{background:#C9EC35}
 .gym-hero .seguir{margin-top:6px}
 .gym-pie{margin:18px 0 0;font-size:11.5px;color:var(--faint);text-align:center}
 .ed-h{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.ed-set{display:grid;grid-template-columns:18px minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:center;margin-top:8px}
+.ed-set{display:grid;grid-template-columns:16px minmax(0,1fr) minmax(0,1fr) 92px;gap:6px;align-items:center;margin-top:8px}
 .sx:has(.ed-set){padding-bottom:16px}
+.ed-set select{min-width:0;width:100%;min-height:48px;padding:0 6px;border:0;border-radius:14px;background:var(--surface-2);color:var(--ink);font:600 12.5px var(--f-body);text-align:center;-webkit-appearance:none;appearance:none;text-overflow:ellipsis}
 .ed-set .i{font-size:13px;color:var(--muted);text-align:center}
 .ed-set label{display:flex;align-items:center;gap:6px;min-height:48px;padding:0 12px;border-radius:14px;background:var(--surface-2);font-size:12.5px;color:var(--muted)}
 .ed-set label:focus-within{box-shadow:inset 0 0 0 1.5px var(--lime)}
@@ -956,19 +957,22 @@ function catalogo() {
   catFuente = state.sesiones; catCache = m;
   return m;
 }
+/* calentamiento y aproximación preparan la serie buena: no cuentan para récords */
+const previa = s => s.tipo === 'c' || s.tipo === 'a';
+const TIPOS_SERIE = [['', 'Normal'], ['c', 'Calentar'], ['a', 'Aproximación'], ['f', 'Fallo'], ['d', 'Drop']];
 function marcas(clave, {excluir, antes} = {}) {
   const c = catalogo().get(clave);
   const hs = (c?.hist || []).filter(h => h.id !== excluir && (!antes || h.fecha < antes.fecha || (h.fecha === antes.fecha && h.orden < orden(antes))));
   if (!hs.length) return null;
   let max = null, rm = null;
   for (const h of hs) for (const s of h.sets) {
-    if (s.tipo === 'c') continue;
+    if (previa(s)) continue;
     if (!max || s.peso > max.peso || (s.peso === max.peso && s.reps > max.reps)) max = {...s, fecha: h.fecha};
     if (!rm || e1rm(s) > rm.v) rm = {v: e1rm(s), peso: s.peso, reps: s.reps, fecha: h.fecha};
   }
   let rangos = [1, 3, 5, 6, 8, 10, 12, 15, 20].map(r => {
     let b = null;
-    for (const h of hs) for (const s of h.sets) if (s.tipo !== 'c' && s.reps >= r && (!b || s.peso > b.peso)) b = {r, peso: s.peso, fecha: h.fecha};
+    for (const h of hs) for (const s of h.sets) if (!previa(s) && s.reps >= r && (!b || s.peso > b.peso)) b = {r, peso: s.peso, fecha: h.fecha};
     return b;
   }).filter(Boolean);
   rangos = rangos.filter((b, i) => !(rangos[i + 1] && rangos[i + 1].peso === b.peso));
@@ -981,7 +985,7 @@ function etiquetas(e, ses) {
   if (!m) return e.sets.map(() => '');
   let maxP = m.max.peso, rmP = m.rm.v;
   return e.sets.map(s => {
-    if (s.tipo === 'c') return '';
+    if (previa(s)) return '';
     if (s.peso > maxP) { maxP = s.peso; rmP = Math.max(rmP, e1rm(s)); return 'pr'; }
     if (e1rm(s) > rmP) { rmP = e1rm(s); return 'rm'; }
     return '';
@@ -1205,7 +1209,7 @@ function bloque(e, i, ses) {
     <div class="res" id="res-cambiar">${resultados(state.buscaCambio, 'cambiar-a')}</div>
     <button class="chip" data-accion="cancelar-cambio" style="margin-top:8px">Cancelar</button></div>`;
   if (!g && ses.grupos.length > 1) h += `<div class="askg"><span class="label">¿Qué grupo trabaja?</span><div class="gchips">${ses.grupos.map(id => `<button class="gchip sm" data-accion="set-grupo" data-g="${id}" aria-pressed="false">${GRUPO[id]?.n || id}</button>`).join('')}</div></div>`;
-  if (e.plan) h += `<div class="ref"><span>Tu rutina</span><b class="num">${e.sets.filter(x => x.tipo !== 'c').length} / ${e.plan.series} series × ${e.plan.reps}</b><button class="mini" data-accion="cambiar">Cambiar</button></div>`;
+  if (e.plan) h += `<div class="ref"><span>Tu rutina</span><b class="num">${e.sets.filter(x => !previa(x)).length} / ${e.plan.series} series × ${e.plan.reps}</b><button class="mini" data-accion="cambiar">Cambiar</button></div>`;
   if (e.ref) h += `<div class="ref"><span>${esc(e.ref.de)} hizo</span><b class="num">${e.ref.sets.map(x => `${fmt(x[0])}×${fmt(x[1])}`).join(' · ')}</b></div>`;
   h += m ? `<details class="pr-d"${state.abiertas.has('pr') ? ' open' : ''}><summary>${(o => o ? `<span>Objetivo <b class="num">${fmt(o.peso)} × ${fmt(o.reps)}</b></span>` : '')(objetivo(m))}<span>Récord <b class="num">${fmt(m.max.peso)} × ${fmt(m.max.reps)}</b></span></summary>${panelMarcas(m)}</details>` : `<div class="first"><b>Primera vez con este ejercicio</b>Lo que apuntes hoy será tu marca de referencia.</div>`;
   if (e.sets.length) {
@@ -1213,7 +1217,7 @@ function bloque(e, i, ses) {
     h += `<div class="sets"><span class="label">Series de hoy</span>`;
     e.sets.forEach((s, k) => {
       const sel = state.setSel === `${e.clave}:${k}`;
-      const tipo = {c: 'C', f: 'F', d: 'D'}[s.tipo];
+      const tipo = {c: 'C', a: 'A', f: 'F', d: 'D'}[s.tipo];
       const tag = tags[k] === 'pr' ? '<span class="tag">Récord</span>' : tags[k] === 'rm' ? '<span class="tag soft">1RM</span>' : '';
       h += `<button class="setrow${state.hint?.nuevo === `${e.clave}:${k}` ? ' nuevo' : ''}" data-accion="set" data-k="${k}">
         <span class="i num">${tipo || k + 1}</span>
@@ -1241,7 +1245,7 @@ function bloque(e, i, ses) {
       <button class="apuntar" type="submit">Apuntar serie ${e.sets.length + 1}</button>
     </form>
       <details class="mas"${state.abiertas.has('log') || inp.tipo || inp.rpe || ajustes().notas[e.clave] ? ' open' : ''}><summary>Más opciones</summary><div>
-      <div class="tipos"><span>Tipo</span>${[['', 'Normal'], ['c', 'Calentar'], ['f', 'Fallo'], ['d', 'Drop']].map(([k, n]) => `<button type="button" class="mini" data-accion="set-tipo" data-t="${k}" aria-pressed="${(inp.tipo || '') === k}">${n}</button>`).join('')}</div>
+      <div class="tipos"><span>Tipo</span>${TIPOS_SERIE.map(([k, n]) => `<button type="button" class="mini" data-accion="set-tipo" data-t="${k}" aria-pressed="${(inp.tipo || '') === k}">${n}</button>`).join('')}</div>
       <div class="tipos"><span>RPE</span>${['', 7, 8, 9, 10].map(n => `<button type="button" class="mini" data-accion="set-rpe" data-r="${n}" aria-pressed="${String(inp.rpe || '') === String(n)}">${n || '–'}</button>`).join('')}</div>
         <textarea class="nota-ej" style="margin:0" id="in-nota" rows="1" maxlength="200" placeholder="Nota para este ejercicio (asiento, agarre…)" aria-label="Nota del ejercicio">${esc(ajustes().notas[e.clave] || '')}</textarea></div></details>
       ${state.hint?.err ? `<div class="hint err">${esc(state.hint.err)}</div>` : `<div class="hint">Toca una serie para editarla o borrarla.</div>`}`;
@@ -1728,7 +1732,7 @@ function resumenFin(ses) {
   if (pend) h += `<button class="ghost" style="width:100%;margin-top:10px" data-accion="abrir-sobre">Abrir ${pend === 1 ? 'tu sobre' : `tus ${pend} sobres`}</button>`;
   h += `<details class="mas fin" style="margin-top:8px"${nubeLista() ? '' : ' open'}><summary>Más opciones</summary><div>
     <button class="ghost" data-accion="compartir-sesion" data-id="${esc(ses.id)}">Compartir tarjeta</button>
-    <button class="ghost" data-accion="editar-series" data-id="${esc(ses.id)}">Editar pesos y repeticiones</button>
+    <button class="ghost" data-accion="editar-series" data-id="${esc(ses.id)}">Editar series</button>
     <div class="row2"><button class="ghost" data-accion="reabrir">Reabrir</button><button class="ghost" data-accion="nueva-sesion">Nueva sesión</button></div></div></details>`;
   const esf = esfuerzo(ses);
   h += `<div class="card" style="margin-top:12px"><div class="esf"><b class="num">${fmt(esf)}</b><span>Esfuerzo ${nivelEsfuerzo(esf)}</span></div>${mapaMuscular(musculos(ses))}</div>`;
@@ -1997,7 +2001,7 @@ function vistaSesion(id) {
     ${nubeLista() && state.amigos.clubsOk ? (state.amigos.guardaRutina === s.id
       ? `<form class="crear" data-form="rutina" data-id="${esc(s.id)}" style="margin:0"><input name="nombre" maxlength="60" value="${esc(s.titulo)}" autocomplete="off" aria-label="Nombre de la rutina"><button type="submit">Guardar</button></form>`
       : `<button class="ghost" data-accion="guardar-rutina" data-id="${esc(s.id)}">Guardar como rutina</button>`) : ''}
-    <button class="ghost" data-accion="editar-series" data-id="${esc(s.id)}">Editar pesos y repeticiones</button>
+    <button class="ghost" data-accion="editar-series" data-id="${esc(s.id)}">Editar series</button>
     <button class="ghost" data-accion="editar-sesion" data-id="${esc(s.id)}">Añadir ejercicios o series</button>
     <button class="chip danger" data-accion="pedir-borrar" data-id="${esc(s.id)}" style="align-self:center">Eliminar sesión</button>
   </div></div>`;
@@ -2011,7 +2015,7 @@ function vistaEdicion(s) {
     <div class="label" style="margin-top:6px">${esc(fechaLarga(s.fecha))}</div><h1>${esc(s.titulo)}</h1>`;
   s.ejercicios.forEach((e, i) => {
     if (!e.sets.length) return;
-    h += `<div class="sx"><h3>${esc(e.nombre)}</h3>${e.sets.map((x, k) => `<div class="ed-set"><span class="i num">${k + 1}</span>${campo(i, k, 'peso', x, `Peso de la serie ${k + 1}`)}${campo(i, k, 'reps', x, `Repeticiones de la serie ${k + 1}`)}</div>`).join('')}</div>`;
+    h += `<div class="sx"><h3>${esc(e.nombre)}</h3>${e.sets.map((x, k) => `<div class="ed-set"><span class="i num">${k + 1}</span>${campo(i, k, 'peso', x, `Peso de la serie ${k + 1}`)}${campo(i, k, 'reps', x, `Repeticiones de la serie ${k + 1}`)}<select data-ed="${i}:${k}" data-c="tipo" aria-label="Tipo de la serie ${k + 1}">${TIPOS_SERIE.map(([t, n]) => `<option value="${t}"${(v[`${i}:${k}`]?.tipo ?? (x.tipo || '')) === t ? ' selected' : ''}>${n}</option>`).join('')}</select></div>`).join('')}</div>`;
   });
   return h + `<div class="foot-actions"><button class="apuntar" data-accion="guardar-edicion">Guardar cambios</button></div></div>`;
 }
@@ -2028,7 +2032,8 @@ function guardarEdicion() {
   for (const [clave, c] of Object.entries(d.v)) {
     const [i, k] = clave.split(':'), x = s.ejercicios[i].sets[k], peso = num(c.peso ?? x.peso), reps = num(c.reps ?? x.reps);
     if (peso == null || peso < 0 || reps == null || reps <= 0) { toast('Revisa los datos', `${s.ejercicios[i].nombre}, serie ${+k + 1}`); return; }
-    if (peso !== x.peso || reps !== x.reps) { x.peso = peso; x.reps = reps; cambios++; }
+    const tipo = c.tipo ?? (x.tipo || '');
+    if (peso !== x.peso || reps !== x.reps || tipo !== (x.tipo || '')) { x.peso = peso; x.reps = reps; if (tipo) x.tipo = tipo; else delete x.tipo; cambios++; }
   }
   if (!cambios) { salirEdicion(); return; }
   if (s.publicada) s.editada = true;
@@ -2167,7 +2172,7 @@ function graficaBarras(sems) {
 }
 function listaProgreso() {
   const q = norm(state.buscaProg);
-  const lista = [...catalogo().values()].filter(c => (!q || norm(c.nombre).includes(q)) && (!state.filtroGrupo || c.grupo === state.filtroGrupo))
+  const lista = [...catalogo().values()].filter(c => marcas(c.clave) && (!q || norm(c.nombre).includes(q)) && (!state.filtroGrupo || c.grupo === state.filtroGrupo))
     .sort((a, b) => a.hist.at(-1).fecha < b.hist.at(-1).fecha ? 1 : -1);
   if (!lista.length) return `<div class="empty">Ningún ejercicio coincide.</div>`;
   return `<div class="rows">${lista.map(c => {
@@ -2305,7 +2310,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 48;
+const VERSION = 49;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -3040,7 +3045,7 @@ const valorSerie = (peso, reps) => peso ? peso * (1 + reps / 30) : reps;
 function marcadorDuelo(ses) {
   const d = ses.desafio, filas = d.objetivos.map(o => {
     const e = ses.ejercicios.find(x => claveRanking(x.nombre) === o.clave);
-    const mio = Math.max(0, ...(e?.sets || []).filter(x => x.tipo !== 'c').map(x => valorSerie(x.peso, x.reps)));
+    const mio = Math.max(0, ...(e?.sets || []).filter(x => !previa(x)).map(x => valorSerie(x.peso, x.reps)));
     return {nombre: o.nombre, mio, suyo: o.v, gana: mio > o.v};
   });
   const yo = filas.filter(f => f.gana).length;
@@ -3631,14 +3636,14 @@ function apuntar(form) {
   const inp = state.inputs[e.clave] || {};
   const s = {peso, reps, t: Date.now(), ...(inp.tipo ? {tipo: inp.tipo} : {}), ...(inp.rpe ? {rpe: inp.rpe} : {})};
   e.sets.push(s);
-  state.inputs[e.clave] = {peso: String(peso), reps: String(reps), tipo: inp.tipo === 'c' ? 'c' : ''};
+  state.inputs[e.clave] = {peso: String(peso), reps: String(reps), tipo: previa(inp) ? inp.tipo : ''};
   state.hint = {nuevo: `${e.clave}:${e.sets.length - 1}`};
   state.setSel = null;
   document.activeElement?.blur();
   guardarSesion(ses);
   render(true);
   if (ses.fecha === hoy) marcarEntrenando(ses);
-  if (s.tipo === 'c') return;
+  if (previa(s)) return;
   if (m && peso > maxAntes) toast('Nuevo récord de peso', `${fmt(peso)} kg × ${fmt(reps)}`);
   else if (m && e1rm(s) > rmAntes) toast('Nuevo 1RM estimado', `${fmt(Math.round(e1rm(s) * 2) / 2)} kg`);
 }
@@ -3980,7 +3985,7 @@ document.addEventListener('input', ev => {
     $('#rc-video').currentTime = c.ini;
     return;
   }
-  if (el.dataset.ed) { el.value = el.value.replace(/[^\d.,]/g, ''); (state.edita.v[el.dataset.ed] ||= {})[el.dataset.c] = el.value; return; }
+  if (el.dataset.ed) { if (el.dataset.c !== 'tipo') el.value = el.value.replace(/[^\d.,]/g, ''); (state.edita.v[el.dataset.ed] ||= {})[el.dataset.c] = el.value; return; }
   if (el.id === 'in-busca-gym') { const q = norm(el.value); for (const o of $('#gym-ops').children) o.hidden = !!q && !o.dataset.b.includes(q); return; }
   if (el.id === 'in-busca-gyms') { state.amigos.buscaGym = el.value; $('#gyms-list').innerHTML = listaGyms(); return; }
   if (el.id === 'in-busca-gente') { state.amigos.buscaGente = el.value; $('#gente-list').innerHTML = listaGente(); return; }
