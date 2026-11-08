@@ -1,5 +1,5 @@
 // Ferrum: la app abre sin conexión. La página se pide primero a la red para recibir actualizaciones.
-const CACHE = 'ferrum-v56';
+const CACHE = 'ferrum-v57';
 const ARCHIVOS = ['./', './index.html', './manifest.webmanifest', './ferrum-f-180.png', './ferrum-f-192.png', './ferrum-f-512.png'];
 
 self.addEventListener('install', e => {

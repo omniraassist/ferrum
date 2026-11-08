@@ -365,7 +365,7 @@ button.set-chip.vacia{box-shadow:inset 0 0 0 1px var(--line-2)}
 .dias{display:flex;gap:6px;margin-top:6px}
 .dias button{flex:1;min-height:40px;border-radius:14px;background:var(--surface-2);font-weight:800;color:var(--muted)}
 .dias button[aria-pressed="true"]{background:var(--lime);color:var(--on-lime)}
-.cartas{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.cartas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 /* carta de bestia: fina, con marco según la rareza y lámina holográfica en las mejores */
 .carta{--a:#C9D6BF;--b:#8FA585;--in1:#F4F7E8;--in2:#DDE6CF;--foil:0;display:block;position:relative;width:100%;aspect-ratio:100/157;text-align:left;container-type:inline-size;font-family:var(--f-body);color:#16261A}
 .carta.rara{--a:#D6F2FF;--b:#6FB7E8;--in1:#EEF8FF;--in2:#CFE4F2;--foil:.12}
@@ -623,9 +623,9 @@ details.pr-d[open] summary::after{transform:rotate(180deg);margin-top:5px}
 @keyframes arranque-fin{to{opacity:0;visibility:hidden}}
 @media (prefers-reduced-motion: reduce){#arranque{display:none}}
 .post .ava::after,.rows .ava::after,.hist .ava::after{filter:none}
-.post{content-visibility:auto;contain-intrinsic-size:auto 320px}
-.srow-w{content-visibility:auto;contain-intrinsic-size:auto 92px}
-.cartas .carta{content-visibility:auto;contain-intrinsic-size:auto 270px;overflow-clip-margin:12px}
+.post{content-visibility:auto;contain-intrinsic-block-size:auto 320px}
+.srow-w{content-visibility:auto;contain-intrinsic-block-size:auto 92px}
+.cartas .carta{content-visibility:auto;contain-intrinsic-block-size:auto 270px;overflow-clip-margin:12px}
 .cartas .copias{top:1%}
 .esq{height:176px;animation:esq 1s ease-in-out infinite alternate}
 @keyframes esq{from{opacity:.45}to{opacity:.9}}
@@ -2426,7 +2426,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 56;
+const VERSION = 57;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
