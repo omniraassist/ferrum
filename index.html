@@ -1737,6 +1737,19 @@ function pintarCapa() {
       <button class="ghost" style="width:100%" data-accion="cerrar-capa">Cancelar</button></div>`;
     return;
   }
+  if (c.tipo === 'resumen') {
+    el.innerHTML = `<div class="capa-in" style="width:min(300px,72vw)"><div class="seg" style="--n:2;width:100%" role="group">${[['semana', 'Semana'], ['mes', 'Mes']].map(([k, n]) => `<button data-accion="resumen-tipo" data-t="${k}" aria-pressed="${c.t === k}">${n}</button>`).join('')}</div>
+      ${c.url ? `<img src="${c.url}" alt="Tu resumen" style="width:100%;border-radius:18px;box-shadow:0 20px 50px -14px rgba(0,0,0,.8)">` : '<div class="empty esq" style="width:100%;aspect-ratio:9/16;height:auto"></div>'}
+      <button class="apuntar" data-accion="resumen-compartir" ${c.url ? '' : 'disabled'}>Compartir</button><button class="ghost" style="width:100%" data-accion="cerrar-capa">Cerrar</button></div>`;
+    return;
+  }
+  if (c.tipo === 'errores') {
+    el.innerHTML = `<div class="gym-sel"><div class="gym-sel-h"><h2>Errores</h2><button class="mini" data-accion="cerrar-capa">Cerrar</button></div>
+      ${c.error ? `<p class="note" style="margin:0">${esc(c.error)}</p>` : !c.lista ? '<div class="empty esq"></div>' : !c.lista.length ? '<div class="empty"><b>Sin errores</b>Todo va bien.</div>'
+      : `<div class="rows">${c.lista.map(x => `<div class="frow" style="display:block"><span class="tt" style="overflow-wrap:anywhere">${esc(x.mensaje)}</span><span class="meta num">${esc(nombreDe(x.usuario))} · Ferrum ${esc(x.version)} · ${esc(x.vista || '')} · ${fechaCorta(String(x.creado).slice(0, 10))} ${String(x.creado).slice(11, 16)}</span></div>`).join('')}</div>
+        <button class="ghost" data-accion="errores-borrar">Borrar todos</button>`}</div>`;
+    return;
+  }
   if (c.tipo === 'admin') {
     const cab = t => `<div class="gym-sel-h"><h2>${t}</h2><button class="mini" data-accion="cerrar-capa">Cerrar</button></div>`;
     if (c.hecho) { el.innerHTML = `<div class="capa-in"><div class="capa-txt"><b>Listo</b><span>Pásale esto a ${esc(c.hecho.nombre)} por privado. Que entre con «Ya tengo cuenta» y la cambie en Perfil.</span></div>
@@ -2076,6 +2089,67 @@ function medidasCard() {
     <form class="crear" data-form="medida" style="margin:${ms.length > 1 ? '12px' : '0'} 0 0"><input name="peso" inputmode="decimal" placeholder="Peso" aria-label="Peso corporal en kg" style="background:var(--surface-2)"><input name="cintura" inputmode="decimal" placeholder="Cintura" aria-label="Cintura en cm" style="background:var(--surface-2)"><button type="submit">Guardar</button></form></div>`;
 }
 /* tarjeta para compartir en redes */
+function datosResumen(tipo) {
+  let desde = tipo === 'mes' ? hoy.slice(0, 8) + '01' : lunesDe(hoy), hasta = hoy;
+  const en = () => state.sesiones.filter(s => conSets(s) && s.fecha >= desde && s.fecha <= hasta);
+  /* recién empezada la semana o el mes, se enseña el anterior: un resumen a cero no se comparte */
+  if (!en().length) { hasta = sumarDias(desde, -1); desde = tipo === 'mes' ? hasta.slice(0, 8) + '01' : lunesDe(hasta); }
+  const ss = en();
+  const st = ss.map(statsSesion), vol = Math.round(st.reduce((a, x) => a + x.vol, 0)), porEj = new Map();
+  let mejor = null;
+  for (const s of ss) for (const e of s.ejercicios) for (const x of e.sets) {
+    if (previa(x)) continue;
+    porEj.set(e.nombre, (porEj.get(e.nombre) || 0) + x.peso * x.reps);
+    if (!mejor || x.peso > mejor.peso) mejor = {nombre: e.nombre, peso: x.peso, reps: x.reps};
+  }
+  const m = coleccion(), carta = CARTAS.filter(c => m.has(c.id)).sort((x, y) => ORDEN_RAREZA[x.r] - ORDEN_RAREZA[y.r])[0];
+  const dias = new Set(ss.map(s => s.fecha));
+  return {tipo, desde, sesiones: ss.length, series: st.reduce((a, x) => a + x.series, 0), vol, mins: st.reduce((a, x) => a + x.mins, 0), records: ss.reduce((a, s) => a + nRecords(s), 0),
+    favorito: [...porEj].sort((x, y) => y[1] - x[1])[0]?.[0], mejor, carta, racha: rachaSemanas(), dias,
+    semana: [...Array(7)].map((_, i) => dias.has(sumarDias(desde, i)))};
+}
+async function imagenResumen(tipo) {
+  await document.fonts?.ready;
+  const d = datosResumen(tipo), W = 1080, H = 1920, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d'), F = (p, w = 600) => `${w} ${p}px Instrument Sans, system-ui, sans-serif`, S = p => `italic 400 ${p}px Instrument Serif, Georgia, serif`;
+  const LIMA = '#DDF3A2', TINTA = '#ECF6CF', GRIS = 'rgba(236,246,207,.6)';
+  x.fillStyle = '#0E1A11'; x.fillRect(0, 0, W, H);
+  for (const [cx, cy, r, col] of [[820, 180, 900, 'rgba(78,107,69,.85)'], [120, 1820, 1000, 'rgba(43,74,47,.9)']]) { const g = x.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, col); g.addColorStop(1, 'rgba(14,26,17,0)'); x.fillStyle = g; x.fillRect(0, 0, W, H); }
+  const caja = (X, Y, w, h, r = 36, fill = 'rgba(255,255,255,.07)') => { x.fillStyle = fill; x.beginPath(); x.roundRect(X, Y, w, h, r); x.fill(); };
+  x.fillStyle = LIMA; x.font = S(64); x.fillText('Ferrum', 80, 140);
+  x.fillStyle = GRIS; x.font = F(34); x.textAlign = 'right'; x.fillText(cuenta?.nombre ? `@${state.amigos.gente?.find(g => g.id === cuenta.uid)?.arroba || cuenta.nombre}` : '', W - 80, 132); x.textAlign = 'left';
+  x.fillStyle = TINTA; x.font = S(150); x.fillText(tipo === 'mes' ? 'Tu mes' : 'Tu semana', 74, 360);
+  const rango = tipo === 'mes' ? parseISO(d.desde).toLocaleDateString('es-ES', {month: 'long', year: 'numeric'}) : `${fechaCorta(d.desde)} – ${fechaCorta(sumarDias(d.desde, 6))}`;
+  x.fillStyle = GRIS; x.font = F(38); x.fillText(rango.charAt(0).toUpperCase() + rango.slice(1), 82, 430);
+  const kg = new Intl.NumberFormat('es-ES', {useGrouping: 'always'}).format(d.vol);
+  x.fillStyle = LIMA; x.font = F(190, 700); x.fillText(kg, 74, 660); const ancho = x.measureText(kg).width;
+  x.font = F(60, 600); x.fillText('kg', 96 + ancho, 660); x.fillStyle = GRIS; x.font = F(38); x.fillText('movidos', 82, 722);
+  const tiles = [['Sesiones', fmt(d.sesiones)], ['Series', fmt(d.series)], ['Récords', fmt(d.records)], ['Racha', `${d.racha} sem`]];
+  tiles.forEach(([k, v], i) => { const X = 80 + (i % 2) * 470, Y = 790 + Math.floor(i / 2) * 210; caja(X, Y, 450, 190); x.fillStyle = GRIS; x.font = F(34); x.fillText(k, X + 40, Y + 66); x.fillStyle = TINTA; x.font = F(78, 700); x.fillText(v, X + 40, Y + 152); });
+  let Y = 1240;
+  if (tipo === 'semana') { ['L', 'M', 'X', 'J', 'V', 'S', 'D'].forEach((l, i) => { const X = 80 + i * 134; caja(X, Y, 116, 116, 30, d.semana[i] ? LIMA : 'rgba(255,255,255,.07)'); x.fillStyle = d.semana[i] ? '#0E1A11' : GRIS; x.font = F(40, 700); x.textAlign = 'center'; x.fillText(l, X + 58, Y + 74); x.textAlign = 'left'; }); Y += 170; }
+  if (d.mejor) { x.fillStyle = GRIS; x.font = F(34); x.fillText('Mejor serie', 80, Y + 40); x.fillStyle = TINTA; x.font = F(54, 700); x.fillText(`${fmt(d.mejor.peso)} kg × ${fmt(d.mejor.reps)}`, 80, Y + 110); x.fillStyle = GRIS; x.font = F(36); x.fillText(String(d.mejor.nombre).slice(0, 26), 80, Y + 162); }
+  if (d.carta) {
+    const img = await new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = `cartas/${d.carta.id}.jpg`; });
+    const cw = 285, ch = 380, X = W - 80 - cw, CY = Y + 70, col = {comun: '#C9D6BF', rara: '#6FB7E8', epica: '#A17BE0', legendaria: '#E2A42C'}[d.carta.r];
+    caja(X - 14, CY - 14, cw + 28, ch + 28, 34, col);
+    if (img) { x.save(); x.beginPath(); x.roundRect(X, CY, cw, ch, 24); x.clip(); x.drawImage(img, X, CY, cw, ch); x.restore(); }
+    x.fillStyle = GRIS; x.font = F(30); x.textAlign = 'right'; x.fillText(`Mi carta más rara · ${RAREZA[d.carta.r]}`, W - 80, CY - 40); x.textAlign = 'left';
+  }
+  x.fillStyle = GRIS; x.font = F(32); x.fillText('Entreno con Ferrum', 80, H - 90);
+  return new Promise(k => c.toBlob(k, 'image/png'));
+}
+async function abrirResumen(tipo = 'semana') {
+  state.capa = {tipo: 'resumen', t: tipo, url: ''}; pintarCapa();
+  const b = await imagenResumen(tipo);
+  if (state.capa?.tipo !== 'resumen' || state.capa.t !== tipo) return;
+  state.capa.blob = b; state.capa.url = URL.createObjectURL(b); pintarCapa();
+}
+async function compartirResumen() {
+  const c = state.capa, file = new File([c.blob], `ferrum-${c.t}-${hoy}.png`, {type: 'image/png'});
+  try { if (navigator.canShare?.({files: [file]})) { await navigator.share({files: [file]}); return; } } catch (e) { if (e.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = c.url; a.download = file.name; a.click();
+}
 async function compartirSesion(id) {
   const s = state.sesiones.find(x => x.id === id);
   if (!s) return;
@@ -2446,7 +2520,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 58;
+const VERSION = 59;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -2517,7 +2591,7 @@ async function cargarAmigos() {
   if (!cuenta?.nombre || a.cargando) return;
   a.cargando = true; a.error = ''; render();
   try {
-    await subirMarcas().catch(e => console.error('marcas', e));
+    await subirMarcas().catch(e => reportarError(`marcas: ${e.message}`, e.stack));
     [a.seg, a.marcas, a.gente] = await Promise.all([
       pedir('seguimientos?select=seguidor,seguido&limit=5000'),
       pedir('marcas?select=*,perfiles(nombre)&order=rm.desc&limit=2000'),
@@ -2548,7 +2622,11 @@ async function cargarAmigos() {
     const pendiente = ls.get('fr_club', '');
     if (pendiente && a.clubes?.some(c => c.id === pendiente)) { ls.set('fr_club', ''); state.vista = 'explorar'; a.cargando = false; abrirClub(pendiente); }
     try { ls.set('fr_cache', {uid: cuenta.uid, gente: a.gente, seg: a.seg, feed: a.feed.slice(0, 12)}); } catch {}
-  } catch (e) { a.error = e instanceof TypeError && /fetch|load|network/i.test(e.message) ? 'No he podido conectar. Revisa tu conexión.' : `Algo ha fallado al cargar. Mándale esto a Xavi: ${e.code || ''} ${e.message}`; }
+  } catch (e) {
+    const red = e instanceof TypeError && /fetch|load|network/i.test(e.message);
+    a.error = red ? 'No he podido conectar. Revisa tu conexión.' : `Algo ha fallado al cargar. Mándale esto a Xavi: ${e.code || ''} ${e.message}`;
+    if (!red) reportarError(`cargar: ${e.code || ''} ${e.message}`, e.stack);
+  }
   a.cargando = false; render();
 }
 async function cargarAvisos() {
@@ -3249,9 +3327,17 @@ function vistaLiga() {
       <span class="mid"><b>${esc(f.nombre)}</b><small class="num">Nivel ${f.nivel}</small></span><span class="v num">${fmt(f.xps)}<small>XP</small></span></button>`;
     if (puedeSubir && i === cupo - 1 && n > cupo) lista += `<span class="zona sube">Hasta aquí ascienden el lunes</span>`;
   });
+  const grupos = (titulo, lista, accion, mio) => {
+    const filas = lista.map(g => ({...g, xp: g.ids.reduce((s, id) => s + xpSemana(id), 0), activos: g.ids.filter(id => xpSemana(id) > 0).length})).filter(g => g.ids.length).sort((x, y) => y.xp - x.xp || y.activos - x.activos).slice(0, 10);
+    return filas.length ? `<div class="sec-h"><h2>${titulo}</h2></div><div class="rows">${filas.map((g, i) => `<button class="rk${g.id === mio ? ' yo' : ''}" data-accion="${accion}" data-g="${esc(g.id)}" data-id="${esc(g.id)}"><span class="p num">${i + 1}</span>
+      <span class="quien" style="grid-template-columns:40px 1fr">${g.logo}<span class="mid"><b>${esc(g.nombre)}</b><small class="num">${g.activos} ${g.activos === 1 ? 'activo' : 'activos'} · ${g.ids.length} ${g.ids.length === 1 ? 'miembro' : 'miembros'}</small></span></span><span class="v num">${fmt(g.xp)}<small>XP</small></span></button>`).join('')}</div>` : '';
+  };
+  const ligaGyms = grupos('Liga de gimnasios', GYMS.map(g => ({id: g.id, nombre: g.n, logo: logoGym(g), ids: genteGym(g.id).map(x => x.id)})), 'ver-gym', gymPor(miGym())?.id);
+  const ligaClubs = a.clubsOk ? grupos('Liga de clubs', (a.clubes || []).map(c => ({id: c.id, nombre: c.nombre, logo: avatarClub(c), ids: miembrosDe(c.id)})), 'ver-club', (a.clubes || []).find(c => soyMiembro(c.id))?.id) : '';
   return `<section class="liga"><span><b>Liga ${ligaU(cuenta.uid)}</b><small class="num">Nivel ${p.n} · ${fmt(semanaActual().xps)} XP esta semana</small></span><strong class="num">${yo ? yo + '.º' : '–'}</strong></section>
     <div class="rows">${lista}</div>
-    <p class="note">Cada lunes los primeros suben de liga y los últimos bajan. Si no entrenas, también bajas.</p>`;
+    <p class="note">Cada lunes los primeros suben de liga y los últimos bajan. Si no entrenas, también bajas.</p>
+    ${ligaGyms}${ligaClubs}${ligaGyms || ligaClubs ? '<p class="note">Suma el XP de esta semana de todos sus miembros.</p>' : ''}`;
 }
 function vistaDuelos() {
   const a = state.amigos;
@@ -3406,7 +3492,7 @@ function vistaPerfil(uid, propio) {
       <div><div class="label">Racha</div><div class="v num">${+a.gente?.find(x => x.id === uid)?.resumen?.racha || 0}<small style="font-size:12px;color:var(--muted)"> sem</small></div></div>
       <div><div class="label">Coronas</div><div class="v num">${lideres().coronas.filter(r => r.usuario === uid).length}</div></div>
       <div><div class="label">Leyendas</div><div class="v num">${lideres().leyendas.filter(r => r.usuario === uid).length}</div></div>
-    </div>${filaColeccion(uid, propio)}`;
+    </div>${filaColeccion(uid, propio)}${propio ? `<button class="col-fila" style="grid-template-columns:1fr auto" data-accion="ver-resumen"><span><b>Tu resumen</b><small>Tu semana o tu mes en una imagen para stories</small></span>${ICON_RIGHT}</button>` : ''}`;
   if (marcasDe.length) h += `<div class="sec-h"><h2>Mejores marcas</h2></div><div class="rows">${marcasDe.slice(0, 5).map(r => `<button class="prow rec" data-accion="ver-ranking" data-clave="${esc(r.clave)}">
     <span class="nm">${esc(r.nombre)}<span class="sub num">${fmt(r.peso)} kg × ${fmt(r.reps)}</span></span><span class="kg num">${kgRm(r)}<small>kg</small></span></button>`).join('')}</div>`;
   h += `<div class="sec-h"><h2>Sesiones</h2></div>`;
@@ -3693,7 +3779,7 @@ function vistaYo() {
   const mios = a.bloqueos.filter(b => b.bloqueador === cuenta.uid);
   return seg + vistaPerfil(cuenta.uid, true) + seccionMarcos() + seccionPremios() + (mios.length ? `<div class="sec-h"><h2>Bloqueados</h2></div><div class="rows">${mios.map(b => `<div class="persona"><span>Usuario bloqueado</span><button class="mini" data-accion="desbloquear" data-u="${esc(b.bloqueado)}">Desbloquear</button></div>`).join('')}</div>` : '') + `<div class="cuenta-txt">${cuenta.email ? `${esc(cuenta.email)} · ` : ''}Ferrum ${VERSION}</div><div class="salir">
     ${cuenta.email ? `<button class="chip" data-accion="cambiar-clave">Cambiar contraseña</button><button class="chip" data-accion="cerrar-cuenta">Cerrar sesión</button>` : ''}
-    ${cuenta.uid === ADMIN ? `<button class="chip" data-accion="admin-abrir">Recuperar cuentas</button>` : ''}
+    ${cuenta.uid === ADMIN ? `<button class="chip" data-accion="admin-abrir">Recuperar cuentas</button><button class="chip" data-accion="errores-abrir">Errores</button>` : ''}
     <button class="chip danger${a.salir ? ' sure' : ''}" data-accion="borrar-cuenta">${a.salir ? '¿Seguro? Se borra para siempre' : 'Borrar mi cuenta'}</button></div>`;
 }
 function camposCuenta(tipo) {
@@ -3708,6 +3794,12 @@ function camposCuenta(tipo) {
 /* recuperar cuentas: el correo gratis de Supabase no llega a los usuarios, así que el administrador pone una contraseña temporal */
 const ADMIN = 'c61a90cb-1fe2-4a4a-bd92-005937218ed9';
 const claveTemporal = () => `Ferrum-${Math.random().toString(36).slice(2, 6)}${Math.floor(Math.random() * 90 + 10)}`;
+async function abrirErrores() {
+  state.capa = {tipo: 'errores', lista: null}; pintarCapa();
+  try { state.capa.lista = await pedir('errores?select=*&order=creado.desc&limit=60'); }
+  catch (e) { state.capa.error = /errores|PGRST205/.test(`${e.code} ${e.message}`) ? 'Falta pegar el SQL de errores en Supabase.' : 'No he podido cargarlos.'; }
+  if (state.capa?.tipo === 'errores') pintarCapa();
+}
 async function abrirAdmin() {
   state.capa = {tipo: 'admin', lista: null}; pintarCapa();
   try { state.capa.lista = await pedir('rpc/admin_cuentas', {method: 'POST', body: {}}); }
@@ -3862,6 +3954,16 @@ function apuntar(form) {
 }
 
 const scrolls = {};
+/* cada error llega a Supabase (tabla errores) para arreglarlo sin esperar a que alguien lo cuente; los de red no, que no son de la app */
+const erroresEnviados = new Set();
+function reportarError(mensaje, pila = '') {
+  const m = String(mensaje || 'Error sin mensaje').slice(0, 500);
+  if (/fetch|Load failed|NetworkError|sin cuenta|sin sesión|AbortError|ResizeObserver/i.test(m) || !nubeLista() || !cuenta?.token || erroresEnviados.has(m) || erroresEnviados.size >= 5) return;
+  erroresEnviados.add(m);
+  pedir('errores', {method: 'POST', prefer: 'return=minimal', body: {version: VERSION, vista: String(state.vista).slice(0, 40), mensaje: m, pila: String(pila || '').slice(0, 2000)}}).catch(() => {});
+}
+addEventListener('error', e => reportarError(e.message, e.error?.stack));
+addEventListener('unhandledrejection', e => reportarError(e.reason?.message || e.reason, e.reason?.stack));
 /* el logo solo sale al abrir la app, no en las recargas por actualización */
 try { if (sessionStorage.fr_abierta) $('#arranque').remove(); sessionStorage.fr_abierta = 1; } catch {}
 setTimeout(() => $('#arranque')?.remove(), 2000);
@@ -4025,6 +4127,11 @@ document.addEventListener('click', ev => {
     case 'quitar-meta': ls.set('fr_metas', metasFuerza().filter((_, i) => i !== +b.dataset.i)); render(true); break;
     case 'comunidad': state.amigos.comunidad = b.dataset.c; render(true); break;
     case 'ver-club': abrirClub(b.dataset.id); break;
+    case 'ver-resumen': abrirResumen('semana'); break;
+    case 'resumen-tipo': abrirResumen(b.dataset.t); break;
+    case 'resumen-compartir': compartirResumen(); break;
+    case 'errores-abrir': abrirErrores(); break;
+    case 'errores-borrar': pedir(`errores?id=in.(${state.capa.lista.map(x => x.id).join(',')})`, {method: 'DELETE'}).then(abrirErrores, () => toast('No se han borrado', 'Revisa la conexión')); break;
     case 'cambiar-clave': state.capa = {tipo: 'clave'}; pintarCapa(); break;
     case 'admin-abrir': abrirAdmin(); break;
     case 'admin-elegir': state.capa.sel = state.capa.lista[+b.dataset.i]; pintarCapa(); break;
