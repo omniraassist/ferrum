@@ -1730,6 +1730,26 @@ function pintarCapa() {
       <div class="rows" id="gym-ops">${gente.map(g => `<button class="gym-op" data-accion="club-invitar" data-u="${esc(g.id)}" data-b="${esc(norm(g.nombre))}" ${enviadas.has(g.id) ? 'disabled' : ''}>${avatar(g.nombre, g.id)}<span><b>${esc(g.nombre)}</b><small>${enviadas.has(g.id) ? 'Invitación enviada' : 'Toca para invitar'}</small></span></button>`).join('') || '<div class="empty">Ya está todo el mundo dentro.</div>'}</div></div>`;
     return;
   }
+  if (c.tipo === 'clave') {
+    el.innerHTML = `<div class="capa-in" style="text-align:left"><div class="capa-txt" style="text-align:center"><b>Cambiar contraseña</b><span>${esc(cuenta.email || '')}</span></div>
+      <form class="campos" data-form="nueva-clave" style="width:100%"><input class="campo" name="clave" type="password" autocomplete="new-password" placeholder="Nueva contraseña (mínimo 8)" aria-label="Nueva contraseña">
+      <input class="campo" name="repite" type="password" autocomplete="new-password" placeholder="Repítela" aria-label="Repite la contraseña"><button class="apuntar" type="submit">Guardar</button></form>
+      <button class="ghost" style="width:100%" data-accion="cerrar-capa">Cancelar</button></div>`;
+    return;
+  }
+  if (c.tipo === 'admin') {
+    const cab = t => `<div class="gym-sel-h"><h2>${t}</h2><button class="mini" data-accion="cerrar-capa">Cerrar</button></div>`;
+    if (c.hecho) { el.innerHTML = `<div class="capa-in"><div class="capa-txt"><b>Listo</b><span>Pásale esto a ${esc(c.hecho.nombre)} por privado. Que entre con «Ya tengo cuenta» y la cambie en Perfil.</span></div>
+      <div class="card" style="width:100%;text-align:left"><p class="note" style="margin:0">Correo</p><b style="overflow-wrap:anywhere">${esc(c.hecho.correo)}</b><p class="note" style="margin:10px 0 0">Contraseña temporal</p><b class="num">${esc(c.hecho.clave)}</b></div>
+      <button class="apuntar" data-accion="admin-copiar">Copiar mensaje</button><button class="ghost" style="width:100%" data-accion="cerrar-capa">Cerrar</button></div>`; return; }
+    if (c.sel) { el.innerHTML = `<div class="gym-sel">${cab(esc(c.sel.nombre))}<p class="note" style="margin:0">${c.sel.email ? 'Pon una contraseña temporal. Puedes cambiar también su correo.' : 'Su cuenta es antigua y no tiene correo: ponle el suyo para que pueda entrar.'}</p>
+      <form class="campos" data-form="restablecer"><input class="campo" name="correo" type="email" autocapitalize="none" autocorrect="off" placeholder="Su correo" value="${esc(c.sel.email || '')}" aria-label="Correo">
+      <input class="campo" name="clave" autocapitalize="none" autocorrect="off" value="${claveTemporal()}" aria-label="Contraseña temporal"><button class="apuntar" type="submit">Restablecer</button></form>
+      <button class="ghost" data-accion="admin-volver">Volver</button></div>`; return; }
+    el.innerHTML = `<div class="gym-sel">${cab('Recuperar cuentas')}${c.error ? `<p class="note" style="margin:0">${esc(c.error)}</p>` : !c.lista ? '<div class="empty esq"></div>'
+      : `<div class="rows">${c.lista.map((u, i) => `<button class="gym-op" data-accion="admin-elegir" data-i="${i}">${avatar(u.nombre, u.id)}<span><b>${esc(u.nombre)}</b><small>${esc(u.email || 'Sin correo · cuenta antigua')}</small></span></button>`).join('')}</div>`}</div>`;
+    return;
+  }
   if (c.tipo === 'ruleta') {
     el.innerHTML = `<div class="capa-in"><div class="capa-txt"><b>Gira la ruleta</b><span>Premios para coleccionar y lucir.</span></div>${htmlRueda()}
       <button class="apuntar" data-accion="girar-ruleta">Girar</button><button class="ghost" style="width:100%" data-accion="cerrar-capa">Ahora no</button></div>`;
@@ -2426,7 +2446,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 57;
+const VERSION = 58;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -3672,7 +3692,8 @@ function vistaYo() {
   if (!cuenta?.nombre) return seg + vistaAmigos();
   const mios = a.bloqueos.filter(b => b.bloqueador === cuenta.uid);
   return seg + vistaPerfil(cuenta.uid, true) + seccionMarcos() + seccionPremios() + (mios.length ? `<div class="sec-h"><h2>Bloqueados</h2></div><div class="rows">${mios.map(b => `<div class="persona"><span>Usuario bloqueado</span><button class="mini" data-accion="desbloquear" data-u="${esc(b.bloqueado)}">Desbloquear</button></div>`).join('')}</div>` : '') + `<div class="cuenta-txt">${cuenta.email ? `${esc(cuenta.email)} · ` : ''}Ferrum ${VERSION}</div><div class="salir">
-    ${cuenta.email ? `<button class="chip" data-accion="cerrar-cuenta">Cerrar sesión</button>` : ''}
+    ${cuenta.email ? `<button class="chip" data-accion="cambiar-clave">Cambiar contraseña</button><button class="chip" data-accion="cerrar-cuenta">Cerrar sesión</button>` : ''}
+    ${cuenta.uid === ADMIN ? `<button class="chip" data-accion="admin-abrir">Recuperar cuentas</button>` : ''}
     <button class="chip danger${a.salir ? ' sure' : ''}" data-accion="borrar-cuenta">${a.salir ? '¿Seguro? Se borra para siempre' : 'Borrar mi cuenta'}</button></div>`;
 }
 function camposCuenta(tipo) {
@@ -3681,7 +3702,34 @@ function camposCuenta(tipo) {
   return `<form class="campos" data-form="cuenta" data-tipo="${tipo}">
     <input class="campo" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Tu email" aria-label="Email">
     <input class="campo" name="password" type="password" autocomplete="${nueva ? 'new-password' : 'current-password'}" placeholder="${nueva ? 'Elige una contraseña (mínimo 8)' : 'Tu contraseña'}" aria-label="Contraseña">
-    <button class="apuntar" type="submit" ${a.cargando ? 'disabled' : ''}>${a.cargando ? 'Un momento…' : texto}</button></form>`;
+    <button class="apuntar" type="submit" ${a.cargando ? 'disabled' : ''}>${a.cargando ? 'Un momento…' : texto}</button>
+    ${tipo === 'entrar' ? `<p class="note" style="margin:0;text-align:center">¿Has olvidado la contraseña? Pídele a Xavi una temporal: te la pone desde la app y luego la cambias en Perfil.</p>` : ''}</form>`;
+}
+/* recuperar cuentas: el correo gratis de Supabase no llega a los usuarios, así que el administrador pone una contraseña temporal */
+const ADMIN = 'c61a90cb-1fe2-4a4a-bd92-005937218ed9';
+const claveTemporal = () => `Ferrum-${Math.random().toString(36).slice(2, 6)}${Math.floor(Math.random() * 90 + 10)}`;
+async function abrirAdmin() {
+  state.capa = {tipo: 'admin', lista: null}; pintarCapa();
+  try { state.capa.lista = await pedir('rpc/admin_cuentas', {method: 'POST', body: {}}); }
+  catch (e) { state.capa.error = /admin_cuentas|PGRST202/.test(`${e.code} ${e.message}`) ? 'Falta pegar el SQL de recuperar cuentas en Supabase.' : 'No he podido cargar las cuentas.'; }
+  if (state.capa?.tipo === 'admin') pintarCapa();
+}
+async function restablecer(f) {
+  const c = state.capa, correo = f.correo.value.trim(), clave = f.clave.value;
+  if (clave.length < 8) { toast('Contraseña corta', 'Mínimo 8 caracteres'); return; }
+  document.activeElement?.blur();
+  try {
+    await pedir('rpc/admin_restablecer', {method: 'POST', body: {objetivo: c.sel.id, correo, clave}});
+    c.hecho = {nombre: c.sel.nombre, correo: correo || c.sel.email, clave}; pintarCapa();
+  } catch (e) { toast('No se ha cambiado', /correo usado/.test(e.message) ? 'Ese correo ya es de otra cuenta' : /falta correo/.test(e.message) ? 'Pon su correo' : 'Revisa la conexión'); }
+}
+async function cambiarClave(f) {
+  const a = f.clave.value, b = f.repite.value;
+  if (a.length < 8) { toast('Contraseña corta', 'Mínimo 8 caracteres'); return; }
+  if (a !== b) { toast('No coinciden', 'Escríbela igual dos veces'); return; }
+  document.activeElement?.blur();
+  try { await pedirAuth('user', {method: 'PUT', token: await token(), body: {password: a}}); state.capa = null; pintarCapa(); toast('Contraseña cambiada', cuenta.email); }
+  catch (e) { toast('No se ha cambiado', e.code === 'same_password' ? 'Es la misma que ya tenías' : e.code === 'weak_password' ? 'Usa una más segura' : 'Revisa la conexión'); }
 }
 function vistaAcceso() {
   const a = state.amigos;
@@ -3977,6 +4025,11 @@ document.addEventListener('click', ev => {
     case 'quitar-meta': ls.set('fr_metas', metasFuerza().filter((_, i) => i !== +b.dataset.i)); render(true); break;
     case 'comunidad': state.amigos.comunidad = b.dataset.c; render(true); break;
     case 'ver-club': abrirClub(b.dataset.id); break;
+    case 'cambiar-clave': state.capa = {tipo: 'clave'}; pintarCapa(); break;
+    case 'admin-abrir': abrirAdmin(); break;
+    case 'admin-elegir': state.capa.sel = state.capa.lista[+b.dataset.i]; pintarCapa(); break;
+    case 'admin-volver': state.capa.sel = null; pintarCapa(); break;
+    case 'admin-copiar': { const h = state.capa.hecho; navigator.clipboard?.writeText(`Ya puedes entrar en Ferrum con «Ya tengo cuenta».\nCorreo: ${h.correo}\nContraseña temporal: ${h.clave}\nCámbiala luego en Perfil → Cambiar contraseña.`).then(() => toast('Mensaje copiado', 'Pégalo por privado'), () => toast('No se ha copiado', 'Cópialo a mano')); break; }
     case 'club-compartir': compartirClub(b.dataset.id); break;
     case 'club-invitar-abrir': state.capa = {tipo: 'club-inv', id: b.dataset.id}; pintarCapa(); break;
     case 'club-invitar': invitarAlClub(state.capa.id, b.dataset.u); break;
@@ -4146,6 +4199,8 @@ document.addEventListener('submit', ev => {
   }
   if (f.dataset.form === 'perfil') guardarPerfil(f);
   if (f.dataset.form === 'club') crearClub(f);
+  if (f.dataset.form === 'nueva-clave') cambiarClave(f);
+  if (f.dataset.form === 'restablecer') restablecer(f);
   if (f.dataset.form === 'club-codigo') unirmeConCodigo(f);
   if (f.dataset.form === 'gym-otro' && f.nombre.value.trim()) gymElegido(f.nombre.value.trim());
   if (f.dataset.form === 'rutina') guardarRutina(f);
