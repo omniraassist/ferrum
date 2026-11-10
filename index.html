@@ -428,6 +428,17 @@ button.set-chip.vacia{box-shadow:inset 0 0 0 1px var(--line-2)}
 @keyframes corre{from{background-position:0% 10%}to{background-position:100% 90%}}
 #capa{position:fixed;inset:0;z-index:40;display:none;place-items:center;padding:24px;background:rgba(6,9,7,.96)}
 #capa.on{display:grid}
+.anterior-b{display:flex;gap:6px}
+.rec-b{display:inline-flex;align-items:center;gap:6px}.rec-b i{width:8px;height:8px;border-radius:50%;background:#ff6b5e}
+.rec-in{width:min(420px,92vw);gap:14px}
+.rec-vis{display:block;width:100%;max-height:58vh;object-fit:contain;border-radius:18px;background:#000;aspect-ratio:9/16;height:auto}
+.rec-guia{margin:0;text-align:center}
+.rec-boton{width:72px;height:72px;border-radius:50%;border:4px solid #fff;background:transparent;display:grid;place-items:center;padding:0}
+.rec-boton i{width:54px;height:54px;border-radius:50%;background:#ff4d3d;transition:all .2s}
+.rec-boton.on i{width:26px;height:26px;border-radius:6px}
+.rec-fila{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.rec-reps{display:flex;align-items:center;gap:10px;justify-content:center}.rec-reps b{font-size:22px;min-width:2ch}
+.int-estado{display:flex;gap:10px;align-items:center;justify-content:center;font-size:13px;color:var(--muted)}
 .capa-in{width:min(300px,78vw);display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center}
 .capa-in{perspective:1100px}
 .capa-txt b{display:block;font-size:22px;font-weight:800;letter-spacing:-.03em}
@@ -1286,7 +1297,7 @@ function bloque(e, i, ses) {
   const inp = state.inputs[e.clave] || prefill(e, m);
   state.inputs[e.clave] = inp;
   h += `
-    <div class="anterior"><span>${(a => a ? `Anterior: <b class="num">${fmt(a.peso)} × ${fmt(a.reps)}</b>` : 'Sin serie anterior')(m?.ultima.sets[e.sets.length])}</span><button type="button" class="mini" data-accion="discos">Discos</button></div>
+    <div class="anterior"><span>${(a => a ? `Anterior: <b class="num">${fmt(a.peso)} × ${fmt(a.reps)}</b>` : 'Sin serie anterior')(m?.ultima.sets[e.sets.length])}</span><span class="anterior-b">${puedeIntentar(e, ses) ? '<button type="button" class="mini rec-b" data-accion="ir-record"><i></i>Récord</button>' : ''}<button type="button" class="mini" data-accion="discos">Discos</button></span></div>
     <form class="logger" data-form="serie">
       <div class="step"><span class="label">Peso · kg</span>
         <div class="step-row"><button type="button" data-accion="paso" data-c="peso" data-d="-2.5" aria-label="Menos peso">−</button>
@@ -1804,6 +1815,9 @@ function pintarCapa() {
       ${!c.ganado && c.publicacion ? `<button class="apuntar" data-accion="revancha" data-id="${esc(c.publicacion)}">Revancha</button><button class="ghost" style="width:100%" data-accion="cerrar-capa">Ahora no</button>` : `<button class="apuntar" data-accion="cerrar-capa">Seguir</button>`}</div>`;
     return;
   }
+  if (c.tipo === 'record') { el.innerHTML = capaRecord(c); return; }
+  if (c.tipo === 'intento') { el.innerHTML = capaIntento(c); return; }
+  if (c.tipo === 'staff') { el.innerHTML = capaStaff(); return; }
   if (c.tipo === 'discos') {
     const kg = c.kg, porLado = Math.max(0, (kg - 20) / 2), discos = []; let resto = porLado;
     for (const d of [25, 20, 15, 10, 5, 2.5, 1.25]) while (resto >= d - .001) { discos.push(d); resto -= d; }
@@ -2520,7 +2534,7 @@ function vistaRecords() {
 /* ---------- amigos: Supabase por REST, sin librerías ---------- */
 const NUBE = {url: 'https://gtwtowgamogybcbtlvwq.supabase.co', key: 'sb_publishable_FJUad4UVL53HrETrLouLdQ_R4iUw4R-'};
 const nubeLista = () => !!(NUBE.url && NUBE.key);
-const VERSION = 59;
+const VERSION = 60;
 let cuenta = ls.get('fr_cuenta', null);
 let renovando = null;
 async function pedirAuth(ruta, {method = 'POST', body, token: t} = {}) {
@@ -2613,6 +2627,7 @@ async function cargarAmigos() {
       a.desafios = await pedir('desafios?select=*,retador_p:perfiles!desafios_retador_fkey(nombre),rival_p:perfiles!desafios_rival_fkey(nombre)&order=creado.desc&limit=100');
       a.desafiosOk = true;
     } catch { a.desafiosOk = false; }
+    await cargarIntentos();
     a.feed = await pedir(consultaFeed());
     if (a.perfilOk) {
       [a.bloqueos, a.ahora] = await Promise.all([pedir('bloqueos?select=*'), pedir(`entrenando?select=*&visto=gt.${new Date(Date.now() - 2 * 36e5).toISOString()}&order=inicio.desc`)]);
@@ -2935,7 +2950,7 @@ function vistaRanking(clave) {
     <div class="rows">${c.filas.map((r, i) => `<button class="rk${r.usuario === cuenta.uid ? ' yo' : ''}" data-accion="perfil" data-u="${esc(r.usuario)}">
       <span class="p num">${i + 1}</span>
       <span class="mid"><b>${esc(r.perfiles?.nombre)}</b><small class="num">${fmt(r.peso)} kg × ${fmt(r.reps)} · ${fechaCorta(String(r.fecha))}</small></span>
-      <span class="v num">${i === 0 ? '<span class="tag" style="margin-right:6px">Corona</span>' : ''}${kgRm(r)}<small>kg</small></span></button>`).join('')}</div></div>`;
+      <span class="v num">${i === 0 ? '<span class="tag" style="margin-right:6px">Corona</span>' : ''}${verificada(r.usuario, r.clave, r.rm) ? '<span class="tag soft" style="margin-right:6px">✓</span>' : ''}${kgRm(r)}<small>kg</small></span></button>`).join('')}</div></div>`;
 }
 /* ---------- fotos y vídeos ---------- */
 const urlMedio = r => /^[0-9a-f-]{36}\/[a-z0-9]+\.(mp4|mov|jpg)$/.test(r) ? `${NUBE.url}/storage/v1/object/public/media/${r}` : '';
@@ -3495,6 +3510,7 @@ function vistaPerfil(uid, propio) {
     </div>${filaColeccion(uid, propio)}${propio ? `<button class="col-fila" style="grid-template-columns:1fr auto" data-accion="ver-resumen"><span><b>Tu resumen</b><small>Tu semana o tu mes en una imagen para stories</small></span>${ICON_RIGHT}</button>` : ''}`;
   if (marcasDe.length) h += `<div class="sec-h"><h2>Mejores marcas</h2></div><div class="rows">${marcasDe.slice(0, 5).map(r => `<button class="prow rec" data-accion="ver-ranking" data-clave="${esc(r.clave)}">
     <span class="nm">${esc(r.nombre)}<span class="sub num">${fmt(r.peso)} kg × ${fmt(r.reps)}</span></span><span class="kg num">${kgRm(r)}<small>kg</small></span></button>`).join('')}</div>`;
+  h += seccionVerifPerfil(uid, propio);
   h += `<div class="sec-h"><h2>Sesiones</h2></div>`;
   h += posts?.length ? posts.map(tarjetaPublicacion).join('')
     : posts ? `<div class="empty">Aún no hay sesiones publicadas.</div>` : `<div class="empty"><b>Cargando</b>Trayendo sus sesiones…</div>`;
@@ -3514,6 +3530,241 @@ function listaGente() {
   return `<div class="rows">${lista.map(g => `<div class="persona"><button class="quien" data-accion="perfil" data-u="${esc(g.id)}">${avatar(g.nombre, g.id)}
     <span class="mid"><b>${esc(g.nombre)}</b><small class="num">${a.seg.filter(x => x.seguido === g.id).length} seguidores</small></span></button>${botonSeguir(g.id)}</div>`).join('')}</div>`;
 }
+/* ---------- verificación de récords ---------- */
+/* solo puntúan para coronas los pesos libres; máquinas y poleas van aparte, sin verificar */
+const PESO_LIBRE = /\b(barra|mancuernas?|kettlebell|sentadilla|peso muerto|banca|press militar|dominadas?|fondos|hip thrust|remo|zancadas?|buenos dias|rumano|clean|arrancada|envion|curl)\b/;
+const NO_LIBRE = /\b(maquina|polea|prensa|multipower|smith|hack|contractora|extension|pec deck|jalon|asistid[ao]s?|femoral|sentado en maquina)\b/;
+const pesoLibre = n => { const t = norm(n); return PESO_LIBRE.test(t) && !NO_LIBRE.test(t); };
+const MOTIVOS_NO = ['Profundidad', 'Recorrido incompleto', 'Le ayudan', 'No se ven los discos', 'No es el peso o las reps', 'No sale el código'];
+const MOTIVOS_REP = ['Vídeo de otro día', 'Peso falso', 'Técnica no válida', 'Otra persona'];
+const esStaff = gym => cuenta?.uid === ADMIN || state.amigos.staff?.some(s => s.gym === gym && s.usuario === cuenta?.uid);
+const intentosDe = filtro => (state.amigos.intentos || []).filter(filtro);
+const votosDe = id => (state.amigos.votos || []).filter(v => v.intento === id);
+/* mejor marca verificada de cada ejercicio: ese es el ranking que cuenta */
+function mejoresVerif(filtro) {
+  const m = new Map();
+  for (const i of intentosDe(i => i.estado === 'verificada' && filtro(i))) if (!m.has(i.clave) || +i.rm > +m.get(i.clave).rm) m.set(i.clave, i);
+  return [...m.values()].sort((x, y) => +y.rm - +x.rm);
+}
+const verificada = (uid, clave, rm) => intentosDe(i => i.estado === 'verificada' && i.usuario === uid && i.clave === clave && +i.rm >= +rm - .05).length > 0;
+const ESTADO_INT = {pendiente: 'Pendiente', verificada: 'Verificada', rechazada: 'No válida', revision: 'En revisión'};
+const puedeIntentar = (e, ses) => !!(cuenta?.nombre && state.amigos.verifOk && ses?.fecha === hoy && pesoLibre(e.nombre) && miGym() && navigator.mediaDevices?.getUserMedia && window.MediaRecorder);
+async function cargarIntentos() {
+  const a = state.amigos;
+  try {
+    [a.intentos, a.votos, a.staff] = await Promise.all([pedir('intentos?select=*&order=creado.desc&limit=500'), pedir('votos?select=intento,votante,valido,motivo,staff&limit=5000'), pedir('staff?select=*')]);
+    a.verifOk = true; limpiarVideos();
+  } catch { a.verifOk = false; a.intentos = []; a.votos = []; a.staff = []; }
+}
+/* el vídeo de una marca rechazada o ya superada por otra verificada se borra: así cabe todo en el plan gratuito */
+async function limpiarVideos() {
+  const mias = intentosDe(i => i.usuario === cuenta.uid && i.ruta);
+  const sobra = mias.filter(i => i.estado === 'rechazada' || (i.estado === 'verificada' && mias.some(j => j.id !== i.id && j.estado === 'verificada' && j.clave === i.clave && (+j.rm > +i.rm || (+j.rm === +i.rm && j.creado > i.creado)))));
+  for (const i of sobra) try {
+    await fetch(`${NUBE.url}/storage/v1/object/verificacion`, {method: 'DELETE', headers: {apikey: NUBE.key, Authorization: 'Bearer ' + await token(), 'Content-Type': 'application/json'}, body: JSON.stringify({prefixes: [i.ruta]})});
+    await pedir('rpc/quitar_video', {method: 'POST', body: {intento_: i.id}});
+    i.ruta = null;
+  } catch {}
+}
+
+/* grabación: la cámara pasa por un lienzo que estampa nombre, hora y el código que da el servidor; sin galería */
+let rec = null;
+async function irARecord() {
+  const ses = sesion(), e = ses?.ejercicios.find(x => x.clave === state.activo);
+  if (!e) return;
+  const peso = num($('#in-peso')?.value ?? state.inputs[e.clave]?.peso), reps = num($('#in-reps')?.value ?? state.inputs[e.clave]?.reps);
+  if (!(peso > 0) || !(reps > 0)) { toast('Falta un dato', 'Pon el peso y las reps que vas a intentar'); return; }
+  document.activeElement?.blur();
+  state.capa = {tipo: 'espera', texto: 'Preparando la cámara'}; pintarCapa();
+  let r;
+  try { [r] = await pedir('rpc/empezar_intento', {method: 'POST', body: {clave_: claveRanking(e.nombre), nombre_: e.nombre.slice(0, 80), peso_: peso, reps_: reps}}); }
+  catch (err) {
+    state.capa = null; pintarCapa();
+    toast('No se puede grabar', /sin gimnasio/.test(err.message) ? 'Pon tu gimnasio en el perfil' : /demasiados/.test(err.message) ? 'Máximo 8 intentos al día' : 'Revisa la conexión'); return;
+  }
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({video: {facingMode: {ideal: 'environment'}, width: {ideal: 1280}, height: {ideal: 720}}, audio: false}); }
+  catch { state.capa = null; pintarCapa(); toast('Sin cámara', 'Dale permiso a Ferrum para usar la cámara'); return; }
+  state.capa = {tipo: 'record', paso: 'prep', id: r.id, codigo: r.codigo, clave: e.clave, nombre: e.nombre, peso, reps};
+  const v = document.createElement('video'), cv = document.createElement('canvas');
+  v.muted = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.srcObject = stream; v.play().catch(() => {});
+  rec = {v, cv, stream, raf: 0};
+  const pinta = () => {
+    if (!rec) return;
+    rec.raf = requestAnimationFrame(pinta);
+    if (!v.videoWidth) return;
+    const k = Math.min(1, 720 / Math.min(v.videoWidth, v.videoHeight)), w = Math.round(v.videoWidth * k / 2) * 2, h = Math.round(v.videoHeight * k / 2) * 2;
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+    const x = cv.getContext('2d');
+    x.drawImage(v, 0, 0, w, h); marcaAgua(x, w, h);
+    const vis = document.getElementById('rec-c');
+    if (vis) { if (vis.width !== w || vis.height !== h) { vis.width = w; vis.height = h; } vis.getContext('2d').drawImage(cv, 0, 0); }
+  };
+  pintarCapa(); pinta();
+}
+function marcaAgua(x, w, h) {
+  const c = state.capa;
+  if (c?.tipo !== 'record') return;
+  const s = Math.max(w, h) / 1280, t = new Date(), f = Math.round(24 * s), pad = Math.round(14 * s);
+  const caja = (txt, px, py, color, alinear, k = 1) => {
+    const fk = Math.round(f * k);
+    x.font = `700 ${fk}px -apple-system, system-ui, sans-serif`;
+    const ancho = x.measureText(txt).width + pad * 2, xx = alinear === 'd' ? px - ancho : px;
+    x.fillStyle = 'rgba(0,0,0,.6)'; x.beginPath(); if (x.roundRect) x.roundRect(xx, py, ancho, fk + pad, fk / 2); else x.rect(xx, py, ancho, fk + pad); x.fill();
+    x.fillStyle = color; x.textBaseline = 'middle'; x.fillText(txt, xx + pad, py + (fk + pad) / 2);
+  };
+  const m = Math.round(18 * s);
+  caja(`FERRUM · ${c.codigo}`, m, m, '#D6F65A', '', 1.6);
+  if (rec?.t0) caja(`● ${Math.floor((Date.now() - rec.t0) / 1000)} s`, w - m, m, '#ff6b5e', 'd');
+  caja(`${c.nombre} · ${fmt(c.peso)} kg × ${fmt(c.reps)}`, m, h - m - 2 * (f + pad) - 8 * s, '#fff');
+  caja(`${cuenta.nombre} · ${t.toLocaleDateString('es-ES')} ${t.toLocaleTimeString('es-ES')}`, m, h - m - (f + pad), '#fff');
+}
+function grabarRecord() {
+  const c = state.capa;
+  if (!rec || c?.tipo !== 'record') return;
+  const tipo = ['video/mp4;codecs=avc1.42E01E', 'video/mp4', 'video/webm;codecs=vp8', 'video/webm'].find(t => MediaRecorder.isTypeSupported?.(t));
+  const r = new MediaRecorder(rec.cv.captureStream(30), {...(tipo ? {mimeType: tipo} : {}), videoBitsPerSecond: 2500000});
+  rec.trozos = []; rec.recorder = r; rec.t0 = Date.now();
+  r.ondataavailable = ev => { if (ev.data.size) rec?.trozos.push(ev.data); };
+  r.onstop = () => {
+    if (!rec || state.capa !== c) return;
+    const tipoB = (r.mimeType || tipo || 'video/mp4').split(';')[0];
+    c.blob = new Blob(rec.trozos, {type: tipoB}); c.ext = tipoB.includes('webm') ? 'webm' : 'mp4';
+    c.url = URL.createObjectURL(c.blob); c.paso = 'revisar'; rec.t0 = 0; pintarCapa();
+  };
+  r.start(1000);
+  rec.tope = setTimeout(pararRecord, 40000);
+  c.paso = 'grabando'; pintarCapa();
+}
+function pararRecord() { if (!rec) return; clearTimeout(rec.tope); if (rec.recorder?.state === 'recording') rec.recorder.stop(); }
+function cerrarRecord() {
+  if (rec) { cancelAnimationFrame(rec.raf); clearTimeout(rec.tope); try { if (rec.recorder?.state === 'recording') rec.recorder.stop(); } catch {} rec.stream.getTracks().forEach(t => t.stop()); rec = null; }
+  if (state.capa?.url) URL.revokeObjectURL(state.capa.url);
+  state.capa = null; pintarCapa(); render(true);
+}
+async function enviarRecord() {
+  const c = state.capa;
+  if (!c?.blob || c.enviando) return;
+  c.enviando = true; pintarCapa();
+  const ruta = `${cuenta.uid}/${c.id}.${c.ext}`;
+  try {
+    const r = await fetch(`${NUBE.url}/storage/v1/object/verificacion/${ruta}`, {method: 'POST', headers: {apikey: NUBE.key, Authorization: 'Bearer ' + await token(), 'Content-Type': c.blob.type}, body: c.blob});
+    if (!r.ok) throw new Error('subida ' + r.status);
+    await pedir('rpc/enviar_intento', {method: 'POST', body: {intento_: c.id, peso_: c.peso, reps_: c.reps, ext: c.ext}});
+  } catch (e) {
+    c.enviando = false; pintarCapa();
+    toast('No se ha enviado', /caducado/.test(e.message) ? 'Han pasado más de 20 minutos: graba otra vez' : 'Revisa la conexión y vuelve a probar'); return;
+  }
+  const {clave, peso, reps} = c;
+  cerrarRecord();
+  state.activo = clave; apuntar({peso: {value: String(peso)}, reps: {value: String(reps)}});
+  toast('Enviado a validar', `Lo verá la gente de ${nombreGym(miGym())}`);
+  await cargarIntentos(); render(true);
+}
+function capaRecord(c) {
+  const titulo = `<div class="capa-txt"><b class="num">${fmt(c.peso)} kg × ${fmt(c.reps)}</b><span>${esc(c.nombre)}</span></div>`;
+  if (c.paso === 'revisar') return `<div class="capa-in rec-in">${titulo}<video class="rec-vis" src="${c.url}" playsinline controls autoplay muted loop></video>
+    <div class="rec-reps"><span>¿Cuántas te han salido?</span><button class="mini" data-accion="rec-reps" data-d="-1" aria-label="Menos">−</button><b class="num">${fmt(c.reps)}</b><button class="mini" data-accion="rec-reps" data-d="1" aria-label="Más">+</button></div>
+    <button class="apuntar" data-accion="rec-enviar" ${c.enviando ? 'disabled' : ''}>${c.enviando ? 'Enviando…' : 'Apuntar y enviar a validar'}</button>
+    <div class="rec-fila"><button class="ghost" data-accion="rec-repetir" ${c.enviando ? 'disabled' : ''}>Repetir</button><button class="ghost" data-accion="rec-cerrar" ${c.enviando ? 'disabled' : ''}>Cancelar</button></div></div>`;
+  const porLado = Math.max(0, (c.peso - 20) / 2), discos = []; let resto = porLado;
+  for (const d of [25, 20, 15, 10, 5, 2.5, 1.25]) while (resto >= d - .001) { discos.push(d); resto -= d; }
+  return `<div class="capa-in rec-in">${titulo}<canvas id="rec-c" class="rec-vis" width="720" height="1280"></canvas>
+    ${c.paso === 'prep' ? `<p class="note rec-guia">Pon el móvil donde se vea todo. Empieza enseñando los discos${discos.length && /barra|banca|sentadilla|peso muerto|press militar|hip thrust|remo/.test(norm(c.nombre)) ? `: <b class="num">${discos.map(fmt).join(' + ')}</b> por lado` : ''} y luego haz la serie.</p>
+      <button class="rec-boton" data-accion="rec-grabar" aria-label="Grabar"><i></i></button><button class="ghost" style="width:100%" data-accion="rec-cerrar">Cancelar</button>`
+    : `<button class="rec-boton on" data-accion="rec-parar" aria-label="Parar"><i></i></button><p class="note rec-guia">Máximo 40 segundos. Toca para parar.</p>`}</div>`;
+}
+
+/* validar: ver el vídeo y votar, reportar o decidir como staff */
+async function verIntento(id) {
+  const i = (state.amigos.intentos || []).find(x => x.id === id);
+  if (!i) return;
+  state.capa = {tipo: 'intento', id, url: null, modo: null};
+  pintarCapa();
+  if (!i.ruta) return;
+  try {
+    const r = await fetch(`${NUBE.url}/storage/v1/object/sign/verificacion/${i.ruta}`, {method: 'POST', headers: {apikey: NUBE.key, Authorization: 'Bearer ' + await token(), 'Content-Type': 'application/json'}, body: JSON.stringify({expiresIn: 3600})});
+    const j = await r.json();
+    if (!r.ok || !j.signedURL) throw new Error('firma');
+    if (state.capa?.id === id) { state.capa.url = `${NUBE.url}/storage/v1${j.signedURL}`; pintarCapa(); }
+  } catch { if (state.capa?.id === id) { state.capa.sinVideo = true; pintarCapa(); } }
+}
+function capaIntento(c) {
+  const i = (state.amigos.intentos || []).find(x => x.id === c.id);
+  if (!i) return '';
+  const vs = votosDe(i.id), si = vs.filter(v => v.valido).length, no = vs.filter(v => !v.valido).length, mio = i.usuario === cuenta.uid, yaVote = vs.some(v => v.votante === cuenta.uid), staff = esStaff(i.gym);
+  const video = c.url ? `<video class="rec-vis" src="${esc(c.url)}" playsinline controls autoplay muted></video>` : !i.ruta || c.sinVideo ? '<div class="empty" style="width:100%">El vídeo ya no está guardado.</div>' : '<div class="empty esq rec-vis"></div>';
+  let acciones = '';
+  if (c.modo) acciones = `<p class="note" style="margin:0">${c.modo === 'no' ? '¿Por qué no es válida?' : '¿Qué pasa con esta marca?'}</p><div class="gchips" style="justify-content:center">${(c.modo === 'no' ? MOTIVOS_NO : MOTIVOS_REP).map(m => `<button class="gchip sm" data-accion="int-motivo" data-m="${esc(m)}">${esc(m)}</button>`).join('')}</div><button class="ghost" style="width:100%" data-accion="int-modo" data-m="">Volver</button>`;
+  else if (!mio && i.estado === 'pendiente' && !yaVote) acciones = `<div class="rec-fila"><button class="apuntar" data-accion="int-votar">Válida</button><button class="ghost" data-accion="int-modo" data-m="no">No válida</button></div>${staff ? '<p class="note" style="margin:0">Votas como staff: tu voto decide.</p>' : ''}`;
+  else if (!mio && i.estado === 'revision' && staff) acciones = `<div class="rec-fila"><button class="apuntar" data-accion="int-decidir" data-v="1">Mantener</button><button class="ghost" data-accion="int-decidir" data-v="0">Tumbar</button></div>`;
+  else if (!mio && i.estado === 'verificada') acciones = `<button class="ghost" style="width:100%" data-accion="int-modo" data-m="rep">Reportar esta marca</button>`;
+  return `<div class="capa-in rec-in"><div class="capa-txt"><b class="num">${fmt(+i.peso)} kg × ${fmt(+i.reps)}</b><span>${esc(nombreDe(i.usuario))} · ${esc(i.nombre)}</span></div>
+    ${video}
+    <p class="note" style="margin:0">${i.estado === 'pendiente' ? `Comprueba que en el vídeo sale el código <b class="num" style="color:var(--lime)">${esc(i.codigo)}</b>, que se ven los discos y que la serie es buena.` : `Código <b class="num">${esc(i.codigo)}</b>`}</p>
+    <div class="int-estado"><span class="tag${i.estado === 'verificada' ? '' : ' soft'}">${ESTADO_INT[i.estado] || ''}</span><span class="num">${si} a favor · ${no} en contra${yaVote ? ' · ya has votado' : ''}</span></div>
+    ${acciones}<button class="ghost" style="width:100%" data-accion="cerrar-capa">Cerrar</button></div>`;
+}
+const ERR_VOTO = {'otro gimnasio': 'Solo vota la gente de su gimnasio', 'cuenta nueva': 'Tu cuenta necesita 2 semanas para validar', 'pocas sesiones': 'Necesitas 5 sesiones guardadas para validar',
+  vetado: 'No puedes validar durante un tiempo', 'limite persona': 'Ya le has validado 3 marcas este mes', 'ya decidido': 'Ya está decidida', bloqueo: 'No puedes votar a esta persona', 'no verificada': 'Ya no está verificada'};
+async function accionIntento(rpc, body, ok) {
+  const c = state.capa;
+  try {
+    const r = await pedir(`rpc/${rpc}`, {method: 'POST', body: {intento_: c.id, ...body}});
+    toast(ok(r), nombreDe((state.amigos.intentos || []).find(x => x.id === c.id)?.usuario));
+  } catch (e) { toast('No se ha podido', Object.entries(ERR_VOTO).find(([k]) => e.message.includes(k))?.[1] || 'Revisa la conexión'); }
+  await cargarIntentos();
+  if (state.capa === c) { c.modo = null; pintarCapa(); }
+  render(true);
+}
+const filaIntento = i => `<button class="prow rec" data-accion="ver-intento" data-i="${esc(i.id)}">
+  <span class="nm">${esc(i.nombre)}<span class="sub num">${esc(nombreDe(i.usuario))} · ${fmt(+i.peso)} kg × ${fmt(+i.reps)}${i.estado === 'pendiente' ? ` · ${votosDe(i.id).filter(v => v.valido).length}/2${votosDe(i.id).some(v => v.votante === cuenta.uid) ? ' · votado' : ''}` : ''}</span></span>
+  <span class="kg num">${i.estado === 'verificada' ? `<span class="tag" style="margin-right:6px">Verificada</span>${fmt(+i.rm)}<small>kg</small>` : `<span class="tag soft">${ESTADO_INT[i.estado]}</span>`}</span></button>`;
+function seccionVerifGym(gid) {
+  const a = state.amigos;
+  if (!a.verifOk) return '';
+  const deGym = i => gymPor(i.gym)?.id === gid, staff = cuenta.uid === ADMIN || !!a.staff?.some(s => gymPor(s.gym)?.id === gid && s.usuario === cuenta.uid);
+  const mio = gymPor(miGym())?.id === gid, coronas = mejoresVerif(deGym);
+  const pend = (mio || staff) ? intentosDe(i => deGym(i) && i.estado === 'pendiente' && i.usuario !== cuenta.uid) : [];
+  const rev = staff ? intentosDe(i => deGym(i) && i.estado === 'revision') : [];
+  let h = '';
+  if (pend.length) h += `<div class="sec-h"><h2>Por validar</h2><span class="r num">${pend.length}</span></div><div class="rows">${pend.map(filaIntento).join('')}</div>`;
+  if (rev.length) h += `<div class="sec-h"><h2>En revisión</h2></div><div class="rows">${rev.map(filaIntento).join('')}</div>`;
+  h += `<div class="sec-h"><h2>Coronas verificadas</h2></div>`;
+  h += coronas.length ? `<div class="rows">${coronas.slice(0, 12).map(filaIntento).join('')}</div>`
+    : `<div class="empty"><b>Aún no hay ninguna</b>En una serie de peso libre toca «Récord» para grabar el intento. Lo validan dos compañeros o alguien del staff.</div>`;
+  return h;
+}
+function seccionVerifPerfil(uid, propio) {
+  if (!state.amigos.verifOk) return '';
+  const ver = mejoresVerif(i => i.usuario === uid), mias = propio ? intentosDe(i => i.usuario === uid && i.estado !== 'verificada').slice(0, 5) : [];
+  if (!ver.length && !mias.length) return '';
+  return `<div class="sec-h"><h2>Marcas verificadas</h2></div><div class="rows">${[...ver.slice(0, 6), ...mias].map(filaIntento).join('')}</div>`;
+}
+async function abrirStaff() {
+  state.capa = {tipo: 'staff'}; pintarCapa();
+  await cargarIntentos();
+  if (state.capa?.tipo === 'staff') pintarCapa();
+}
+function capaStaff() {
+  const a = state.amigos, gyms = [...new Set([...GYMS.map(g => g.id), ...(a.gente || []).map(g => g.gimnasio).filter(Boolean)])];
+  const rev = intentosDe(i => i.estado === 'revision');
+  return `<div class="gym-sel"><div class="gym-sel-h"><h2>Staff y revisión</h2><button class="mini" data-accion="cerrar-capa">Cerrar</button></div>
+    ${!a.verifOk ? '<p class="note" style="margin:0">Falta pegar el SQL de verificación en Supabase.</p>' : `
+    ${rev.length ? `<div class="label">En revisión</div><div class="rows">${rev.map(filaIntento).join('')}</div>` : ''}
+    <div class="label">Staff por gimnasio</div>
+    <div class="rows">${(a.staff || []).map(s => `<div class="frow"><span class="tt">${esc(nombreDe(s.usuario))}<small style="display:block;color:var(--muted)">${esc(nombreGym(s.gym))}</small></span><button class="mini" data-accion="staff-quitar" data-g="${esc(s.gym)}" data-u="${esc(s.usuario)}">Quitar</button></div>`).join('') || '<p class="note" style="margin:0">Aún no hay nadie. Tú validas en todos los gimnasios.</p>'}</div>
+    <form class="campos" data-form="staff-poner"><select class="campo" name="gym" aria-label="Gimnasio">${gyms.map(g => `<option value="${esc(g)}">${esc(nombreGym(g))}</option>`).join('')}</select>
+      <select class="campo" name="u" aria-label="Persona">${(a.gente || []).map(g => `<option value="${esc(g.id)}">${esc(g.nombre)}${g.gimnasio ? ` · ${esc(nombreGym(g.gimnasio))}` : ''}</option>`).join('')}</select>
+      <button class="apuntar" type="submit">Añadir al staff</button></form>`}</div>`;
+}
+async function ponerStaff(gym, u, poner) {
+  try { await pedir('rpc/poner_staff', {method: 'POST', body: {gym_: gym, usuario_: u, poner}}); toast(poner ? 'Añadido al staff' : 'Quitado del staff', nombreDe(u)); }
+  catch { toast('No se ha podido', 'Revisa la conexión'); }
+  await cargarIntentos();
+  if (state.capa?.tipo === 'staff') pintarCapa();
+}
+
 /* ---------- gimnasios ---------- */
 const genteGym = id => (state.amigos.gente || []).filter(g => gymPor(g.gimnasio)?.id === id);
 function listaGyms() {
@@ -3539,7 +3790,8 @@ function vistaGym(id) {
   h += tabla.length ? `<div class="rows">${tabla.map((x, i) => `<button class="rk${x.id === cuenta.uid ? ' yo' : ''}" data-accion="perfil" data-u="${esc(x.id)}"><span class="p num">${i + 1}</span>
     <span class="mid"><b>${esc(x.nombre)}</b><small class="num">${x.resumen?.semana === semana ? `${fmt(+x.resumen.series || 0)} series` : 'Sin entrenar esta semana'}</small></span><span class="v num">${fmt(vol(x))}<small>kg</small></span></button>`).join('')}</div>`
     : `<div class="empty"><b>Aún no hay nadie</b>Sé el primero en poner este gimnasio como tuyo.</div>`;
-  if (mejores.size) h += `<div class="sec-h"><h2>Récords del gimnasio</h2></div><div class="rows">${[...mejores.values()].slice(0, 12).map(r => `<button class="prow rec" data-accion="ver-ranking" data-clave="${esc(r.clave)}">
+  h += seccionVerifGym(id);
+  if (mejores.size) h += `<div class="sec-h"><h2>Récords apuntados</h2></div><div class="rows">${[...mejores.values()].slice(0, 12).map(r => `<button class="prow rec" data-accion="ver-ranking" data-clave="${esc(r.clave)}">
     <span class="nm">${esc(r.nombre)}<span class="sub">${esc(r.perfiles?.nombre)}</span></span><span class="kg num">${kgRm(r)}<small>kg</small></span></button>`).join('')}</div>`;
   h += `<div class="sec-h"><h2>Sesiones</h2></div>`;
   h += a.gymPosts?.length ? a.gymPosts.map(tarjetaPublicacion).join('') : a.gymPosts ? `<div class="empty">Aún no hay sesiones publicadas aquí.</div>` : `<div class="empty"><b>Cargando</b>Trayendo las sesiones…</div>`;
@@ -3779,7 +4031,7 @@ function vistaYo() {
   const mios = a.bloqueos.filter(b => b.bloqueador === cuenta.uid);
   return seg + vistaPerfil(cuenta.uid, true) + seccionMarcos() + seccionPremios() + (mios.length ? `<div class="sec-h"><h2>Bloqueados</h2></div><div class="rows">${mios.map(b => `<div class="persona"><span>Usuario bloqueado</span><button class="mini" data-accion="desbloquear" data-u="${esc(b.bloqueado)}">Desbloquear</button></div>`).join('')}</div>` : '') + `<div class="cuenta-txt">${cuenta.email ? `${esc(cuenta.email)} · ` : ''}Ferrum ${VERSION}</div><div class="salir">
     ${cuenta.email ? `<button class="chip" data-accion="cambiar-clave">Cambiar contraseña</button><button class="chip" data-accion="cerrar-cuenta">Cerrar sesión</button>` : ''}
-    ${cuenta.uid === ADMIN ? `<button class="chip" data-accion="admin-abrir">Recuperar cuentas</button><button class="chip" data-accion="errores-abrir">Errores</button>` : ''}
+    ${cuenta.uid === ADMIN ? `<button class="chip" data-accion="admin-abrir">Recuperar cuentas</button><button class="chip" data-accion="errores-abrir">Errores</button><button class="chip" data-accion="staff-abrir">Staff</button>` : ''}
     <button class="chip danger${a.salir ? ' sure' : ''}" data-accion="borrar-cuenta">${a.salir ? '¿Seguro? Se borra para siempre' : 'Borrar mi cuenta'}</button></div>`;
 }
 function camposCuenta(tipo) {
@@ -4122,7 +4374,7 @@ document.addEventListener('click', ev => {
     case 'ver-carta': state.capa = {tipo: 'carta', id: b.dataset.c, de: b.dataset.u}; pintarCapa(); break;
     case 'ver-cartas': state.amigos.cartasDe = b.dataset.u; render(true); scrollTo(0, 0); break;
     case 'volver-cartas': state.amigos.cartasDe = null; render(true); scrollTo(0, 0); break;
-    case 'cerrar-capa': state.capa = null; pintarCapa(); render(true); break;
+    case 'cerrar-capa': if (state.capa?.tipo === 'record') { cerrarRecord(); break; } state.capa = null; pintarCapa(); render(true); break;
     case 'objetivo': ls.set('fr_objetivo', +b.dataset.n); render(true); if (nubeLista() && cuenta?.nombre) subirMarcas().catch(() => {}); break;
     case 'quitar-meta': ls.set('fr_metas', metasFuerza().filter((_, i) => i !== +b.dataset.i)); render(true); break;
     case 'comunidad': state.amigos.comunidad = b.dataset.c; render(true); break;
@@ -4131,6 +4383,21 @@ document.addEventListener('click', ev => {
     case 'resumen-tipo': abrirResumen(b.dataset.t); break;
     case 'resumen-compartir': compartirResumen(); break;
     case 'errores-abrir': abrirErrores(); break;
+    case 'staff-abrir': abrirStaff(); break;
+    case 'staff-quitar': ponerStaff(b.dataset.g, b.dataset.u, false); break;
+    case 'ir-record': irARecord(); break;
+    case 'rec-grabar': grabarRecord(); break;
+    case 'rec-parar': pararRecord(); break;
+    case 'rec-cerrar': cerrarRecord(); break;
+    case 'rec-repetir': if (state.capa?.url) URL.revokeObjectURL(state.capa.url); Object.assign(state.capa, {paso: 'prep', blob: null, url: null}); pintarCapa(); break;
+    case 'rec-reps': state.capa.reps = Math.max(1, Math.min(100, state.capa.reps + +b.dataset.d)); pintarCapa(); break;
+    case 'rec-enviar': enviarRecord(); break;
+    case 'ver-intento': verIntento(b.dataset.i); break;
+    case 'int-modo': state.capa.modo = b.dataset.m || null; pintarCapa(); break;
+    case 'int-votar': accionIntento('votar_intento', {valido_: true, motivo_: null}, r => r === 'verificada' ? 'Récord verificado' : 'Voto enviado'); break;
+    case 'int-motivo': if (state.capa.modo === 'rep') accionIntento('reportar_intento', {motivo_: b.dataset.m}, () => 'Reporte enviado');
+      else accionIntento('votar_intento', {valido_: false, motivo_: b.dataset.m}, r => r === 'rechazada' ? 'Marca no validada' : 'Voto enviado'); break;
+    case 'int-decidir': accionIntento('decidir_intento', {valido_: b.dataset.v === '1'}, () => b.dataset.v === '1' ? 'Marca mantenida' : 'Marca tumbada'); break;
     case 'errores-borrar': pedir(`errores?id=in.(${state.capa.lista.map(x => x.id).join(',')})`, {method: 'DELETE'}).then(abrirErrores, () => toast('No se han borrado', 'Revisa la conexión')); break;
     case 'cambiar-clave': state.capa = {tipo: 'clave'}; pintarCapa(); break;
     case 'admin-abrir': abrirAdmin(); break;
@@ -4281,6 +4548,7 @@ document.addEventListener('submit', ev => {
   const f = ev.target;
   if (f.dataset.form === 'buscar') empezar(mejorCoincidencia(f.q.value));
   if (f.dataset.form === 'serie') apuntar(f);
+  if (f.dataset.form === 'staff-poner') ponerStaff(f.gym.value, f.u.value, true);
   if (f.dataset.form === 'alta') entrar(f.nombre.value);
   if (f.dataset.form === 'cuenta') accionCuenta(f, f.dataset.tipo);
   if (f.dataset.form === 'comentar') comentar(f);
