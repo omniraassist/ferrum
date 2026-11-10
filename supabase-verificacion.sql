@@ -69,7 +69,7 @@ as $$ select (select auth.uid()) = 'c61a90cb-1fe2-4a4a-bd92-005937218ed9'
   or exists (select 1 from public.staff s where s.gym = g and s.usuario = (select auth.uid())); $$;
 
 create function public.puede_ver_video(nombre text) returns boolean language sql stable security definer set search_path = ''
-as $$ select exists (select 1 from public.intentos i where i.ruta = nombre and (
+as $$ select exists (select 1 from public.intentos i where i.ruta = $1 and (
   i.usuario = (select auth.uid())
   or public.es_staff(i.gym)
   or (select p.gimnasio from public.perfiles p where p.id = (select auth.uid())) = i.gym)); $$;
